@@ -1,0 +1,6 @@
+{
+  "projects": {
+    "default": "fraa-capstone",
+    "develop": "fraa-capstone"
+  }
+}
