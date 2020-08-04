@@ -66,7 +66,7 @@ exports.signIn = async (req, res) => {
 
   try {
     const signIn = await firebase.auth().signInWithEmailAndPassword(user.email, user.password);
-    const idToken = signIn.user.getIdToken();
+    const idToken = await signIn.user.getIdToken();
     if (idToken) {
       return res.json({token: idToken});
     }
@@ -76,6 +76,7 @@ exports.signIn = async (req, res) => {
   }
   // Error message can be used as response, no need to console.error here.
   catch (e) {
+    console.log(e);
     if (e.code === 'auth/wrong-password') {
       return res.json({error: 'Password is incorrect'});
     }
