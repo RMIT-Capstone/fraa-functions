@@ -29,7 +29,8 @@ exports.createUserInAuth = async (req, res) => {
       return res.json({error: 'Email already in use.'});
     }
     else {
-      return res.json({error: e});
+      console.error(e);
+      return res.json({error: 'Something went wrong with createUserInAuth()'});
     }
   }
 };
@@ -76,14 +77,16 @@ exports.signIn = async (req, res) => {
   }
   // Error message can be used as response, no need to console.error here.
   catch (e) {
-    console.log(e);
     if (e.code === 'auth/wrong-password') {
       return res.json({error: 'Password is incorrect'});
     }
     else if (e.code === 'auth/user-not-found') {
       return res.json({error: 'User does not exist'});
     }
-    return res.json({error: e});
+    else {
+      console.error(e);
+      return res.json({error: 'Something went wrong with signIn()'});
+    }
   }
 };
 

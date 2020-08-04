@@ -1,5 +1,5 @@
-const isEmpty = string => {
-  if (!string) return true;
+const stringIsEmpty = string => {
+  if (!(typeof string === 'string')) return true;
   return string.trim() === '';
 };
 
@@ -13,14 +13,14 @@ const isEmail = email => {
 exports.validateAccountData = data => {
   let errors = {};
 
-  if (isEmpty(data.email)) {
+  if (stringIsEmpty(data.email)) {
     errors.email = 'Email must not be empty';
   }
   else if (!isEmail(data.email)) {
     errors.email = 'Invalid email address';
   }
 
-  if (isEmpty(data.password)) {
+  if (stringIsEmpty(data.password)) {
     errors.password = 'Password cannot be empty';
   }
   else if (data.password.length < 6) {
