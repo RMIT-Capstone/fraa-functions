@@ -1,7 +1,7 @@
 const {db, firebase} = require('../../utils/admin');
 const {validateAccountData}  = require('../../utils/user-helpers');
-// const {getUserDocumentIdByEmail} = require('./UserHelpers');
-// const crypto = require('crypto');
+const {userDocumentExistsInFirestore} = require('./UserHelpers');
+const {generateOTPCode} = require('./UserHelpers');
 
 exports.createUserInAuth = async (req, res) => {
   const newUser = {
@@ -87,13 +87,35 @@ exports.signIn = async (req, res) => {
   }
 };
 
-// exports.generateOTP = async (req, res) => {
-//   const email = req.body.email;
-//   const id = await getUserDocumentIdByEmail(email);
-//   if (!id) {
-//     return res.json({error: 'user does not exist'});
-//   }
-//   else {
-//     return res.json({id});
-//   }
+exports.generateOTP = async (req, res) => {
+  const email = req.body.email;
+  const id = await userDocumentExistsInFirestore(email);
+  if (!id) {
+    return res.json({error: 'user does not exist'});
+  }
+  else {
+    try {
+      const OTP = generateOTPCode();
+      await db
+        .collection('OTP')
+        .add({
+          email,
+          OTP,
+          expiryTime: new Date(),
+        });
+      return res.json({message: 'OTP code created'});
+    }
+    catch (e) {
+      console.log(e);
+      return res.json({error: e});
+    }
+  }
+};
+
+// exports.verifyOTP = async (req, res) => {
+//
 // };
+//
+// function changeUserPassword(user) {
+//
+// }
