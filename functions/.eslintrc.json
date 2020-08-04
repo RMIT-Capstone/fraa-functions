@@ -124,6 +124,12 @@
     "semi": ["error", "always"],
 
     // 2 spaces indentation
-    "indent": ["error", 2]
+    "indent": ["error", 2],
+
+    // Maximum 120
+    "max-len": ["error", { "code": 120 }],
+
+    // Space around infix operators
+    "space-infix-ops": ["error", { "int32Hint":false }]
   }
 }
