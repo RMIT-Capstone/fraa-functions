@@ -9,6 +9,7 @@ const {
   deleteUserInFirestore
 } = require('./UserHelpers');
 const {generateOTPCode} = require('./UserHelpers');
+const {sendOTPToUser} = require('../email');
 
 exports.createUserInAuth = async (req, res) => {
   const newUser = {
@@ -86,11 +87,13 @@ exports.generateOTP = async (req, res) => {
     try {
       const OTP = generateOTPCode();
       const now = admin.firestore.Timestamp.now();
+      const expiryTime = admin.firestore.Timestamp.fromMillis(now.toMillis() + (300 * 1000));
       await db.collection('OTP').add({
         email,
         OTP,
-        expiryTime: admin.firestore.Timestamp.fromMillis(now.toMillis() + (300 * 1000)),
+        expiryTime
       });
+      await sendOTPToUser(email, OTP);
       return res.json({message: 'OTP code created'});
     }
     catch (errorGenerateOTP) {
