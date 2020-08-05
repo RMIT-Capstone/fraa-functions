@@ -31,3 +31,14 @@ exports.getUserDocumentIdByEmail = async email => {
     return null;
   }
 };
+
+function getRandomInt(min, max) {
+  min = Math.ceil(min);
+  max = Math.ceil(max);
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+exports.generateOTPCode = () => {
+  const OTP_LENGTH = 6;
+  return Array.apply(null, {length: OTP_LENGTH}).map(() => getRandomInt(0, 9)).join('');
+};

@@ -1,7 +1,8 @@
-const {db, firebase} = require('../../utils/admin');
+const {getUserDataInFirebaseAuthentication} = require('./UserHelpers');
+const {db, firebase, admin} = require('../../utils/admin');
 const {validateAccountData}  = require('../../utils/user-helpers');
-// const {getUserDocumentIdByEmail} = require('./UserHelpers');
-// const crypto = require('crypto');
+const {userDocumentExistsInFirestore} = require('./UserHelpers');
+const {generateOTPCode} = require('./UserHelpers');
 
 exports.createUserInAuth = async (req, res) => {
   const newUser = {
@@ -29,7 +30,7 @@ exports.createUserInAuth = async (req, res) => {
       return res.json({error: 'Email already in use.'});
     }
     else {
-      console.error(e);
+      console.error(e.message);
       return res.json({error: 'Something went wrong with createUserInAuth()'});
     }
   }
@@ -51,8 +52,8 @@ exports.createUserInFirestore = async user => {
       console.error(`Something went wrong with creating ${user.email} in Firestore`);
     }
   }
-  catch(e) {
-    console.error(`Failed to create user in Firestore: ${e}`);
+  catch(errorCreateUserInFirestore) {
+    console.error(`Failed to create user in Firestore: ${errorCreateUserInFirestore.message}`);
   }
 };
 
@@ -61,7 +62,6 @@ exports.signIn = async (req, res) => {
     email: req.body.email,
     password: req.body.password
   };
-
   const {valid, errors} = validateAccountData(user);
   if (!valid) return res.json({error: errors});
 
@@ -84,19 +84,92 @@ exports.signIn = async (req, res) => {
       return res.json({error: 'User does not exist'});
     }
     else {
-      console.error(e);
+      console.error(e.message);
       return res.json({error: 'Something went wrong with signIn()'});
     }
   }
 };
 
-// exports.generateOTP = async (req, res) => {
-//   const email = req.body.email;
-//   const id = await getUserDocumentIdByEmail(email);
-//   if (!id) {
-//     return res.json({error: 'user does not exist'});
-//   }
-//   else {
-//     return res.json({id});
-//   }
-// };
+exports.generateOTP = async (req, res) => {
+  const email = req.body.email;
+  const id = await userDocumentExistsInFirestore(email);
+  if (!id) {
+    return res.json({error: 'user does not exist'});
+  }
+  else {
+    try {
+      const OTP = generateOTPCode();
+      const now = admin.firestore.Timestamp.now();
+      await db
+        .collection('OTP')
+        .add({
+          email,
+          OTP,
+          expiryTime: admin.firestore.Timestamp.fromMillis(now.toMillis() + (300 * 1000)),
+        });
+      return res.json({message: 'OTP code created'});
+    }
+    catch (errorGenerateOTP) {
+      console.log(errorGenerateOTP.message);
+      return res.json({error: 'Something went wrong with generateOTP()'});
+    }
+  }
+};
+
+exports.verifyOTP = async (req, res) => {
+  const email = req.body.email;
+  const userOTP = req.body.OTP;
+
+  try {
+    const otpDocumentSnapshot = await db
+      .collection('OTP')
+      .where('email', '==', email)
+      .orderBy('expiryTime', 'desc')
+      .get();
+
+    if (otpDocumentSnapshot.size === 0) {
+      return res.json({error: 'no OTP record found'});
+    }
+    else {
+      const otpDocument = otpDocumentSnapshot.docs[0].data();
+      const expiryTime = otpDocument.expiryTime.toDate().toString();
+      const now = admin.firestore.Timestamp.now().toDate().toString();
+      const OTP = otpDocument.OTP;
+
+      if (expiryTime < now) {
+        return res.json({error: 'OTP expired'});
+      }
+      if (OTP === userOTP) {
+        return res.json({message: 'valid OTP'});
+      }
+      else {
+        return res.json({message: 'invalid OTP'});
+      }
+    }
+  }
+  catch (errorVerifyOTP) {
+    console.error(errorVerifyOTP.message);
+    return res.json({error: 'Something went wrong with verifyOTP()'});
+  }
+};
+
+exports.changeUserPassword = async (req, res) => {
+  const user = {
+    email: req.body.email,
+    password: req.body.password
+  };
+  const {valid, errors} = validateAccountData(user);
+  if (!valid) return res.json({error: errors});
+
+  try {
+    const record = await getUserDataInFirebaseAuthentication(user.email);
+    await admin.auth().updateUser(record.uid, {
+      password: user.password
+    });
+    return res.json({message: 'password updated successfully'});
+  }
+  catch (errorChangeUserPassword) {
+    console.error(errorChangeUserPassword);
+    return res.json({error: 'Something went wrong with changeUserPassword()'});
+  }
+};
