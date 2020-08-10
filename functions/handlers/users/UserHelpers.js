@@ -1,12 +1,19 @@
 const {db} = require('../../utils/admin');
 
-exports.userDocumentExistsInFirestore = userId => {
+// querysnapshot is an array of snapshots when queried
+// if querysnapshot length is more than 0 (not empty)
+// a document exist with given query parameters
+exports.userDocumentExistsWithEmail = async email => {
   try {
-    const userReference =  db.collection('users').doc(userId).get();
-    return Boolean(userReference);
+    const querySnapshot = await db
+      .collection('users')
+      .where('email', '==', email)
+      .get();
+
+    return querySnapshot.size > 0;
   }
-  catch (e) {
-    console.error(e);
+  catch (errorUserDocumentExistsWithEmail) {
+    console.error(errorUserDocumentExistsWithEmail.message);
     return null;
   }
 };
@@ -18,8 +25,8 @@ exports.getUserDocumentIdByEmail = async email => {
       .collection('users')
       .where('email', '==', email)
       .get();
-    querySnapshot.forEach(doc => {
-      id = doc.id;
+    querySnapshot.forEach(snapshot => {
+      id = snapshot.id;
     });
     if (id) {
       return id;
@@ -29,6 +36,45 @@ exports.getUserDocumentIdByEmail = async email => {
   catch (e) {
     console.error(`Something went wrong with fetching user document ${e}`);
     return null;
+  }
+};
+
+exports.deleteUserInFirestore = async userDocId => {
+  return db
+    .collection('users')
+    .doc(userDocId)
+    .delete();
+};
+
+exports.getOTPDocumentsByEmail = async email => {
+  const querySnapshot = await db
+    .collection('OTP')
+    .where('email', '==', email)
+    .orderBy('expiryTime', 'desc')
+    .get();
+
+  if (!querySnapshot || querySnapshot.size === 0) {
+    return {error: `no OTP code found with ${email}`};
+  }
+  else {
+    return querySnapshot.docs[0].data();
+  }
+};
+
+exports.deleteOTPDocumentsByEmail = async email => {
+  try {
+    const querySnapshot = await db
+      .collection('OTP')
+      .where('email', '==', email)
+      .get();
+    if (querySnapshot.size >= 1) {
+      querySnapshot.forEach(snapshot => {
+        snapshot.ref.delete();
+      });
+    }
+  }
+  catch (errorDeleteOTPDocuments) {
+    console.error(errorDeleteOTPDocuments.message);
   }
 };
 
@@ -42,3 +88,4 @@ exports.generateOTPCode = () => {
   const OTP_LENGTH = 6;
   return Array.apply(null, {length: OTP_LENGTH}).map(() => getRandomInt(0, 9)).join('');
 };
+

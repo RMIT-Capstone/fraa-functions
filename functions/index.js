@@ -4,11 +4,12 @@ const cors = require('cors');
 const {generateQrCode} = require('./handlers/qr-code');
 const {
   createUserInAuth,
-  createUserInFirestore,
   signIn,
-  changeUserPassword,
+  createUserInFirestore,
+  deleteUserInFirestore,
   generateOTP,
-  verifyOTP
+  verifyOTP,
+  changeUserPassword
 } = require('./handlers/users');
 
 app.use(cors());
@@ -21,3 +22,4 @@ app.post('/change_user_password', changeUserPassword);
 
 exports.api = functions.region('asia-northeast1').https.onRequest(app);
 exports.onUserCreatedInAuth = functions.region('asia-northeast1').auth.user().onCreate(createUserInFirestore);
+exports.onUserDeletedInAuth = functions.region('asia-northeast1').auth.user().onDelete(deleteUserInFirestore);

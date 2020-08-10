@@ -1,7 +1,13 @@
-const {getUserDataInFirebaseAuthentication} = require('./UserHelpers');
 const {db, firebase, admin} = require('../../utils/admin');
 const {validateAccountData}  = require('../../utils/user-helpers');
-const {userDocumentExistsInFirestore} = require('./UserHelpers');
+const {
+  userDocumentExistsWithEmail,
+  getUserDocumentIdByEmail,
+  getUserDataInFirebaseAuthentication,
+  getOTPDocumentsByEmail,
+  deleteOTPDocumentsByEmail,
+  deleteUserInFirestore
+} = require('./UserHelpers');
 const {generateOTPCode} = require('./UserHelpers');
 
 exports.createUserInAuth = async (req, res) => {
@@ -10,9 +16,9 @@ exports.createUserInAuth = async (req, res) => {
     password: req.body.password,
     confirmPassword: req.body.password,
   };
-
   newUser.newAccount = true;
   const {errors, valid} = validateAccountData(newUser);
+
   if (!valid) return res.json({error: errors});
   try {
     const createAccount = await firebase.auth().createUserWithEmailAndPassword(newUser.email, newUser.password);
@@ -33,27 +39,6 @@ exports.createUserInAuth = async (req, res) => {
       console.error(e.message);
       return res.json({error: 'Something went wrong with createUserInAuth()'});
     }
-  }
-};
-
-exports.createUserInFirestore = async user => {
-  try {
-    const createUser = await db
-      .collection('users')
-      .add({
-        email: user.email,
-        createdAt: new Date().toISOString(),
-        firstTimePassword: true,
-      });
-    if (createUser) {
-      console.log(`User with email: ${user.email} created successfully`);
-    }
-    else {
-      console.error(`Something went wrong with creating ${user.email} in Firestore`);
-    }
-  }
-  catch(errorCreateUserInFirestore) {
-    console.error(`Failed to create user in Firestore: ${errorCreateUserInFirestore.message}`);
   }
 };
 
@@ -92,21 +77,20 @@ exports.signIn = async (req, res) => {
 
 exports.generateOTP = async (req, res) => {
   const email = req.body.email;
-  const id = await userDocumentExistsInFirestore(email);
-  if (!id) {
-    return res.json({error: 'user does not exist'});
+  const userExists = await userDocumentExistsWithEmail(email);
+
+  if (!userExists) {
+    return res.json({error: 'User does not exist'});
   }
   else {
     try {
       const OTP = generateOTPCode();
       const now = admin.firestore.Timestamp.now();
-      await db
-        .collection('OTP')
-        .add({
-          email,
-          OTP,
-          expiryTime: admin.firestore.Timestamp.fromMillis(now.toMillis() + (300 * 1000)),
-        });
+      await db.collection('OTP').add({
+        email,
+        OTP,
+        expiryTime: admin.firestore.Timestamp.fromMillis(now.toMillis() + (300 * 1000)),
+      });
       return res.json({message: 'OTP code created'});
     }
     catch (errorGenerateOTP) {
@@ -119,31 +103,28 @@ exports.generateOTP = async (req, res) => {
 exports.verifyOTP = async (req, res) => {
   const email = req.body.email;
   const userOTP = req.body.OTP;
+  const userExist = await userDocumentExistsWithEmail(email);
+
+  if (!userExist) return res.json({error: 'User does not exist'});
 
   try {
-    const otpDocumentSnapshot = await db
-      .collection('OTP')
-      .where('email', '==', email)
-      .orderBy('expiryTime', 'desc')
-      .get();
-
-    if (otpDocumentSnapshot.size === 0) {
-      return res.json({error: 'no OTP record found'});
+    const otpDocumentSnapshot = await getOTPDocumentsByEmail(email);
+    if (otpDocumentSnapshot.error) {
+      return res.json({error: otpDocumentSnapshot.error});
     }
     else {
-      const otpDocument = otpDocumentSnapshot.docs[0].data();
-      const expiryTime = otpDocument.expiryTime.toDate().toString();
+      const expiryTime = otpDocumentSnapshot.expiryTime.toDate().toString();
       const now = admin.firestore.Timestamp.now().toDate().toString();
-      const OTP = otpDocument.OTP;
+      const OTP = otpDocumentSnapshot.OTP;
 
       if (expiryTime < now) {
         return res.json({error: 'OTP expired'});
       }
       if (OTP === userOTP) {
-        return res.json({message: 'valid OTP'});
+        return res.json({message: 'Valid OTP'});
       }
       else {
-        return res.json({message: 'invalid OTP'});
+        return res.json({message: 'Invalid OTP'});
       }
     }
   }
@@ -166,10 +147,42 @@ exports.changeUserPassword = async (req, res) => {
     await admin.auth().updateUser(record.uid, {
       password: user.password
     });
-    return res.json({message: 'password updated successfully'});
+    return res.json({message: 'Password updated successfully'});
   }
   catch (errorChangeUserPassword) {
     console.error(errorChangeUserPassword);
     return res.json({error: 'Something went wrong with changeUserPassword()'});
+  }
+};
+
+// background functions
+exports.createUserInFirestore = async user => {
+  try {
+    const createUser = await db.collection('users').add({
+      email: user.email,
+      createdAt: new Date().toISOString(),
+      firstTimePassword: true,
+    });
+    if (createUser) {
+      console.log(`User with email: ${user.email} created successfully`);
+    }
+    else {
+      console.error(`Something went wrong with creating ${user.email} in Firestore`);
+    }
+  }
+  catch(errorCreateUserInFirestore) {
+    console.error(`Failed to create user in Firestore: ${errorCreateUserInFirestore.message}`);
+  }
+};
+
+exports.deleteUserInFirestore = async user => {
+  try {
+    const userDocId = await getUserDocumentIdByEmail(user.email);
+    if (userDocId) {
+      await Promise.all([deleteUserInFirestore(userDocId), deleteOTPDocumentsByEmail(user.email)]);
+    }
+  }
+  catch (errorDeleteUserInFirestore) {
+    console.error(`Failed to delete user in Firestore: ${errorDeleteUserInFirestore}`);
   }
 };
