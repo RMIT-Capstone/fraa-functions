@@ -66,5 +66,5 @@ node_modules/
 
 # config file
 functions/config
-functions/config/index.js
+functions/config/FirebaseConfig.js
 /functions/config/

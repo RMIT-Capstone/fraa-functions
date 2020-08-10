@@ -66,5 +66,5 @@ node_modules/
 .idea
 
 config
-config/index.js
+config/FirebaseConfig.js
 /config/
