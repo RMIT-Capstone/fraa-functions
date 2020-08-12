@@ -1,19 +1,20 @@
 const functions = require('firebase-functions');
 const app = require('express')();
 const cors = require('cors');
-const {generateQrCode} = require('./handlers/qr-code');
-const {
-  createUserInAuth,
-  signIn,
-  createUserInFirestore,
-  deleteUserInFirestore,
-  generateOTP,
-  verifyOTP,
-  changeUserPassword
-} = require('./handlers/users');
+const {createUserInFirestore, deleteUserInFirestore} = require('./handlers/users/background');
+const {verifyOTP, generateOTP, signIn, createUserInAuth, changeUserPassword} = require('./handlers/users/https');
+const {createCourse} = require('./handlers/courses/https');
+const {createAttendanceSession} = require('./handlers/attendance-session/https');
 
 app.use(cors());
-app.post('/generate_qr_code', generateQrCode);
+
+// attendance session handlers
+app.post('/create_attendance_session', createAttendanceSession);
+
+//courses
+app.post('/create_course', createCourse);
+
+// user handlers
 app.post('/create_user', createUserInAuth);
 app.post('/sign_in', signIn);
 app.post('/generate_OTP', generateOTP);

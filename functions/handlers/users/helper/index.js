@@ -1,4 +1,4 @@
-const {db} = require('../../utils/admin');
+const {db} = require('../../../utils/admin');
 
 // querysnapshot is an array of snapshots when queried
 // if querysnapshot length is more than 0 (not empty)
@@ -48,7 +48,7 @@ exports.deleteUserInFirestore = async userDocId => {
 
 exports.getOTPDocumentsByEmail = async email => {
   const querySnapshot = await db
-    .collection('OTP')
+    .collection('reset-password-otp')
     .where('email', '==', email)
     .orderBy('expiryTime', 'desc')
     .get();
@@ -64,7 +64,7 @@ exports.getOTPDocumentsByEmail = async email => {
 exports.deleteOTPDocumentsByEmail = async email => {
   try {
     const querySnapshot = await db
-      .collection('OTP')
+      .collection('reset-password-otp')
       .where('email', '==', email)
       .get();
     if (querySnapshot.size >= 1) {
@@ -88,4 +88,43 @@ exports.generateOTPCode = () => {
   const OTP_LENGTH = 6;
   return Array.apply(null, {length: OTP_LENGTH}).map(() => getRandomInt(0, 9)).join('');
 };
+
+const stringIsEmpty = string => {
+  if (!(typeof string === 'string')) return true;
+  return string.trim() === '';
+};
+
+const isEmail = email => {
+  let regEx;
+  // eslint-disable-next-line no-useless-escape,max-len
+  regEx = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  return Boolean(email.match(regEx));
+};
+
+exports.validateAccountData = data => {
+  let errors = {};
+
+  validateEmailData(data.email, errors);
+  validatePasswordData(data.password, errors);
+
+  return {
+    errors,
+    valid: Object.keys(errors).length === 0
+  };
+};
+
+const validateEmailData = (email, errors) => {
+  if (stringIsEmpty(email)) {
+    errors.email = 'Email must not be empty';
+  }
+  else if (!isEmail(email)) {
+    errors.email = 'Invalid email address';
+  }
+};
+
+const validatePasswordData = (password, errors) => {
+  if (stringIsEmpty(password)) errors.password = 'Password must not be empty';
+  else if (password.length < 6) errors.password = 'Password length must be more than 6 characters';
+};
+
 

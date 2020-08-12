@@ -1,15 +1,11 @@
-const {db, firebase, admin} = require('../../utils/admin');
-const {validateAccountData}  = require('../../utils/user-helpers');
+const {validateAccountData} = require('../helper');
+const {sendOTPToUser} = require('../../email');
 const {
   userDocumentExistsWithEmail,
-  getUserDocumentIdByEmail,
   getUserDataInFirebaseAuthentication,
-  getOTPDocumentsByEmail,
-  deleteOTPDocumentsByEmail,
-  deleteUserInFirestore
-} = require('./UserHelpers');
-const {generateOTPCode} = require('./UserHelpers');
-const {sendOTPToUser} = require('../email');
+  generateOTPCode,
+  getOTPDocumentsByEmail
+} = require('../helper');
 
 exports.createUserInAuth = async (req, res) => {
   const newUser = {
@@ -24,12 +20,7 @@ exports.createUserInAuth = async (req, res) => {
   try {
     const createAccount = await firebase.auth().createUserWithEmailAndPassword(newUser.email, newUser.password);
     const idToken = await createAccount.user.getIdToken();
-    if (idToken) {
-      return res.json({token: idToken});
-    }
-    else {
-      return res.json({error: 'Token generation failed. Check Firebase console.'});
-    }
+    return res.json({token: idToken});
   }
   // Error message can be used as response, no need to console.error here.
   catch (e) {
@@ -38,7 +29,7 @@ exports.createUserInAuth = async (req, res) => {
     }
     else {
       console.error(e.message);
-      return res.json({error: 'Something went wrong with createUserInAuth()'});
+      return res.json({error: 'Something went wrong. Try again.'});
     }
   }
 };
@@ -54,12 +45,7 @@ exports.signIn = async (req, res) => {
   try {
     const signIn = await firebase.auth().signInWithEmailAndPassword(user.email, user.password);
     const idToken = await signIn.user.getIdToken();
-    if (idToken) {
-      return res.json({token: idToken});
-    }
-    else {
-      return res.json({error: 'Token generation failed. Check Firebase console.'});
-    }
+    return res.json({token: idToken});
   }
   // Error message can be used as response, no need to console.error here.
   catch (e) {
@@ -71,7 +57,7 @@ exports.signIn = async (req, res) => {
     }
     else {
       console.error(e.message);
-      return res.json({error: 'Something went wrong with signIn()'});
+      return res.json({error: 'Something went wrong. Try again.'});
     }
   }
 };
@@ -88,7 +74,7 @@ exports.generateOTP = async (req, res) => {
       const OTP = generateOTPCode();
       const now = admin.firestore.Timestamp.now();
       const expiryTime = admin.firestore.Timestamp.fromMillis(now.toMillis() + (300 * 1000));
-      await db.collection('OTP').add({
+      await db.collection('reset-password-otp').add({
         email,
         OTP,
         expiryTime
@@ -98,7 +84,7 @@ exports.generateOTP = async (req, res) => {
     }
     catch (errorGenerateOTP) {
       console.log(errorGenerateOTP.message);
-      return res.json({error: 'Something went wrong with generateOTP()'});
+      return res.json({error: 'Something went wrong. Try again.'});
     }
   }
 };
@@ -133,7 +119,7 @@ exports.verifyOTP = async (req, res) => {
   }
   catch (errorVerifyOTP) {
     console.error(errorVerifyOTP.message);
-    return res.json({error: 'Something went wrong with verifyOTP()'});
+    return res.json({error: 'Something went wrong. Try again.'});
   }
 };
 
@@ -154,38 +140,6 @@ exports.changeUserPassword = async (req, res) => {
   }
   catch (errorChangeUserPassword) {
     console.error(errorChangeUserPassword);
-    return res.json({error: 'Something went wrong with changeUserPassword()'});
-  }
-};
-
-// background functions
-exports.createUserInFirestore = async user => {
-  try {
-    const createUser = await db.collection('users').add({
-      email: user.email,
-      createdAt: new Date().toISOString(),
-      firstTimePassword: true,
-    });
-    if (createUser) {
-      console.log(`User with email: ${user.email} created successfully`);
-    }
-    else {
-      console.error(`Something went wrong with creating ${user.email} in Firestore`);
-    }
-  }
-  catch(errorCreateUserInFirestore) {
-    console.error(`Failed to create user in Firestore: ${errorCreateUserInFirestore.message}`);
-  }
-};
-
-exports.deleteUserInFirestore = async user => {
-  try {
-    const userDocId = await getUserDocumentIdByEmail(user.email);
-    if (userDocId) {
-      await Promise.all([deleteUserInFirestore(userDocId), deleteOTPDocumentsByEmail(user.email)]);
-    }
-  }
-  catch (errorDeleteUserInFirestore) {
-    console.error(`Failed to delete user in Firestore: ${errorDeleteUserInFirestore}`);
+    return res.json({error: 'Something went wrong. Try again.'});
   }
 };
