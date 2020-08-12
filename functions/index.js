@@ -3,16 +3,20 @@ const app = require('express')();
 const cors = require('cors');
 const {createUserInFirestore, deleteUserInFirestore} = require('./handlers/users/background');
 const {verifyOTP, generateOTP, signIn, createUserInAuth, changeUserPassword} = require('./handlers/users/https');
-const {createCourse} = require('./handlers/courses/https');
+const {createCourse, subscribeUserToCourses, unsubscribeStudentFromCourses} = require('./handlers/courses/https');
 const {createAttendanceSession} = require('./handlers/attendance-session/https');
 
 app.use(cors());
+
+//TODO: check request parameters
 
 // attendance session handlers
 app.post('/create_attendance_session', createAttendanceSession);
 
 //courses
 app.post('/create_course', createCourse);
+app.post('/subscribe_courses', subscribeUserToCourses);
+app.post('/unsubscribed_courses', unsubscribeStudentFromCourses);
 
 // user handlers
 app.post('/create_user', createUserInAuth);

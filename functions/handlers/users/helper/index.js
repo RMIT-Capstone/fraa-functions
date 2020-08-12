@@ -1,8 +1,19 @@
 const {db} = require('../../../utils/admin');
 
-// querysnapshot is an array of snapshots when queried
-// if querysnapshot length is more than 0 (not empty)
-// a document exist with given query parameters
+exports.userDocumentExists = async userDocumentID => {
+  try {
+    const documentSnapshot = await db
+      .collection('users')
+      .doc(userDocumentID)
+      .get();
+    return documentSnapshot.exists;
+  }
+  catch (errorUserDocumentExists) {
+    console.error(errorUserDocumentExists.message);
+    return null;
+  }
+};
+
 exports.userDocumentExistsWithEmail = async email => {
   try {
     const querySnapshot = await db
@@ -10,7 +21,7 @@ exports.userDocumentExistsWithEmail = async email => {
       .where('email', '==', email)
       .get();
 
-    return querySnapshot.size > 0;
+    return !querySnapshot.empty;
   }
   catch (errorUserDocumentExistsWithEmail) {
     console.error(errorUserDocumentExistsWithEmail.message);
