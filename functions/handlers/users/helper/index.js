@@ -1,4 +1,4 @@
-const {db} = require('../../../utils/admin');
+const {db, admin} = require('../../../utils/admin');
 
 exports.userDocumentExists = async userDocumentID => {
   try {
@@ -86,6 +86,23 @@ exports.deleteOTPDocumentsByEmail = async email => {
   }
   catch (errorDeleteOTPDocuments) {
     console.error(errorDeleteOTPDocuments.message);
+  }
+};
+
+exports.getUserIdInFBAuthWithEmail = async email => {
+  console.log(email);
+  try {
+    const userRecord = await admin
+      .auth()
+      .getUserByEmail(email);
+    if (!userRecord) {
+      return null;
+    }
+    return userRecord.uid;
+  }
+  catch (errorGetUserIdInFBAuthWithEmail) {
+    console.error(errorGetUserIdInFBAuthWithEmail.message);
+    return null;
   }
 };
 

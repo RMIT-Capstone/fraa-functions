@@ -1,10 +1,11 @@
-const {validateAccountData} = require('../helper');
+const {db, admin, firebase} = require('../../../utils/admin');
 const {sendOTPToUser} = require('../../email');
 const {
   userDocumentExistsWithEmail,
-  getUserDataInFirebaseAuthentication,
+  getUserIdInFBAuthWithEmail,
   generateOTPCode,
-  getOTPDocumentsByEmail
+  getOTPDocumentsByEmail,
+  validateAccountData
 } = require('../helper');
 
 exports.createUserInAuth = async (req, res) => {
@@ -132,8 +133,9 @@ exports.changeUserPassword = async (req, res) => {
   if (!valid) return res.json({error: errors});
 
   try {
-    const record = await getUserDataInFirebaseAuthentication(user.email);
-    await admin.auth().updateUser(record.uid, {
+    const recordId = await getUserIdInFBAuthWithEmail(user.email);
+    if (!recordId) return res.json({error: 'User does not exist'});
+    await admin.auth().updateUser(recordId, {
       password: user.password
     });
     return res.json({message: 'Password updated successfully'});
