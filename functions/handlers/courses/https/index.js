@@ -6,7 +6,7 @@ const {db, admin} = require('../../../utils/admin');
 exports.createCourse = async (req, res) => {
   const {course} = req.body;
   const courseExisted = await courseAlreadyExist(course.code);
-  if (courseExisted) return res.json({error: 'Course already exists'});
+  if (courseExisted) return res.json({error: `Course with code: ${course.code} already exists`});
   else {
     try {
       await db
@@ -15,7 +15,48 @@ exports.createCourse = async (req, res) => {
       return res.json({message: 'Course created'});
     }
     catch (errorCreateCourse) {
+      console.error(errorCreateCourse.message);
       return res.json({error: 'Something went wrong. Try again'});
+    }
+  }
+};
+
+exports.updateCourse = async (req, res) => {
+  const {course} = req.body;
+  const courseExisted = await courseAlreadyExist(course.code);
+  if (!courseExisted) return res.json({error: `Course with code: ${course.code} does not exist`});
+  else {
+    try {
+      const courseDocId = await getCourseDocumentIdByCode(course.code);
+      await db
+        .collection('courses')
+        .doc(courseDocId)
+        .update(course);
+      return res.json({message: 'Course updated'});
+    }
+    catch (errorUpdateCourse) {
+      console.error(errorUpdateCourse.message);
+      return res.json({error: 'Something went wrong. Try again.'});
+    }
+  }
+};
+
+exports.deleteCourse = async (req, res) => {
+  const {course} = req.body;
+  const courseExisted = await courseAlreadyExist(course.code);
+  if (!courseExisted) return res.json({error: `Course with code: ${course.code} does not exist`});
+  else {
+    try {
+      const courseDocId = await getCourseDocumentIdByCode(course.code);
+      await db
+        .collection('courses')
+        .doc(courseDocId)
+        .delete();
+      return res.json({message: 'Course deleted'});
+    }
+    catch (errorDeleteCourse) {
+      console.error(errorDeleteCourse.message);
+      return res.json({error: 'Something went wrong. Try again.'});
     }
   }
 };
