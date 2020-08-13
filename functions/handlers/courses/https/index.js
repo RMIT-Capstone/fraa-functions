@@ -26,9 +26,10 @@ exports.subscribeUserToCourses = async (req, res) => {
   if (!userExists) return res.json({error: 'User does not exist'});
   const userDocId = await getUserDocumentIdByEmail(email);
   try {
-    // use allSettled to avoid one rejection failing the whole thing and run promises in parallel
+    // Promise.allSettled is not available for current version of Node
+    // using all instead
     // https://stackoverflow.com/questions/35612428/call-async-await-functions-in-parallel
-    await Promise.allSettled(courses.map(async course => {
+    await Promise.all(courses.map(async course => {
       const courseExisted = await courseAlreadyExist(course);
       if (courseExisted) {
         const courseId = await getCourseDocumentIdByCode(course);
