@@ -3,7 +3,7 @@ const QRCode = require('qrcode');
 const {courseAlreadyExist} = require('../../courses/helper');
 
 exports.createAttendanceSession = async (req, res) => {
-  const QRCodeContent = req.body.content;
+  const {content: QRCodeContent} = req.body;
   QRCodeContent.origin = 'FRAA-CheckIn';
   const {courseCode} = QRCodeContent;
   const courseExist = await courseAlreadyExist(courseCode);
@@ -12,7 +12,7 @@ exports.createAttendanceSession = async (req, res) => {
   }
   else {
     try {
-      await QRCode.toDataURL(JSON.stringify(req.body.content), (error, url) => {
+      await QRCode.toDataURL(JSON.stringify(QRCodeContent), (error, url) => {
         if (error) {
           console.error(error);
         }
