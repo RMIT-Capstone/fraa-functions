@@ -60,7 +60,7 @@ exports.unsubscribeStudentFromCourses = async (req, res) => {
   const userDocId = await getUserDocumentIdByEmail(email);
 
   try {
-    await Promise.allSettled(courses.map(async course => {
+    await Promise.all(courses.map(async course => {
       const courseExisted = await courseAlreadyExist(course);
       if (courseExisted) {
         const courseDocId = await getCourseDocumentIdByCode(course);
@@ -73,12 +73,15 @@ exports.unsubscribeStudentFromCourses = async (req, res) => {
               subscribedCourses: admin.firestore.FieldValue.arrayRemove(courseDocId)
             });
         }
+        else {
+          console.log(`Student is not subscribed in ${course}`);
+        }
       }
       else {
         console.log(`Course with code: ${course} does not exist`);
       }
     }));
-    return res.json({message: 'User unsubscribed to course(s)'});
+    return res.json({message: 'User unsubscribed from course(s)'});
   }
   catch (errorUnsubscribeUserFromCourses) {
     console.error(errorUnsubscribeUserFromCourses.message);
