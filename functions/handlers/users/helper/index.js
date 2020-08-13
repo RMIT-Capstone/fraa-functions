@@ -31,18 +31,17 @@ exports.userDocumentExistsWithEmail = async email => {
 
 exports.getUserDocumentIdByEmail = async email => {
   try {
-    let id;
     const querySnapshot = await db
       .collection('users')
       .where('email', '==', email)
       .get();
-    querySnapshot.forEach(snapshot => {
-      id = snapshot.id;
-    });
-    if (id) {
-      return id;
+
+    if (querySnapshot.empty) {
+      return null;
     }
-    return null;
+    else {
+      return querySnapshot.docs[0].id;
+    }
   }
   catch (e) {
     console.error(`Something went wrong with fetching user document ${e}`);
@@ -63,8 +62,8 @@ exports.getOTPDocumentsByEmail = async email => {
     .where('email', '==', email)
     .orderBy('expiryTime', 'desc')
     .get();
-
-  if (!querySnapshot || querySnapshot.size === 0) {
+  console.log(querySnapshot.docs[0].data());
+  if (querySnapshot.empty) {
     return {error: `no OTP code found with ${email}`};
   }
   else {
@@ -90,7 +89,6 @@ exports.deleteOTPDocumentsByEmail = async email => {
 };
 
 exports.getUserIdInFBAuthWithEmail = async email => {
-  console.log(email);
   try {
     const userRecord = await admin
       .auth()

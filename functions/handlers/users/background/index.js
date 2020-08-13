@@ -9,7 +9,7 @@ exports.createUserInFirestore = async user => {
       .collection('users')
       .add({
         email: user.email,
-        createdAt: new Date().toISOString(),
+        createdAt: new Date(),
         firstTimePassword: true,
       });
     if (createUser) {

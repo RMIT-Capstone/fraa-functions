@@ -9,21 +9,20 @@ const {
 } = require('../helper');
 
 exports.createUserInAuth = async (req, res) => {
+  const {email, password} = req.body;
   const newUser = {
-    email: req.body.email,
-    password: req.body.password,
-    confirmPassword: req.body.password,
+    email,
+    password
   };
-  newUser.newAccount = true;
   const {errors, valid} = validateAccountData(newUser);
 
   if (!valid) return res.json({error: errors});
+
   try {
     const createAccount = await firebase.auth().createUserWithEmailAndPassword(newUser.email, newUser.password);
     const idToken = await createAccount.user.getIdToken();
     return res.json({token: idToken});
   }
-  // Error message can be used as response, no need to console.error here.
   catch (e) {
     if (e.code === 'auth/email-already-in-use') {
       return res.json({error: 'Email already in use.'});
@@ -36,9 +35,10 @@ exports.createUserInAuth = async (req, res) => {
 };
 
 exports.signIn = async (req, res) => {
+  const {email, password} = req.body;
   const user = {
-    email: req.body.email,
-    password: req.body.password
+    email,
+    password
   };
   const {valid, errors} = validateAccountData(user);
   if (!valid) return res.json({error: errors});
@@ -48,7 +48,6 @@ exports.signIn = async (req, res) => {
     const idToken = await signIn.user.getIdToken();
     return res.json({token: idToken});
   }
-  // Error message can be used as response, no need to console.error here.
   catch (e) {
     if (e.code === 'auth/wrong-password') {
       return res.json({error: 'Password is incorrect'});
@@ -64,7 +63,7 @@ exports.signIn = async (req, res) => {
 };
 
 exports.generateOTP = async (req, res) => {
-  const email = req.body.email;
+  const {email} = req.body;
   const userExists = await userDocumentExistsWithEmail(email);
 
   if (!userExists) {
@@ -84,24 +83,21 @@ exports.generateOTP = async (req, res) => {
       return res.json({message: 'OTP code created'});
     }
     catch (errorGenerateOTP) {
-      console.log(errorGenerateOTP.message);
+      console.error(errorGenerateOTP.message);
       return res.json({error: 'Something went wrong. Try again.'});
     }
   }
 };
 
 exports.verifyOTP = async (req, res) => {
-  const email = req.body.email;
-  const userOTP = req.body.OTP;
+  const {email, userOTP} = req.body;
   const userExist = await userDocumentExistsWithEmail(email);
 
   if (!userExist) return res.json({error: 'User does not exist'});
 
   try {
     const otpDocumentSnapshot = await getOTPDocumentsByEmail(email);
-    if (otpDocumentSnapshot.error) {
-      return res.json({error: otpDocumentSnapshot.error});
-    }
+    if (otpDocumentSnapshot.error) return res.json({error: otpDocumentSnapshot.error});
     else {
       const expiryTime = otpDocumentSnapshot.expiryTime.toDate().toString();
       const now = admin.firestore.Timestamp.now().toDate().toString();
@@ -125,11 +121,13 @@ exports.verifyOTP = async (req, res) => {
 };
 
 exports.changeUserPassword = async (req, res) => {
+  const {email, password} = req.body;
   const user = {
-    email: req.body.email,
-    password: req.body.password
+    email,
+    password
   };
   const {valid, errors} = validateAccountData(user);
+
   if (!valid) return res.json({error: errors});
 
   try {
