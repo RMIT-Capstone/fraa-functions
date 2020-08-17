@@ -27,6 +27,7 @@ const courseValidator = require('./utils/middlewares/courses');
 app.use(cors());
 
 //TODO: check request parameters for users
+//TODO: check auth headers when doing CRUD operations
 
 // attendance session handlers
 app.post('/create_attendance_session', createAttendanceSession);
