@@ -1,43 +1,39 @@
-const {getUserDocumentIdByEmail, userDocumentExistsWithEmail} = require('../../users/helper');
+const {getUserDocumentIdByEmail} = require('../../users/helper');
 const {getCourseDocumentIdByCode} = require('../helper');
 const {courseAlreadyExist, userAlreadySubscribedToCourse} = require('../helper');
 const {db, admin} = require('../../../utils/admin');
 
 exports.createCourse = async (req, res) => {
   const {course} = req.body;
-  const courseExisted = await courseAlreadyExist(course.code);
-  if (courseExisted) return res.json({error: `Course with code: ${course.code} already exists`});
-  else {
-    try {
-      await db
-        .collection('courses')
-        .add(course);
-      return res.json({message: 'Course created'});
-    }
-    catch (errorCreateCourse) {
-      console.error(errorCreateCourse.message);
-      return res.json({error: 'Something went wrong. Try again'});
-    }
+  course.name = course.name.toLowerCase().split(' ');
+
+  try {
+    await db
+      .collection('courses')
+      .add(course);
+    return res.json({message: 'Course created'});
+  }
+  catch (errorCreateCourse) {
+    console.error(errorCreateCourse.message);
+    return res.json({error: 'Something went wrong. Try again'});
   }
 };
 
 exports.updateCourse = async (req, res) => {
   const {course} = req.body;
-  const courseExisted = await courseAlreadyExist(course.code);
-  if (!courseExisted) return res.json({error: `Course with code: ${course.code} does not exist`});
-  else {
-    try {
-      const courseDocId = await getCourseDocumentIdByCode(course.code);
-      await db
-        .collection('courses')
-        .doc(courseDocId)
-        .update(course);
-      return res.json({message: 'Course updated'});
-    }
-    catch (errorUpdateCourse) {
-      console.error(errorUpdateCourse.message);
-      return res.json({error: 'Something went wrong. Try again.'});
-    }
+  course.name = course.name.toLowerCase().split(' ');
+
+  try {
+    const courseDocId = await getCourseDocumentIdByCode(course.code);
+    await db
+      .collection('courses')
+      .doc(courseDocId)
+      .update(course);
+    return res.json({message: 'Course updated'});
+  }
+  catch (errorUpdateCourse) {
+    console.error(errorUpdateCourse.message);
+    return res.json({error: 'Something went wrong. Try again.'});
   }
 };
 
@@ -61,10 +57,108 @@ exports.deleteCourse = async (req, res) => {
   }
 };
 
+exports.getCourses = async (req, res) => {
+  try {
+    const courses = [];
+    const querySnapshot = await db
+      .collection('courses')
+      .orderBy('code')
+      .limit(5)
+      .get();
+    querySnapshot.forEach(snap => {
+      courses.push(snap.data());
+    });
+    return res.json({courses});
+  }
+  catch (errorGetAllCourses) {
+    console.error(errorGetAllCourses.message);
+    return res.json({error: 'Something went wrong. Try again.'});
+  }
+};
+
+exports.getMoreCourses = async (req, res) => {
+  const courses = [];
+  try {
+    const querySnapshot = await db
+      .collection('courses')
+      .orderBy('code')
+      .startAfter(startAt)
+      .limit(5)
+      .get();
+
+    querySnapshot.forEach(snap => {
+      courses.push(snap.data());
+    });
+    return res.json({courses});
+  }
+  catch (errorGetMoreCourses) {
+    console.error(errorGetMoreCourses.message);
+    return res.json({error: 'Something went wrong. Try again.'});
+  }
+};
+
+exports.getCourseByCode = async (req, res) => {
+  try {
+    const querySnapshot = await db
+      .collection('courses')
+      .where('code', '==', code)
+      .limit(1)
+      .get();
+    const course = querySnapshot.docs[0].data();
+
+    return res.json({course});
+  }
+  catch (errorGetCourseByCode) {
+    console.error(errorGetCourseByCode.message);
+    return res.json({error: 'Something went wrong. Try again'});
+  }
+};
+
+exports.getCoursesByName = async (req, res) => {
+  try {
+    const querySnapshot = await db
+      .collection('courses')
+      .where('name', 'array-contains', name.toLowerCase())
+      .orderBy('code')
+      .limit(1)
+      .get();
+
+    const courses = [];
+    querySnapshot.forEach(snapshot => {
+      courses.push(snapshot.data());
+    });
+    return res.json({courses});
+  }
+  catch (errorGetCourseByName) {
+    console.error(errorGetCourseByName);
+    return res.json({error: 'Something went wrong. Try again'});
+  }
+};
+
+exports.getMoreCoursesByName = async (req, res) => {
+  try {
+    const querySnapshot = await db
+      .collection('courses')
+      .where('name', 'array-contains', name.toLowerCase())
+      .orderBy('code')
+      .startAt(startAt)
+      .limit(1)
+      .get();
+
+    const courses = [];
+    querySnapshot.forEach(snapshot => {
+      courses.push(snapshot.data());
+    });
+    return res.json({courses});
+  }
+  catch (errorGetMoreCoursesByName) {
+    console.error(errorGetMoreCoursesByName.message);
+    return res.json({error: 'Something went wrong. Try again'});
+  }
+};
+
 exports.subscribeUserToCourses = async (req, res) => {
   const {courses, email} = req.body;
-  const userExists = await userDocumentExistsWithEmail(email);
-  if (!userExists) return res.json({error: 'User does not exist'});
   const userDocId = await getUserDocumentIdByEmail(email);
   try {
     // Promise.allSettled is not available for current version of Node
@@ -96,8 +190,6 @@ exports.subscribeUserToCourses = async (req, res) => {
 
 exports.unsubscribeStudentFromCourses = async (req, res) => {
   const {courses, email} = req.body;
-  const userExists = await userDocumentExistsWithEmail(email);
-  if (!userExists) return res.json({error: 'User does not exist'});
   const userDocId = await getUserDocumentIdByEmail(email);
 
   try {
