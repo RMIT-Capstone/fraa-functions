@@ -1,12 +1,10 @@
 const {getUserDocumentIdByEmail} = require('../../users/helper');
-const {getCourseDocumentIdByCode} = require('../helper');
-const {courseAlreadyExist, userAlreadySubscribedToCourse} = require('../helper');
+const {userAlreadySubscribedToCourse, courseAlreadyExistsWithCourseCode} = require('../helper');
 const {db, admin} = require('../../../utils/admin');
 
 exports.createCourse = async (req, res) => {
   const {course} = req.body;
   course.name = course.name.toLowerCase().split(' ');
-
   try {
     await db
       .collection('courses')
@@ -16,44 +14,6 @@ exports.createCourse = async (req, res) => {
   catch (errorCreateCourse) {
     console.error(errorCreateCourse.message);
     return res.json({error: 'Something went wrong. Try again'});
-  }
-};
-
-exports.updateCourse = async (req, res) => {
-  const {course} = req.body;
-  course.name = course.name.toLowerCase().split(' ');
-
-  try {
-    const courseDocId = await getCourseDocumentIdByCode(course.code);
-    await db
-      .collection('courses')
-      .doc(courseDocId)
-      .update(course);
-    return res.json({message: 'Course updated'});
-  }
-  catch (errorUpdateCourse) {
-    console.error(errorUpdateCourse.message);
-    return res.json({error: 'Something went wrong. Try again.'});
-  }
-};
-
-exports.deleteCourse = async (req, res) => {
-  const {course} = req.body;
-  const courseExisted = await courseAlreadyExist(course.code);
-  if (!courseExisted) return res.json({error: `Course with code: ${course.code} does not exist`});
-  else {
-    try {
-      const courseDocId = await getCourseDocumentIdByCode(course.code);
-      await db
-        .collection('courses')
-        .doc(courseDocId)
-        .delete();
-      return res.json({message: 'Course deleted'});
-    }
-    catch (errorDeleteCourse) {
-      console.error(errorDeleteCourse.message);
-      return res.json({error: 'Something went wrong. Try again.'});
-    }
   }
 };
 
@@ -77,6 +37,7 @@ exports.getCourses = async (req, res) => {
 };
 
 exports.getMoreCourses = async (req, res) => {
+  const {startAt} = req.body;
   const courses = [];
   try {
     const querySnapshot = await db
@@ -98,6 +59,7 @@ exports.getMoreCourses = async (req, res) => {
 };
 
 exports.getCourseByCode = async (req, res) => {
+  const {code} = req.body;
   try {
     const querySnapshot = await db
       .collection('courses')
@@ -115,12 +77,13 @@ exports.getCourseByCode = async (req, res) => {
 };
 
 exports.getCoursesByName = async (req, res) => {
+  const {name} = req.body;
   try {
     const querySnapshot = await db
       .collection('courses')
       .where('name', 'array-contains', name.toLowerCase())
       .orderBy('code')
-      .limit(1)
+      .limit(20)
       .get();
 
     const courses = [];
@@ -136,13 +99,14 @@ exports.getCoursesByName = async (req, res) => {
 };
 
 exports.getMoreCoursesByName = async (req, res) => {
+  const {name, startAt} = req.body;
   try {
     const querySnapshot = await db
       .collection('courses')
       .where('name', 'array-contains', name.toLowerCase())
       .orderBy('code')
-      .startAt(startAt)
-      .limit(1)
+      .startAfter(startAt)
+      .limit(20)
       .get();
 
     const courses = [];
@@ -157,6 +121,39 @@ exports.getMoreCoursesByName = async (req, res) => {
   }
 };
 
+exports.updateCourse = async (req, res) => {
+  const {course} = req.body;
+  course.name = course.name.toLowerCase().split(' ');
+  try {
+    const courseExistsWithCode = await courseAlreadyExistsWithCourseCode(course.code);
+    await db
+      .collection('courses')
+      .doc(courseExistsWithCode.id)
+      .update(course);
+    return res.json({message: 'Course updated'});
+  }
+  catch (errorUpdateCourse) {
+    console.error(errorUpdateCourse.message);
+    return res.json({error: 'Something went wrong. Try again.'});
+  }
+};
+
+exports.deleteCourse = async (req, res) => {
+  const {code} = req.body;
+  try {
+    const {id} = await courseAlreadyExistsWithCourseCode(code);
+    await db
+      .collection('courses')
+      .doc(id)
+      .delete();
+    return res.json({message: 'Course deleted'});
+  }
+  catch (errorDeleteCourse) {
+    console.error(errorDeleteCourse.message);
+    return res.json({error: 'Something went wrong. Try again.'});
+  }
+};
+
 exports.subscribeUserToCourses = async (req, res) => {
   const {courses, email} = req.body;
   const userDocId = await getUserDocumentIdByEmail(email);
@@ -165,15 +162,15 @@ exports.subscribeUserToCourses = async (req, res) => {
     // using all instead
     // https://stackoverflow.com/questions/35612428/call-async-await-functions-in-parallel
     await Promise.all(courses.map(async course => {
-      const courseExisted = await courseAlreadyExist(course);
-      if (courseExisted) {
-        const courseId = await getCourseDocumentIdByCode(course);
+      const {exists} = await courseAlreadyExistsWithCourseCode(course);
+      if (exists) {
+        const {id} = await courseAlreadyExistsWithCourseCode(course);
         // arrayUnion add element to array and avoid duplicate
         await db
           .collection('users')
           .doc(userDocId)
           .update({
-            subscribedCourses: admin.firestore.FieldValue.arrayUnion(courseId)
+            subscribedCourses: admin.firestore.FieldValue.arrayUnion(id)
           });
       } else {
         console.log(`Course with code: ${course} does not exist`);
@@ -194,16 +191,16 @@ exports.unsubscribeStudentFromCourses = async (req, res) => {
 
   try {
     await Promise.all(courses.map(async course => {
-      const courseExisted = await courseAlreadyExist(course);
-      if (courseExisted) {
-        const courseDocId = await getCourseDocumentIdByCode(course);
-        const userSubscribedToCourse = await userAlreadySubscribedToCourse(userDocId, courseDocId);
+      const {exists} = await courseAlreadyExistsWithCourseCode(course);
+      if (exists) {
+        const {id} = await courseAlreadyExistsWithCourseCode(course);
+        const userSubscribedToCourse = await userAlreadySubscribedToCourse(userDocId, id);
         if (userSubscribedToCourse) {
           await db
             .collection('users')
             .doc(userDocId)
             .update({
-              subscribedCourses: admin.firestore.FieldValue.arrayRemove(courseDocId)
+              subscribedCourses: admin.firestore.FieldValue.arrayRemove(id)
             });
         }
         else {
