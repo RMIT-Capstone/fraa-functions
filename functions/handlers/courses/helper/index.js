@@ -1,36 +1,24 @@
 const {userDocumentExists} = require('../../users/helper');
 const {db} = require('../../../utils/admin');
 
-exports.courseAlreadyExist = async courseCode => {
+exports.courseAlreadyExistsWithCourseCode = async code => {
   try {
     const querySnapshot = await db
       .collection('courses')
-      .where('code', '==', courseCode)
-      .get();
-
-    return !querySnapshot.empty;
-  }
-  catch (errorCourseAlreadyExist) {
-    console.error(errorCourseAlreadyExist.message);
-    return null;
-  }
-};
-
-exports.getCourseDocumentIdByCode = async courseCode => {
-  try {
-    const querySnapshot = await db
-      .collection('courses')
-      .where('code', '==', courseCode)
+      .where('code', '==', code)
       .get();
 
     if (querySnapshot.empty) {
-      return null;
+      return {exists: false, id: null};
     }
-    return querySnapshot.docs[0].id;
+    else {
+      const documentId = querySnapshot.docs[0].id;
+      return {exists: true, id: documentId};
+    }
   }
-  catch (errorGetCourseDocumentId) {
-    console.error(errorGetCourseDocumentId.message);
-    return null;
+  catch (errorCourseAlreadyExistsWithCourseCode) {
+    console.error(errorCourseAlreadyExistsWithCourseCode);
+    return {exists: false, id: null};
   }
 };
 
