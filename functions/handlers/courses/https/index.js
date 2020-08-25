@@ -37,13 +37,13 @@ exports.getCourses = async (req, res) => {
 };
 
 exports.getMoreCourses = async (req, res) => {
-  const {startAt} = req.body;
+  const {startAfter} = req.body;
   const courses = [];
   try {
     const querySnapshot = await db
       .collection('courses')
       .orderBy('code')
-      .startAfter(startAt)
+      .startAfter(startAfter)
       .limit(5)
       .get();
 
@@ -99,13 +99,13 @@ exports.getCoursesByName = async (req, res) => {
 };
 
 exports.getMoreCoursesByName = async (req, res) => {
-  const {name, startAt} = req.body;
+  const {name, startAfter} = req.body;
   try {
     const querySnapshot = await db
       .collection('courses')
       .where('name', 'array-contains', name.toLowerCase())
       .orderBy('code')
-      .startAfter(startAt)
+      .startAfter(startAfter)
       .limit(20)
       .get();
 

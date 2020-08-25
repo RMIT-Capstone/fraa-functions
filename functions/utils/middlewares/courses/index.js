@@ -13,8 +13,8 @@ module.exports = async (req, res, next) => {
   }
 
   if (path === COURSE_ROUTES.GET_MORE_COURSES || path === COURSE_ROUTES.GET_MORE_COURSES_BY_NAME) {
-    const {startAt} = req.body;
-    if (!startAt) return res.json({error: 'Must include startAt'});
+    const {startAfter} = req.body;
+    if (!startAfter) return res.json({error: 'Must include startAfter'});
   }
 
   if (path === COURSE_ROUTES.GET_COURSE_BY_CODE) {
@@ -30,9 +30,9 @@ module.exports = async (req, res, next) => {
   }
 
   if (path === COURSE_ROUTES.GET_MORE_COURSES_BY_NAME) {
-    const {name, startAt} = req.body;
+    const {name, startAfter} = req.body;
     if (!name) return res.json({error: 'Must include course name'});
-    if (!startAt) return res.json({error: 'Must include startAt'});
+    if (!startAfter) return res.json({error: 'Must include startAfter'});
   }
 
   if (path === COURSE_ROUTES.UPDATE_COURSE) {
