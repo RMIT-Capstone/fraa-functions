@@ -1,10 +1,10 @@
 const {db, bucket} = require('../../../utils/admin');
 const QRCode = require('qrcode');
+const fs = require('fs');
 
 exports.createAttendanceSession = async (req, res) => {
   const {content: QRCodeContent} = req.body;
   const {validOn, courseCode} = QRCodeContent;
-  QRCodeContent.origin = 'FRAA-CheckIn';
 
   try {
     const date = new Date(validOn);
@@ -12,8 +12,11 @@ exports.createAttendanceSession = async (req, res) => {
     let dateFolderName = `${date.getDate()}_${month}_${date.getFullYear()}`;
     const base64String = await QRCode.toDataURL(JSON.stringify(QRCodeContent));
     const {url, error} = await uploadQRCodeToStorage(base64String, courseCode, dateFolderName);
+
     if (url) {
       QRCodeContent.QRCodeUrl = url;
+      QRCodeContent.origin = 'FRAA-CheckIn';
+      QRCodeContent.createdAt = new Date().toISOString();
       await createAttendanceSessionInFirestore(QRCodeContent);
     }
     if (error) {
@@ -50,19 +53,29 @@ const uploadQRCodeToStorage = async (QRCode, courseCode, date) => {
   const options = {
     destination: `${courseCode}/${date}/${new Date().toISOString()}.jpg`
   };
-  const path = '/Users/trung/Desktop/fraa/fraa-functions/functions/handlers/attendance-session/https/output.jpg';
+  const path = `/tmp/output.jpg`;
   QRCode = QRCode.replace(/^data:image\/png;base64,/, '');
 
   try {
-    await require('fs').writeFile(path, QRCode,{encoding: 'base64'}, err => {
-      console.error(err);
+    await fs.writeFile(path, QRCode,{encoding: 'base64'}, err => {
+      console.error('error fs writeFile',err);
       return {url: null, error: err};
     });
 
+    fs.readdir(__dirname, (err, files) => {
+      if (err) {
+        console.error(err);
+      } else {
+        console.log('Files', files);
+      }
+    });
+
     const uploadFile = await bucket.upload(path, options);
+    await fs.unlinkSync(path);
     const file = uploadFile[0];
     const metaData = await file.getMetadata();
     const fileMetaData = metaData[0];
+
     return {url: fileMetaData.mediaLink, error: null};
   }
   catch (errorUploadQRCodeToStorage) {
