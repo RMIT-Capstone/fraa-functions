@@ -1,29 +1,11 @@
-const {db, bucket} = require('../../../utils/admin');
-const QRCode = require('qrcode');
-const fs = require('fs');
+const {db} = require('../../../utils/admin');
 
 exports.createAttendanceSession = async (req, res) => {
   const {content: QRCodeContent} = req.body;
-  const {validOn, courseCode} = QRCodeContent;
-
   try {
-    const date = new Date(validOn);
-    const month = formatMonth(date.getMonth() + 1);
-    let dateFolderName = `${date.getDate()}_${month}_${date.getFullYear()}`;
-    const base64String = await QRCode.toDataURL(JSON.stringify(QRCodeContent));
-    const {url, error} = await uploadQRCodeToStorage(base64String, courseCode, dateFolderName);
-
-    if (url) {
-      QRCodeContent.QRCodeUrl = url;
-      QRCodeContent.origin = 'FRAA-CheckIn';
-      QRCodeContent.createdAt = new Date().toISOString();
-      await createAttendanceSessionInFirestore(QRCodeContent);
-    }
-    if (error) {
-      console.error(`Failed to generateQrCode: ${error}`);
-      return res.json({error: 'Something went wrong. Try again.'});
-    }
-
+    await db
+      .collection('attendance-session')
+      .add(QRCodeContent);
     return res.json({message: 'attendance session created'});
   }
   catch (errorGenerateQrCode) {
@@ -32,61 +14,24 @@ exports.createAttendanceSession = async (req, res) => {
   }
 };
 
-const createAttendanceSessionInFirestore = async session => {
+exports.getAttendanceSessionByCourseCode = async (req, res) => {
+  const {courseCode} = req.body;
   try {
-    const createRecord = await db
+    let sessions = [];
+    const querySnapshot = await db
       .collection('attendance-session')
-      .add(session);
-    if (createRecord) {
-      console.log('Successfully created attendance session');
-    }
-    else {
-      console.error('Something went wrong with creating attendance session');
-    }
-  }
-  catch (errorCreateAttendanceSession) {
-    console.error(`Failed to create attendance session: ${errorCreateAttendanceSession}`);
-  }
-};
-
-const uploadQRCodeToStorage = async (QRCode, courseCode, date) => {
-  const options = {
-    destination: `${courseCode}/${date}/${new Date().toISOString()}.jpg`
-  };
-  const path = `/tmp/output.jpg`;
-  QRCode = QRCode.replace(/^data:image\/png;base64,/, '');
-
-  try {
-    await fs.writeFile(path, QRCode,{encoding: 'base64'}, err => {
-      console.error('error fs writeFile',err);
-      return {url: null, error: err};
+      .where('courseCode', '==', courseCode)
+      .orderBy('validOn')
+      .limit(5)
+      .get();
+    querySnapshot.forEach(snapshot => {
+      sessions.push(snapshot.data());
     });
-
-    fs.readdir(__dirname, (err, files) => {
-      if (err) {
-        console.error(err);
-      } else {
-        console.log('Files', files);
-      }
-    });
-
-    const uploadFile = await bucket.upload(path, options);
-    await fs.unlinkSync(path);
-    const file = uploadFile[0];
-    const metaData = await file.getMetadata();
-    const fileMetaData = metaData[0];
-
-    return {url: fileMetaData.mediaLink, error: null};
+    return res.json({sessions});
   }
-  catch (errorUploadQRCodeToStorage) {
-    console.error(errorUploadQRCodeToStorage);
-    return {url: null, error: errorUploadQRCodeToStorage};
+  catch (errorGetAttendanceSessionByCourseCode) {
+    console.error('Something went wrong with get attendance session by course code: ',
+      errorGetAttendanceSessionByCourseCode);
+    return res.json({error: 'Something went wrong. Try again'});
   }
-};
-
-const formatMonth = month => {
-  if (month < 10) {
-    return '0' + month;
-  }
-  return String(month);
 };

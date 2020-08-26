@@ -12,7 +12,7 @@ exports.createCourse = async (req, res) => {
     return res.json({message: 'Course created'});
   }
   catch (errorCreateCourse) {
-    console.error(errorCreateCourse.message);
+    console.error('Something went wrong with create course: ', errorCreateCourse);
     return res.json({error: 'Something went wrong. Try again'});
   }
 };
@@ -30,8 +30,8 @@ exports.getCourses = async (req, res) => {
     });
     return res.json({courses});
   }
-  catch (errorGetAllCourses) {
-    console.error(errorGetAllCourses.message);
+  catch (errorGetCourses) {
+    console.error('Something went wrong with get courses: ', errorGetCourses);
     return res.json({error: 'Something went wrong. Try again.'});
   }
 };
@@ -53,7 +53,7 @@ exports.getMoreCourses = async (req, res) => {
     return res.json({courses});
   }
   catch (errorGetMoreCourses) {
-    console.error(errorGetMoreCourses.message);
+    console.error('Something went wrong with get more courses: ',errorGetMoreCourses);
     return res.json({error: 'Something went wrong. Try again.'});
   }
 };
@@ -71,7 +71,7 @@ exports.getCourseByCode = async (req, res) => {
     return res.json({course});
   }
   catch (errorGetCourseByCode) {
-    console.error(errorGetCourseByCode.message);
+    console.error('Something went wrong with get course by code: ', errorGetCourseByCode);
     return res.json({error: 'Something went wrong. Try again'});
   }
 };
@@ -93,7 +93,7 @@ exports.getCoursesByName = async (req, res) => {
     return res.json({courses});
   }
   catch (errorGetCourseByName) {
-    console.error(errorGetCourseByName);
+    console.error('Something went wrong with get course by name: ', errorGetCourseByName);
     return res.json({error: 'Something went wrong. Try again'});
   }
 };
@@ -116,7 +116,7 @@ exports.getMoreCoursesByName = async (req, res) => {
     return res.json({courses});
   }
   catch (errorGetMoreCoursesByName) {
-    console.error(errorGetMoreCoursesByName.message);
+    console.error('Something went wrong with get more courses by name: ', errorGetMoreCoursesByName);
     return res.json({error: 'Something went wrong. Try again'});
   }
 };
@@ -133,7 +133,7 @@ exports.updateCourse = async (req, res) => {
     return res.json({message: 'Course updated'});
   }
   catch (errorUpdateCourse) {
-    console.error(errorUpdateCourse.message);
+    console.error('Something went wrong with update course: ', errorUpdateCourse);
     return res.json({error: 'Something went wrong. Try again.'});
   }
 };
@@ -149,7 +149,7 @@ exports.deleteCourse = async (req, res) => {
     return res.json({message: 'Course deleted'});
   }
   catch (errorDeleteCourse) {
-    console.error(errorDeleteCourse.message);
+    console.error('Something went wrong with delete course: ', errorDeleteCourse);
     return res.json({error: 'Something went wrong. Try again.'});
   }
 };
@@ -180,7 +180,7 @@ exports.subscribeUserToCourses = async (req, res) => {
     return res.json({message: 'User subscribed to course(s)'});
   }
   catch (errorSubscribeUserToCourses) {
-    console.error(errorSubscribeUserToCourses.message);
+    console.error('Something went wrong with subscribe user to courses: ', errorSubscribeUserToCourses);
     return res.json({error: 'Something went wrong. Try again.'});
   }
 };
@@ -214,7 +214,7 @@ exports.unsubscribeStudentFromCourses = async (req, res) => {
     return res.json({message: 'User unsubscribed from course(s)'});
   }
   catch (errorUnsubscribeUserFromCourses) {
-    console.error(errorUnsubscribeUserFromCourses.message);
+    console.error('Sonmething went wrong with unsubscribe user from courses: ', errorUnsubscribeUserFromCourses);
     return res.json({error: 'Something went wrong. Try again.'});
   }
 };

@@ -4,6 +4,7 @@ const cors = require('cors');
 
 // routes
 const COURSE_ROUTES = require('./routes/courses');
+const ATTENDANCE_SESSION_ROUTES = require('./routes/attendance-session');
 
 // handlers
 const {createUserInFirestore, deleteUserInFirestore} = require('./handlers/users/background');
@@ -20,7 +21,7 @@ const {
   subscribeUserToCourses,
   unsubscribeStudentFromCourses,
 } = require('./handlers/courses/https');
-const {createAttendanceSession} = require('./handlers/attendance-session/https');
+const {createAttendanceSession, getAttendanceSessionByCourseCode} = require('./handlers/attendance-session/https');
 
 //middlewares
 const courseValidator = require('./utils/middlewares/courses');
@@ -31,7 +32,8 @@ app.use(cors());
 //TODO: check auth headers when doing CRUD operations
 
 // attendance session handlers
-app.post('/create_attendance_session', createAttendanceSession);
+app.post(`/${ATTENDANCE_SESSION_ROUTES.CREATE_ATTENDANCE_SESSION}`, createAttendanceSession);
+app.post(`/${ATTENDANCE_SESSION_ROUTES.GET_ATTENDANCE_SESSION_BY_COURSE_CODE}`, getAttendanceSessionByCourseCode);
 
 //courses
 app.post(`/${COURSE_ROUTES.CREATE_COURSE}`, courseValidator, createCourse);
