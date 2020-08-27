@@ -27,11 +27,11 @@ const {
   getMoreAttendanceSessionsByCourseCode,
   getAttendanceSessionsInDateRangeWithCourseCode,
   getTodayAttendanceSessionsByCourseCode
-} = require('./handlers/attendance-session/https');
+} = require('./handlers/attendance-sessions/https');
 
 //middlewares
 const courseValidator = require('./utils/middlewares/courses');
-const attendanceSessionValidator = require('./utils/middlewares/attendance-session');
+const attendanceSessionValidator = require('./utils/middlewares/attendance-sessions');
 
 app.use(cors());
 
