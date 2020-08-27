@@ -19,12 +19,19 @@ const {
   updateCourse,
   deleteCourse,
   subscribeUserToCourses,
-  unsubscribeStudentFromCourses,
+  unsubscribeStudentFromCourses
 } = require('./handlers/courses/https');
-const {createAttendanceSession, getAttendanceSessionByCourseCode} = require('./handlers/attendance-session/https');
+const {
+  createAttendanceSession,
+  getAttendanceSessionsByCourseCode,
+  getMoreAttendanceSessionsByCourseCode,
+  getAttendanceSessionsInDateRangeWithCourseCode,
+  getTodayAttendanceSessionsByCourseCode
+} = require('./handlers/attendance-session/https');
 
 //middlewares
 const courseValidator = require('./utils/middlewares/courses');
+const attendanceSessionValidator = require('./utils/middlewares/attendance-session');
 
 app.use(cors());
 
@@ -32,8 +39,26 @@ app.use(cors());
 //TODO: check auth headers when doing CRUD operations
 
 // attendance session handlers
-app.post(`/${ATTENDANCE_SESSION_ROUTES.CREATE_ATTENDANCE_SESSION}`, createAttendanceSession);
-app.post(`/${ATTENDANCE_SESSION_ROUTES.GET_ATTENDANCE_SESSION_BY_COURSE_CODE}`, getAttendanceSessionByCourseCode);
+app.post(`/${ATTENDANCE_SESSION_ROUTES.CREATE_ATTENDANCE_SESSION}`,
+  attendanceSessionValidator,
+  createAttendanceSession
+);
+app.post(`/${ATTENDANCE_SESSION_ROUTES.GET_ATTENDANCE_SESSIONS_BY_COURSE_CODE}`,
+  attendanceSessionValidator,
+  getAttendanceSessionsByCourseCode
+);
+app.post(`/${ATTENDANCE_SESSION_ROUTES.GET_MORE_ATTENDANCE_SESSIONS_BY_COURSE_CODE}`,
+  attendanceSessionValidator,
+  getMoreAttendanceSessionsByCourseCode
+);
+app.post(`/${ATTENDANCE_SESSION_ROUTES.GET_ATTENDANCE_SESSIONS_IN_DATE_RANGE}`,
+  attendanceSessionValidator,
+  getAttendanceSessionsInDateRangeWithCourseCode
+);
+app.post(`/${ATTENDANCE_SESSION_ROUTES.GET_TODAY_ATTENDANCE_SESSIONS}`,
+  attendanceSessionValidator,
+  getTodayAttendanceSessionsByCourseCode
+);
 
 //courses
 app.post(`/${COURSE_ROUTES.CREATE_COURSE}`, courseValidator, createCourse);
