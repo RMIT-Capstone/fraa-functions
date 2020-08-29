@@ -73,7 +73,7 @@ app.post(`/${COURSE_ROUTES.SUBSCRIBE_COURSES}`, courseValidator, subscribeUserTo
 app.post(`/${COURSE_ROUTES.UNSUBSCRIBE_COURSES}`, courseValidator, unsubscribeStudentFromCourses);
 
 // user handlers
-app.post('/create_user', createUserInAuth);
+app.post('/create_user', createUserInFirestore);
 app.post('/sign_in', signIn);
 app.post('/generate_OTP', generateOTP);
 app.post('/verify_OTP', verifyOTP);
@@ -82,3 +82,9 @@ app.post('/change_user_password', changeUserPassword);
 exports.api = functions.region('asia-northeast1').https.onRequest(app);
 exports.onUserCreatedInAuth = functions.region('asia-northeast1').auth.user().onCreate(createUserInFirestore);
 exports.onUserDeletedInAuth = functions.region('asia-northeast1').auth.user().onDelete(deleteUserInFirestore);
+
+exports.onUserCreatedInFirestore = functions
+  .region('asia-northeast1')
+  .firestore
+  .document('users/{userId}')
+  .onCreate(snapshot =>  createUserInAuth(snapshot));

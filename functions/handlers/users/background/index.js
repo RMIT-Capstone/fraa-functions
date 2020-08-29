@@ -3,12 +3,13 @@ const {deleteUserInFirestore} = require('../helper');
 const {getUserDocumentIdByEmail} = require('../helper');
 const {db} = require('../../../utils/admin');
 
-exports.createUserInFirestore = async user => {
+exports.createUserInFirestore = async (req, res) => {
   try {
+    const {email, password} = req.body;
     const createUser = await db
       .collection('users')
       .add({
-        email: user.email,
+        email,
         createdAt: new Date(),
         firstTimePassword: true,
       });

@@ -1,35 +1,6 @@
 const {db, admin} = require('../../../utils/admin');
 
-exports.userDocumentExists = async userDocumentID => {
-  try {
-    const documentSnapshot = await db
-      .collection('users')
-      .doc(userDocumentID)
-      .get();
-    return documentSnapshot.exists;
-  }
-  catch (errorUserDocumentExists) {
-    console.error(errorUserDocumentExists.message);
-    return null;
-  }
-};
-
-exports.userDocumentExistsWithEmail = async email => {
-  try {
-    const querySnapshot = await db
-      .collection('users')
-      .where('email', '==', email)
-      .get();
-
-    return !querySnapshot.empty;
-  }
-  catch (errorUserDocumentExistsWithEmail) {
-    console.error(errorUserDocumentExistsWithEmail.message);
-    return null;
-  }
-};
-
-exports.getUserDocumentIdByEmail = async email => {
+exports.userAlreadyExistsWithEmail = async email => {
   try {
     const querySnapshot = await db
       .collection('users')
@@ -37,15 +8,16 @@ exports.getUserDocumentIdByEmail = async email => {
       .get();
 
     if (querySnapshot.empty) {
-      return null;
+      return {exists: false, id: null};
     }
     else {
-      return querySnapshot.docs[0].id;
+      const documentId = querySnapshot.docs[0].id;
+      return {exists: true, id: documentId};
     }
   }
-  catch (e) {
-    console.error(`Something went wrong with fetching user document ${e}`);
-    return null;
+  catch (errorUserAlreadyExistsWithEmail) {
+    console.error(errorUserAlreadyExistsWithEmail);
+    return {exists: false, id: null};
   }
 };
 

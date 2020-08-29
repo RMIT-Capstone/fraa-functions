@@ -8,24 +8,33 @@ const {
   validateAccountData
 } = require('../helper');
 
-exports.createUserInAuth = async (req, res) => {
+exports.onCreateUser = async (req, res) => {
   const {email, password} = req.body;
-  const newUser = {
-    email,
-    password
-  };
-  const {errors, valid} = validateAccountData(newUser);
-
-  if (!valid) return res.json({error: errors});
-
   try {
-    const createAccount = await firebase.auth().createUserWithEmailAndPassword(newUser.email, newUser.password);
+    const createUser = await Promise.all([createUserInFirestore(req, res), createUserInAuth(req, res)]);
+    console.log(createUser);
+  }
+  catch (errorOnCreateUser) {
+    console.error('Something went wrong with create user: ', errorOnCreateUser);
+    return res.json({error: 'Something went wrong. Try again'});
+  }
+};
+
+exports.createUserInFirestore = async (email, password) => {
+  try {
+
+  }
+};
+
+exports.createUserInAuth = async (email, password) => {
+  try {
+    const createAccount = await firebase.auth().createUserWithEmailAndPassword(email, password);
     const idToken = await createAccount.user.getIdToken();
-    return res.json({token: idToken});
+    return {idToken, error: null};
   }
   catch (e) {
     if (e.code === 'auth/email-already-in-use') {
-      return res.json({error: 'Email already in use.'});
+      return {idToken: null, error: 'Email already in use'};
     }
     else {
       console.error(e.message);
