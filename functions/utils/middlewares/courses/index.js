@@ -1,6 +1,6 @@
 const COURSE_ROUTES = require('../../../routes/courses');
-const {courseAlreadyExistsWithCourseCode} = require('../../../handlers/courses/helper');
-const {userDocumentExistsWithEmail} = require('../../../handlers/users/helper');
+const {courseAlreadyExistsWithCourseCode} = require('./helper');
+// const {userDocumentExistsWithEmail} = require('../../../handlers/users/helper');
 
 module.exports = async (req, res, next) => {
   const path = req.path.split('/')[1];

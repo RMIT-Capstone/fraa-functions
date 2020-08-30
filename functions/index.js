@@ -3,8 +3,9 @@ const app = require('express')();
 const cors = require('cors');
 
 // routes
-const COURSE_ROUTES = require('./routes/courses');
-const ATTENDANCE_SESSION_ROUTES = require('./routes/attendance-session');
+const COURSES_ROUTES = require('./routes/courses');
+const ATTENDANCE_SESSIONS_ROUTES = require('./routes/attendance-sessions');
+const USER_ROUTES = require('./routes/users');
 
 // handlers
 const {createUserInFirestore, deleteUserInFirestore} = require('./handlers/users/background');
@@ -39,38 +40,38 @@ app.use(cors());
 //TODO: check auth headers when doing CRUD operations
 
 // attendance session handlers
-app.post(`/${ATTENDANCE_SESSION_ROUTES.CREATE_ATTENDANCE_SESSION}`,
+app.post(`/${ATTENDANCE_SESSIONS_ROUTES.CREATE_ATTENDANCE_SESSION}`,
   attendanceSessionValidator,
   createAttendanceSession
 );
-app.post(`/${ATTENDANCE_SESSION_ROUTES.GET_ATTENDANCE_SESSIONS_BY_COURSE_CODE}`,
+app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_ATTENDANCE_SESSIONS_BY_COURSE_CODE}`,
   attendanceSessionValidator,
   getAttendanceSessionsByCourseCode
 );
-app.post(`/${ATTENDANCE_SESSION_ROUTES.GET_MORE_ATTENDANCE_SESSIONS_BY_COURSE_CODE}`,
+app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_MORE_ATTENDANCE_SESSIONS_BY_COURSE_CODE}`,
   attendanceSessionValidator,
   getMoreAttendanceSessionsByCourseCode
 );
-app.post(`/${ATTENDANCE_SESSION_ROUTES.GET_ATTENDANCE_SESSIONS_IN_DATE_RANGE}`,
+app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_ATTENDANCE_SESSIONS_IN_DATE_RANGE}`,
   attendanceSessionValidator,
   getAttendanceSessionsInDateRangeWithCourseCode
 );
-app.post(`/${ATTENDANCE_SESSION_ROUTES.GET_TODAY_ATTENDANCE_SESSIONS}`,
+app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_TODAY_ATTENDANCE_SESSIONS}`,
   attendanceSessionValidator,
   getTodayAttendanceSessionsByCourseCode
 );
 
 //courses
-app.post(`/${COURSE_ROUTES.CREATE_COURSE}`, courseValidator, createCourse);
-app.post(`/${COURSE_ROUTES.GET_COURSES}`, getCourses);
-app.post(`/${COURSE_ROUTES.GET_MORE_COURSES}`, courseValidator, getMoreCourses);
-app.post(`/${COURSE_ROUTES.GET_COURSES_BY_NAME}`, courseValidator, getCoursesByName);
-app.post(`/${COURSE_ROUTES.GET_MORE_COURSES_BY_NAME}`, courseValidator, getMoreCoursesByName);
-app.post(`/${COURSE_ROUTES.GET_COURSE_BY_CODE}`, courseValidator, getCourseByCode);
-app.post(`/${COURSE_ROUTES.UPDATE_COURSE}`, courseValidator, updateCourse);
-app.post(`/${COURSE_ROUTES.DELETE_COURSE}`, courseValidator, deleteCourse);
-app.post(`/${COURSE_ROUTES.SUBSCRIBE_COURSES}`, courseValidator, subscribeUserToCourses);
-app.post(`/${COURSE_ROUTES.UNSUBSCRIBE_COURSES}`, courseValidator, unsubscribeStudentFromCourses);
+app.post(`/${COURSES_ROUTES.CREATE_COURSE}`, courseValidator, createCourse);
+app.post(`/${COURSES_ROUTES.GET_COURSES}`, getCourses);
+app.post(`/${COURSES_ROUTES.GET_MORE_COURSES}`, courseValidator, getMoreCourses);
+app.post(`/${COURSES_ROUTES.GET_COURSES_BY_NAME}`, courseValidator, getCoursesByName);
+app.post(`/${COURSES_ROUTES.GET_MORE_COURSES_BY_NAME}`, courseValidator, getMoreCoursesByName);
+app.post(`/${COURSES_ROUTES.GET_COURSE_BY_CODE}`, courseValidator, getCourseByCode);
+app.post(`/${COURSES_ROUTES.UPDATE_COURSE}`, courseValidator, updateCourse);
+app.post(`/${COURSES_ROUTES.DELETE_COURSE}`, courseValidator, deleteCourse);
+app.post(`/${COURSES_ROUTES.SUBSCRIBE_COURSES}`, courseValidator, subscribeUserToCourses);
+app.post(`/${COURSES_ROUTES.UNSUBSCRIBE_COURSES}`, courseValidator, unsubscribeStudentFromCourses);
 
 // user handlers
 app.post('/create_user', createUserInFirestore);

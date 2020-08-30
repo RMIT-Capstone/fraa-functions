@@ -6,13 +6,14 @@ const {
   generateOTPCode,
   getOTPDocumentsByEmail,
   validateAccountData
-} = require('../helper');
+} = require('../../../utils/middlewares/users/helper');
 
 exports.onCreateUser = async (req, res) => {
   const {email, password} = req.body;
   try {
-    const createUser = await Promise.all([createUserInFirestore(req, res), createUserInAuth(req, res)]);
+    const createUser = await Promise.all([createUserInFirestore(email), createUserInAuth(email, password)]);
     console.log(createUser);
+    return res.json({message: 'ok'});
   }
   catch (errorOnCreateUser) {
     console.error('Something went wrong with create user: ', errorOnCreateUser);
@@ -20,9 +21,20 @@ exports.onCreateUser = async (req, res) => {
   }
 };
 
-exports.createUserInFirestore = async (email, password) => {
+exports.createUserInFirestore = async (email) => {
   try {
-
+    await db
+      .collection('users')
+      .add({
+        email,
+        createdAt: new Date(),
+        firstTimePassword: true,
+      });
+    return {success: true, error: null};
+  }
+  catch (errorCreateUserInFirestore) {
+    console.error('Something went wrong with create user in Firestore: ', errorCreateUserInFirestore);
+    return {success: false, error: errorCreateUserInFirestore};
   }
 };
 
@@ -37,8 +49,8 @@ exports.createUserInAuth = async (email, password) => {
       return {idToken: null, error: 'Email already in use'};
     }
     else {
-      console.error(e.message);
-      return res.json({error: 'Something went wrong. Try again.'});
+      console.error('Something went wrong with create user in auth: ', e.message);
+      return {idToken: null, error: e};
     }
   }
 };

@@ -1,4 +1,4 @@
-const {db, admin} = require('../../../utils/admin');
+const {db, admin} = require('../../../admin');
 
 exports.userAlreadyExistsWithEmail = async email => {
   try {

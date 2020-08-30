@@ -1,5 +1,5 @@
-const {getUserDocumentIdByEmail} = require('../../users/helper');
-const {userAlreadySubscribedToCourse, courseAlreadyExistsWithCourseCode} = require('../helper');
+const {getUserDocumentIdByEmail} = require('../../../utils/middlewares/users/helper');
+const {userAlreadySubscribedToCourse, courseAlreadyExistsWithCourseCode} = require('../../../utils/middlewares/courses/helper');
 const {db, admin} = require('../../../utils/admin');
 
 exports.createCourse = async (req, res) => {

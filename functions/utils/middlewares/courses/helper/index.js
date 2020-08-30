@@ -1,5 +1,5 @@
 const {userDocumentExists} = require('../../users/helper');
-const {db} = require('../../../utils/admin');
+const {db} = require('../../../admin');
 
 exports.courseAlreadyExistsWithCourseCode = async code => {
   try {
