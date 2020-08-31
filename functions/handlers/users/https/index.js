@@ -8,9 +8,12 @@ const {
 } = require('../../../utils/middlewares/users/helper');
 
 exports.onCreateUser = async (req, res) => {
-  const {email, password} = req.body;
+  const {email, password, name, school, isLecturer} = req.body;
+  console.log(isLecturer);
   try {
-    const createUser = await Promise.all([createUserInFirestore(email), createUserInAuth(email, password)]);
+    const createUser = await Promise.all([
+      isLecturer ? createLecturerInFirestore(email, name, school) : createUserInFirestore(email),
+      createUserInAuth(email, password)]);
     // needs a better way to catch errors from the promises, may be map and catch ?
     const {error: errorCreateInFirestore} = createUser[0];
     const {error: errorCreateInFirebaseAuth, idToken} = createUser[1];
@@ -30,7 +33,28 @@ exports.onCreateUser = async (req, res) => {
   }
 };
 
-const createUserInFirestore = async (email) => {
+const createLecturerInFirestore = async (email, name, school) => {
+  console.log('creating lecturer...');
+  try {
+    await db
+      .collection('lecturers')
+      .add({
+        email,
+        name: name.split(' ').map(letter => letter.toLowerCase()),
+        school,
+        createdAt: new Date(),
+        firstTimePassword: true,
+      });
+    return {error: null};
+  }
+  catch (errorCreateLecturerInFirestore) {
+    console.error('Something went wrong with create lecturer in Firestore: ', errorCreateLecturerInFirestore);
+    return {error: errorCreateLecturerInFirestore};
+  }
+};
+
+const createUserInFirestore = async email => {
+  console.log('creating user...');
   try {
     await db
       .collection('users')
@@ -137,7 +161,6 @@ exports.verifyOTP = async (req, res) => {
 
 exports.changeUserPassword = async (req, res) => {
   const {email, password} = req.body;
-
   try {
     const recordId = await getUserIdInFBAuthWithEmail(email);
     if (!recordId) return res.json({error: 'User does not exist'});

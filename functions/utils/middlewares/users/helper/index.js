@@ -21,6 +21,27 @@ exports.userAlreadyExistsWithEmail = async email => {
   }
 };
 
+exports.lecturerAlreadyExistsWithEmail = async email => {
+  try {
+    const querySnapshot = await db
+      .collection('lecturers')
+      .where('email', '==', email)
+      .get();
+
+    if (querySnapshot.empty) {
+      return {exists: false, id: null};
+    }
+    else {
+      const documentId = querySnapshot.docs[0].id;
+      return {exists: true, id: documentId};
+    }
+  }
+  catch (errorLecturerAlreadyExistsWithEmail) {
+    console.error(errorLecturerAlreadyExistsWithEmail);
+    return {exists: false, id: null};
+  }
+};
+
 exports.deleteUserInFirestore = async userDocId => {
   return db
     .collection('users')

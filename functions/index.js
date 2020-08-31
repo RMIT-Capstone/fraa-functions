@@ -8,7 +8,14 @@ const ATTENDANCE_SESSIONS_ROUTES = require('./routes/attendance-sessions');
 const USERS_ROUTES = require('./routes/users');
 
 // handlers
-const {onCreateUser, verifyOTP, generateOTP, signIn, changeUserPassword} = require('./handlers/users/https');
+const {
+  onCreateUser,
+  verifyOTP,
+  generateOTP,
+  signIn,
+  changeUserPassword
+} = require('./handlers/users/https');
+
 const {
   createCourse,
   getCourses,
@@ -21,6 +28,7 @@ const {
   subscribeUserToCourses,
   unsubscribeStudentFromCourses
 } = require('./handlers/courses/https');
+
 const {
   createAttendanceSession,
   getAttendanceSessionsByCourseCode,
@@ -36,7 +44,6 @@ const usersValidator = require('./utils/middlewares/users');
 
 app.use(cors());
 
-//TODO: check request parameters for users
 //TODO: check auth headers when doing CRUD operations
 
 // attendance session handlers
@@ -75,9 +82,10 @@ app.post(`/${COURSES_ROUTES.UNSUBSCRIBE_COURSES}`, coursesValidator, unsubscribe
 
 // user handlers
 app.post(`/${USERS_ROUTES.CREATE_USER}`, usersValidator, onCreateUser);
-app.post(`/${USERS_ROUTES.SIGN_IN}`, signIn);
-app.post('/generate_OTP', generateOTP);
-app.post('/verify_OTP', verifyOTP);
-app.post('/change_user_password', changeUserPassword);
+app.post(`/${USERS_ROUTES.CREATE_LECTURER}`, usersValidator, onCreateUser);
+app.post(`/${USERS_ROUTES.SIGN_IN}`, usersValidator, signIn);
+app.post(`/${USERS_ROUTES.CHANGE_PASSWORD}`, usersValidator, changeUserPassword);
+app.post(`/${USERS_ROUTES.GENERATE_OTP}`, usersValidator, generateOTP);
+app.post(`/${USERS_ROUTES.VERIFY_OTP}`, usersValidator, verifyOTP);
 
 exports.api = functions.region('asia-northeast1').https.onRequest(app);
