@@ -34,13 +34,8 @@ exports.getOTPDocumentsByEmail = async email => {
     .where('email', '==', email)
     .orderBy('expiryTime', 'desc')
     .get();
-  console.log(querySnapshot.docs[0].data());
-  if (querySnapshot.empty) {
-    return {error: `no OTP code found with ${email}`};
-  }
-  else {
-    return querySnapshot.docs[0].data();
-  }
+  if (querySnapshot.empty) return {error: `no OTP code found with ${email}`};
+  return querySnapshot.docs[0].data();
 };
 
 exports.deleteOTPDocumentsByEmail = async email => {
@@ -49,7 +44,7 @@ exports.deleteOTPDocumentsByEmail = async email => {
       .collection('reset-password-otp')
       .where('email', '==', email)
       .get();
-    if (querySnapshot.size >= 1) {
+    if (!querySnapshot.empty) {
       querySnapshot.forEach(snapshot => {
         snapshot.ref.delete();
       });
@@ -99,11 +94,11 @@ const isEmail = email => {
   return Boolean(email.match(regEx));
 };
 
-exports.validateAccountData = data => {
+exports.validateAccountData = (email, password) => {
   let errors = {};
 
-  validateEmailData(data.email, errors);
-  validatePasswordData(data.password, errors);
+  validateEmailData(email, errors);
+  validatePasswordData(password, errors);
 
   return {
     errors,

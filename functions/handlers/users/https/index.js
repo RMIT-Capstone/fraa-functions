@@ -1,19 +1,28 @@
 const {db, admin, firebase} = require('../../../utils/admin');
 const {sendOTPToUser} = require('../../email');
 const {
-  userDocumentExistsWithEmail,
   getUserIdInFBAuthWithEmail,
   generateOTPCode,
   getOTPDocumentsByEmail,
-  validateAccountData
+  deleteOTPDocumentsByEmail,
 } = require('../../../utils/middlewares/users/helper');
 
 exports.onCreateUser = async (req, res) => {
   const {email, password} = req.body;
   try {
     const createUser = await Promise.all([createUserInFirestore(email), createUserInAuth(email, password)]);
-    console.log(createUser);
-    return res.json({message: 'ok'});
+    // needs a better way to catch errors from the promises, may be map and catch ?
+    const {error: errorCreateInFirestore} = createUser[0];
+    const {error: errorCreateInFirebaseAuth, idToken} = createUser[1];
+    if (errorCreateInFirestore) {
+      console.error('Something went wrong with create user: ', errorCreateInFirestore);
+      return res.json({error: 'Something went wrong. Try again'});
+    }
+    if (errorCreateInFirebaseAuth) {
+      console.error('Something went wrong with create user: ', errorCreateInFirebaseAuth);
+      return res.json({error: 'Something went wrong. Try again'});
+    }
+    return res.json({token: idToken});
   }
   catch (errorOnCreateUser) {
     console.error('Something went wrong with create user: ', errorOnCreateUser);
@@ -21,7 +30,7 @@ exports.onCreateUser = async (req, res) => {
   }
 };
 
-exports.createUserInFirestore = async (email) => {
+const createUserInFirestore = async (email) => {
   try {
     await db
       .collection('users')
@@ -30,15 +39,15 @@ exports.createUserInFirestore = async (email) => {
         createdAt: new Date(),
         firstTimePassword: true,
       });
-    return {success: true, error: null};
+    return {error: null};
   }
   catch (errorCreateUserInFirestore) {
     console.error('Something went wrong with create user in Firestore: ', errorCreateUserInFirestore);
-    return {success: false, error: errorCreateUserInFirestore};
+    return {error: errorCreateUserInFirestore};
   }
 };
 
-exports.createUserInAuth = async (email, password) => {
+const createUserInAuth = async (email, password) => {
   try {
     const createAccount = await firebase.auth().createUserWithEmailAndPassword(email, password);
     const idToken = await createAccount.user.getIdToken();
@@ -57,15 +66,8 @@ exports.createUserInAuth = async (email, password) => {
 
 exports.signIn = async (req, res) => {
   const {email, password} = req.body;
-  const user = {
-    email,
-    password
-  };
-  const {valid, errors} = validateAccountData(user);
-  if (!valid) return res.json({error: errors});
-
   try {
-    const signIn = await firebase.auth().signInWithEmailAndPassword(user.email, user.password);
+    const signIn = await firebase.auth().signInWithEmailAndPassword(email, password);
     const idToken = await signIn.user.getIdToken();
     return res.json({token: idToken});
   }
@@ -85,53 +87,45 @@ exports.signIn = async (req, res) => {
 
 exports.generateOTP = async (req, res) => {
   const {email} = req.body;
-  const userExists = await userDocumentExistsWithEmail(email);
+  try {
+    const OTP = generateOTPCode();
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + 5);
+    const fiveMinutesFromNow = new Date(now);
+    await db.collection('reset-password-otp').add({
+      email,
+      OTP,
+      expiryTime: fiveMinutesFromNow,
+    });
+    await sendOTPToUser(email, OTP);
+    return res.json({message: 'OTP code created'});
+  }
+  catch (errorGenerateOTP) {
+    console.error(errorGenerateOTP.message);
+    return res.json({error: 'Something went wrong. Try again.'});
+  }
 
-  if (!userExists) {
-    return res.json({error: 'User does not exist'});
-  }
-  else {
-    try {
-      const OTP = generateOTPCode();
-      const now = admin.firestore.Timestamp.now();
-      const expiryTime = admin.firestore.Timestamp.fromMillis(now.toMillis() + (300 * 1000));
-      await db.collection('reset-password-otp').add({
-        email,
-        OTP,
-        expiryTime
-      });
-      await sendOTPToUser(email, OTP);
-      return res.json({message: 'OTP code created'});
-    }
-    catch (errorGenerateOTP) {
-      console.error(errorGenerateOTP.message);
-      return res.json({error: 'Something went wrong. Try again.'});
-    }
-  }
 };
 
 exports.verifyOTP = async (req, res) => {
-  const {email, userOTP} = req.body;
-  const userExist = await userDocumentExistsWithEmail(email);
-
-  if (!userExist) return res.json({error: 'User does not exist'});
-
+  const {email, OTP: userOTP} = req.body;
   try {
     const otpDocumentSnapshot = await getOTPDocumentsByEmail(email);
     if (otpDocumentSnapshot.error) return res.json({error: otpDocumentSnapshot.error});
     else {
-      const expiryTime = otpDocumentSnapshot.expiryTime.toDate().toString();
-      const now = admin.firestore.Timestamp.now().toDate().toString();
-      const OTP = otpDocumentSnapshot.OTP;
+      const {OTP, expiryTime} = otpDocumentSnapshot;
+      const now = new Date();
+      console.log(OTP, expiryTime.toDate(), now.toISOString(), 'aaa');
 
-      if (expiryTime < now) {
+      if (expiryTime.toDate() < now) {
         return res.json({error: 'OTP expired'});
       }
       if (OTP === userOTP) {
+        await deleteOTPDocumentsByEmail(email);
         return res.json({message: 'Valid OTP'});
       }
       else {
-        return res.json({message: 'Invalid OTP'});
+        return res.json({error: 'Invalid OTP'});
       }
     }
   }
@@ -143,19 +137,12 @@ exports.verifyOTP = async (req, res) => {
 
 exports.changeUserPassword = async (req, res) => {
   const {email, password} = req.body;
-  const user = {
-    email,
-    password
-  };
-  const {valid, errors} = validateAccountData(user);
-
-  if (!valid) return res.json({error: errors});
 
   try {
-    const recordId = await getUserIdInFBAuthWithEmail(user.email);
+    const recordId = await getUserIdInFBAuthWithEmail(email);
     if (!recordId) return res.json({error: 'User does not exist'});
     await admin.auth().updateUser(recordId, {
-      password: user.password
+      password: password
     });
     return res.json({message: 'Password updated successfully'});
   }

@@ -5,11 +5,10 @@ const cors = require('cors');
 // routes
 const COURSES_ROUTES = require('./routes/courses');
 const ATTENDANCE_SESSIONS_ROUTES = require('./routes/attendance-sessions');
-const USER_ROUTES = require('./routes/users');
+const USERS_ROUTES = require('./routes/users');
 
 // handlers
-const {createUserInFirestore, deleteUserInFirestore} = require('./handlers/users/background');
-const {verifyOTP, generateOTP, signIn, createUserInAuth, changeUserPassword} = require('./handlers/users/https');
+const {onCreateUser, verifyOTP, generateOTP, signIn, changeUserPassword} = require('./handlers/users/https');
 const {
   createCourse,
   getCourses,
@@ -31,8 +30,9 @@ const {
 } = require('./handlers/attendance-sessions/https');
 
 //middlewares
-const courseValidator = require('./utils/middlewares/courses');
-const attendanceSessionValidator = require('./utils/middlewares/attendance-sessions');
+const coursesValidator = require('./utils/middlewares/courses');
+const attendanceSessionsValidator = require('./utils/middlewares/attendance-sessions');
+const usersValidator = require('./utils/middlewares/users');
 
 app.use(cors());
 
@@ -41,51 +41,43 @@ app.use(cors());
 
 // attendance session handlers
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.CREATE_ATTENDANCE_SESSION}`,
-  attendanceSessionValidator,
+  attendanceSessionsValidator,
   createAttendanceSession
 );
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_ATTENDANCE_SESSIONS_BY_COURSE_CODE}`,
-  attendanceSessionValidator,
+  attendanceSessionsValidator,
   getAttendanceSessionsByCourseCode
 );
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_MORE_ATTENDANCE_SESSIONS_BY_COURSE_CODE}`,
-  attendanceSessionValidator,
+  attendanceSessionsValidator,
   getMoreAttendanceSessionsByCourseCode
 );
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_ATTENDANCE_SESSIONS_IN_DATE_RANGE}`,
-  attendanceSessionValidator,
+  attendanceSessionsValidator,
   getAttendanceSessionsInDateRangeWithCourseCode
 );
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_TODAY_ATTENDANCE_SESSIONS}`,
-  attendanceSessionValidator,
+  attendanceSessionsValidator,
   getTodayAttendanceSessionsByCourseCode
 );
 
 //courses
-app.post(`/${COURSES_ROUTES.CREATE_COURSE}`, courseValidator, createCourse);
+app.post(`/${COURSES_ROUTES.CREATE_COURSE}`, coursesValidator, createCourse);
 app.post(`/${COURSES_ROUTES.GET_COURSES}`, getCourses);
-app.post(`/${COURSES_ROUTES.GET_MORE_COURSES}`, courseValidator, getMoreCourses);
-app.post(`/${COURSES_ROUTES.GET_COURSES_BY_NAME}`, courseValidator, getCoursesByName);
-app.post(`/${COURSES_ROUTES.GET_MORE_COURSES_BY_NAME}`, courseValidator, getMoreCoursesByName);
-app.post(`/${COURSES_ROUTES.GET_COURSE_BY_CODE}`, courseValidator, getCourseByCode);
-app.post(`/${COURSES_ROUTES.UPDATE_COURSE}`, courseValidator, updateCourse);
-app.post(`/${COURSES_ROUTES.DELETE_COURSE}`, courseValidator, deleteCourse);
-app.post(`/${COURSES_ROUTES.SUBSCRIBE_COURSES}`, courseValidator, subscribeUserToCourses);
-app.post(`/${COURSES_ROUTES.UNSUBSCRIBE_COURSES}`, courseValidator, unsubscribeStudentFromCourses);
+app.post(`/${COURSES_ROUTES.GET_MORE_COURSES}`, coursesValidator, getMoreCourses);
+app.post(`/${COURSES_ROUTES.GET_COURSES_BY_NAME}`, coursesValidator, getCoursesByName);
+app.post(`/${COURSES_ROUTES.GET_MORE_COURSES_BY_NAME}`, coursesValidator, getMoreCoursesByName);
+app.post(`/${COURSES_ROUTES.GET_COURSE_BY_CODE}`, coursesValidator, getCourseByCode);
+app.post(`/${COURSES_ROUTES.UPDATE_COURSE}`, coursesValidator, updateCourse);
+app.post(`/${COURSES_ROUTES.DELETE_COURSE}`, coursesValidator, deleteCourse);
+app.post(`/${COURSES_ROUTES.SUBSCRIBE_COURSES}`, coursesValidator, subscribeUserToCourses);
+app.post(`/${COURSES_ROUTES.UNSUBSCRIBE_COURSES}`, coursesValidator, unsubscribeStudentFromCourses);
 
 // user handlers
-app.post('/create_user', createUserInFirestore);
-app.post('/sign_in', signIn);
+app.post(`/${USERS_ROUTES.CREATE_USER}`, usersValidator, onCreateUser);
+app.post(`/${USERS_ROUTES.SIGN_IN}`, signIn);
 app.post('/generate_OTP', generateOTP);
 app.post('/verify_OTP', verifyOTP);
 app.post('/change_user_password', changeUserPassword);
 
 exports.api = functions.region('asia-northeast1').https.onRequest(app);
-exports.onUserCreatedInAuth = functions.region('asia-northeast1').auth.user().onCreate(createUserInFirestore);
-exports.onUserDeletedInAuth = functions.region('asia-northeast1').auth.user().onDelete(deleteUserInFirestore);
-
-exports.onUserCreatedInFirestore = functions
-  .region('asia-northeast1')
-  .firestore
-  .document('users/{userId}')
-  .onCreate(snapshot =>  createUserInAuth(snapshot));
