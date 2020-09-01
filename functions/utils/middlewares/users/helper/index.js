@@ -1,6 +1,6 @@
 const {db, admin} = require('../../../admin');
 
-exports.userAlreadyExistsWithEmail = async email => {
+exports.getUserDocumentIdWithId = async email => {
   try {
     const querySnapshot = await db
       .collection('users')

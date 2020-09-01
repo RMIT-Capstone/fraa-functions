@@ -1,3 +1,4 @@
+const {getUserDocumentIdWithId} = require('../../../utils/middlewares/users/helper');
 const {db} = require('../../../utils/admin');
 
 exports.createAttendanceSession = async (req, res) => {
@@ -127,5 +128,21 @@ exports.getTodayAttendanceSessionsByCourseCode = async (req, res) => {
       'Something went wrong with get today attendance session by course code: ',
       errorGetTodaySessionsByCourseCode);
     return res.json({error: errorGetTodaySessionsByCourseCode});
+  }
+};
+
+exports.registerStudentToAttendanceSession = async (req, res) => {
+  const {email, sessionDate} = req.body;
+  const {exists: userExists, id: userDocId} = await getUserDocumentIdWithId(email);
+  const {exists: attendanceExists, id: attendanceDocId} = await getUserDocumentIdWithId(sessionDate);
+  console.log(userExists, attendanceExists);
+  try {
+    return res.json({userDocId, attendanceDocId});
+  }
+  catch (errorRegisterStudentToAttendanceSession) {
+    console.error(
+      'Something went wrong with register student to attendance session',
+      errorRegisterStudentToAttendanceSession);
+    return res.json({error: 'Something went wrong. Try again'});
   }
 };
