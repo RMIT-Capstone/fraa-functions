@@ -25,3 +25,21 @@ exports.getAttendanceSessionDocumentIdByDate = async date => {
     return {exists: false, id: null};
   }
 };
+
+exports.attendanceSessionExistsWithDocId = async docId => {
+  const documentSnapshot = await db
+    .collection('attendance-sessions')
+    .doc(docId)
+    .get();
+
+  return documentSnapshot.exists;
+};
+
+exports.userAlreadyRegisteredToAttendanceSession = async (email, sessionId) => {
+  const documentSnapshot = await db
+    .collection('attendance-sessions')
+    .doc(sessionId)
+    .get();
+
+  return Boolean(documentSnapshot.data().attendees.includes(email));
+};

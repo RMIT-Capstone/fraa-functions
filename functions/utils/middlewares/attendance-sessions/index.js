@@ -1,4 +1,6 @@
 const ATTENDANCE_SESSIONS_ROUTES = require('../../../routes/attendance-sessions');
+const {attendanceSessionExistsWithDocId, userAlreadyRegisteredToAttendanceSession} = require('./helper');
+const {getUserDocumentIdWithId} = require('../users/helper');
 const {courseAlreadyExistsWithCourseCode} = require('../courses/helper');
 
 module.exports = async (req, res, next) => {
@@ -37,6 +39,18 @@ module.exports = async (req, res, next) => {
     if (!startTime) return res.json({error: 'Must include startTime'});
     if (!endTime) return res.json({error: 'Must include endTime'});
     if (startTime > endTime) return res.json({error: 'Start time must be sooner than end time'});
+  }
+
+  if (path === ATTENDANCE_SESSIONS_ROUTES.REGISTER_STUDENT_TO_ATTENDANCE_SESSION) {
+    const {email, sessionId} = req.body;
+    if (!email) return res.json({error: 'Must include email'});
+    if (!sessionId) return res.json({error: 'Must include sessionId'});
+    const {exists: userExists} = await getUserDocumentIdWithId(email);
+    if (!userExists) return res.json({error: `User with email: ${email} does not exist`});
+    const exists = await attendanceSessionExistsWithDocId(sessionId);
+    if (!exists) return res.json({error: `Attendance session with id: ${sessionId} does not exist`});
+    const attended = await userAlreadyRegisteredToAttendanceSession(email, sessionId);
+    if (attended) return res.json({error: `User already registered to attendance session`});
   }
 
   return next();
