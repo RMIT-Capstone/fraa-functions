@@ -6,10 +6,9 @@ exports.getAttendanceSessionDocumentIdByDate = async date => {
     // start.setHours(0, 0, 0, 0);
     // const end = new Date(date);
     // end.setHours(23, 59, 59, 999);
-
     const querySnapshot = await db
       .collection('attendance-sessions')
-      .where('validOn', '==', date)
+      .where('validOn', '==', new Date(date))
       // .where('validOn', '>=', start)
       // .where('validOn', '<=', end)
       .get();

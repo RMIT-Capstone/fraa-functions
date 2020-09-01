@@ -1,5 +1,4 @@
-const {getUserDocumentIdWithId} = require('../../../utils/middlewares/users/helper');
-const {db} = require('../../../utils/admin');
+const {db, admin} = require('../../../utils/admin');
 
 exports.createAttendanceSession = async (req, res) => {
   const {content: QRCodeContent} = req.body;
@@ -105,7 +104,7 @@ exports.getTodayAttendanceSessionsByCourseCode = async (req, res) => {
     const start = new Date();
     start.setHours(0, 0, 0, 0);
     const end = new Date();
-    end.setHours(23, 59, 59, 59);
+    end.setHours(23, 59, 59, 999);
     const querySnapshot = await db
       .collection('attendance-sessions')
       .where('validOn', '>=', start)
@@ -119,6 +118,7 @@ exports.getTodayAttendanceSessionsByCourseCode = async (req, res) => {
       data.createdAt = createdAt.toDate();
       data.validOn = validOn.toDate();
       data.expireOn = expireOn.toDate();
+      data.id = snapshot.id;
       if (courseCode === code) sessions.push(data);
     });
     return res.json({sessions});
@@ -132,12 +132,16 @@ exports.getTodayAttendanceSessionsByCourseCode = async (req, res) => {
 };
 
 exports.registerStudentToAttendanceSession = async (req, res) => {
-  const {email, sessionDate} = req.body;
-  const {exists: userExists, id: userDocId} = await getUserDocumentIdWithId(email);
-  const {exists: attendanceExists, id: attendanceDocId} = await getUserDocumentIdWithId(sessionDate);
-  console.log(userExists, attendanceExists);
+  // TODO: check if user/attendance session exists
+  const {email, sessionId} = req.body;
   try {
-    return res.json({userDocId, attendanceDocId});
+    await db
+      .collection('attendance-sessions')
+      .doc(sessionId)
+      .update({
+        attendees: admin.firestore.FieldValue.arrayUnion(email)
+      });
+    return res.json({success: 'User registered'});
   }
   catch (errorRegisterStudentToAttendanceSession) {
     console.error(
