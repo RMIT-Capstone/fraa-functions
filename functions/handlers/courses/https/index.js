@@ -1,5 +1,8 @@
 const {getUserDocumentIdByEmail} = require('../../../utils/middlewares/users/helper');
-const {userAlreadySubscribedToCourse, courseAlreadyExistsWithCourseCode} = require('../../../utils/middlewares/courses/helper');
+const {
+  userAlreadySubscribedToCourse,
+  courseAlreadyExistsWithCourseCode
+} = require('../../../utils/middlewares/courses/helper');
 const {db, admin} = require('../../../utils/admin');
 
 exports.createCourse = async (req, res) => {
@@ -9,7 +12,7 @@ exports.createCourse = async (req, res) => {
     await db
       .collection('courses')
       .add(course);
-    return res.json({message: 'Course created'});
+    return res.json({success: 'Course created'});
   }
   catch (errorCreateCourse) {
     console.error('Something went wrong with create course: ', errorCreateCourse);
@@ -130,7 +133,7 @@ exports.updateCourse = async (req, res) => {
       .collection('courses')
       .doc(courseExistsWithCode.id)
       .update(course);
-    return res.json({message: 'Course updated'});
+    return res.json({success: 'Course updated'});
   }
   catch (errorUpdateCourse) {
     console.error('Something went wrong with update course: ', errorUpdateCourse);
@@ -146,7 +149,7 @@ exports.deleteCourse = async (req, res) => {
       .collection('courses')
       .doc(id)
       .delete();
-    return res.json({message: 'Course deleted'});
+    return res.json({success: 'Course deleted'});
   }
   catch (errorDeleteCourse) {
     console.error('Something went wrong with delete course: ', errorDeleteCourse);
@@ -177,7 +180,7 @@ exports.subscribeUserToCourses = async (req, res) => {
       }
     }));
 
-    return res.json({message: 'User subscribed to course(s)'});
+    return res.json({success: 'User subscribed to course(s)'});
   }
   catch (errorSubscribeUserToCourses) {
     console.error('Something went wrong with subscribe user to courses: ', errorSubscribeUserToCourses);
@@ -211,7 +214,7 @@ exports.unsubscribeStudentFromCourses = async (req, res) => {
         console.log(`Course with code: ${course} does not exist`);
       }
     }));
-    return res.json({message: 'User unsubscribed from course(s)'});
+    return res.json({success: 'User unsubscribed from course(s)'});
   }
   catch (errorUnsubscribeUserFromCourses) {
     console.error('Sonmething went wrong with unsubscribe user from courses: ', errorUnsubscribeUserFromCourses);

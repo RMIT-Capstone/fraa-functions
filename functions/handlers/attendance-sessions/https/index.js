@@ -10,7 +10,7 @@ exports.createAttendanceSession = async (req, res) => {
     await db
       .collection('attendance-sessions')
       .add(QRCodeContent);
-    return res.json({message: 'attendance session created'});
+    return res.json({success: 'attendance session created'});
   }
   catch (errorGenerateQrCode) {
     console.error(`Failed to generateQrCode: ${errorGenerateQrCode}`);
@@ -141,7 +141,7 @@ exports.registerStudentToAttendanceSession = async (req, res) => {
       .update({
         attendees: admin.firestore.FieldValue.arrayUnion(email)
       });
-    return res.json({success: 'User registered'});
+    return res.json({success: 'user registered'});
   }
   catch (errorRegisterStudentToAttendanceSession) {
     console.error(

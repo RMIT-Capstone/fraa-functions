@@ -34,7 +34,6 @@ exports.onCreateUser = async (req, res) => {
 };
 
 const createLecturerInFirestore = async (email, name, school) => {
-  console.log('creating lecturer...');
   try {
     await db
       .collection('lecturers')
@@ -54,7 +53,6 @@ const createLecturerInFirestore = async (email, name, school) => {
 };
 
 const createUserInFirestore = async email => {
-  console.log('creating user...');
   try {
     await db
       .collection('users')
@@ -77,12 +75,12 @@ const createUserInAuth = async (email, password) => {
     const idToken = await createAccount.user.getIdToken();
     return {idToken, error: null};
   }
-  catch (e) {
-    if (e.code === 'auth/email-already-in-use') {
+  catch (errorCreateUserInAuth) {
+    if (errorCreateUserInAuth.code === 'auth/email-already-in-use') {
       return {idToken: null, error: 'Email already in use'};
     }
     else {
-      console.error('Something went wrong with create user in auth: ', e.message);
+      console.error('Something went wrong with create user in auth: ', errorCreateUserInAuth);
       return {idToken: null, error: e};
     }
   }
@@ -95,15 +93,15 @@ exports.signIn = async (req, res) => {
     const idToken = await signIn.user.getIdToken();
     return res.json({token: idToken});
   }
-  catch (e) {
-    if (e.code === 'auth/wrong-password') {
+  catch (errorSignIn) {
+    if (errorSignIn.code === 'auth/wrong-password') {
       return res.json({error: 'Password is incorrect'});
     }
-    else if (e.code === 'auth/user-not-found') {
+    else if (errorSignIn.code === 'auth/user-not-found') {
       return res.json({error: 'User does not exist'});
     }
     else {
-      console.error(e.message);
+      console.error('Something went wrong with sign in', errorSignIn);
       return res.json({error: 'Something went wrong. Try again.'});
     }
   }
@@ -122,10 +120,10 @@ exports.generateOTP = async (req, res) => {
       expiryTime: fiveMinutesFromNow,
     });
     await sendOTPToUser(email, OTP);
-    return res.json({message: 'OTP code created'});
+    return res.json({success: 'OTP code created'});
   }
   catch (errorGenerateOTP) {
-    console.error(errorGenerateOTP.message);
+    console.error('Something went wrong with generate OTP: ', errorGenerateOTP);
     return res.json({error: 'Something went wrong. Try again.'});
   }
 
@@ -146,15 +144,15 @@ exports.verifyOTP = async (req, res) => {
       }
       if (OTP === userOTP) {
         await deleteOTPDocumentsByEmail(email);
-        return res.json({message: 'Valid OTP'});
+        return res.json({success: 'valid OTP'});
       }
       else {
-        return res.json({error: 'Invalid OTP'});
+        return res.json({error: 'invalid OTP'});
       }
     }
   }
   catch (errorVerifyOTP) {
-    console.error(errorVerifyOTP.message);
+    console.error('Something went wrong with verify OTP: ', errorVerifyOTP);
     return res.json({error: 'Something went wrong. Try again.'});
   }
 };
@@ -167,10 +165,10 @@ exports.changeUserPassword = async (req, res) => {
     await admin.auth().updateUser(recordId, {
       password: password
     });
-    return res.json({message: 'Password updated successfully'});
+    return res.json({success: 'password updated successfully'});
   }
   catch (errorChangeUserPassword) {
-    console.error(errorChangeUserPassword);
+    console.error('Something went wrong with change user password: ', errorChangeUserPassword);
     return res.json({error: 'Something went wrong. Try again.'});
   }
 };
