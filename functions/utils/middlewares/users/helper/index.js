@@ -1,35 +1,6 @@
-const {db, admin} = require('../../../utils/admin');
+const {db, admin} = require('../../../admin');
 
-exports.userDocumentExists = async userDocumentID => {
-  try {
-    const documentSnapshot = await db
-      .collection('users')
-      .doc(userDocumentID)
-      .get();
-    return documentSnapshot.exists;
-  }
-  catch (errorUserDocumentExists) {
-    console.error(errorUserDocumentExists.message);
-    return null;
-  }
-};
-
-exports.userDocumentExistsWithEmail = async email => {
-  try {
-    const querySnapshot = await db
-      .collection('users')
-      .where('email', '==', email)
-      .get();
-
-    return !querySnapshot.empty;
-  }
-  catch (errorUserDocumentExistsWithEmail) {
-    console.error(errorUserDocumentExistsWithEmail.message);
-    return null;
-  }
-};
-
-exports.getUserDocumentIdByEmail = async email => {
+exports.userAlreadyExistsWithEmail = async email => {
   try {
     const querySnapshot = await db
       .collection('users')
@@ -37,15 +8,37 @@ exports.getUserDocumentIdByEmail = async email => {
       .get();
 
     if (querySnapshot.empty) {
-      return null;
+      return {exists: false, id: null};
     }
     else {
-      return querySnapshot.docs[0].id;
+      const documentId = querySnapshot.docs[0].id;
+      return {exists: true, id: documentId};
     }
   }
-  catch (e) {
-    console.error(`Something went wrong with fetching user document ${e}`);
-    return null;
+  catch (errorUserAlreadyExistsWithEmail) {
+    console.error(errorUserAlreadyExistsWithEmail);
+    return {exists: false, id: null};
+  }
+};
+
+exports.lecturerAlreadyExistsWithEmail = async email => {
+  try {
+    const querySnapshot = await db
+      .collection('lecturers')
+      .where('email', '==', email)
+      .get();
+
+    if (querySnapshot.empty) {
+      return {exists: false, id: null};
+    }
+    else {
+      const documentId = querySnapshot.docs[0].id;
+      return {exists: true, id: documentId};
+    }
+  }
+  catch (errorLecturerAlreadyExistsWithEmail) {
+    console.error(errorLecturerAlreadyExistsWithEmail);
+    return {exists: false, id: null};
   }
 };
 
@@ -62,13 +55,8 @@ exports.getOTPDocumentsByEmail = async email => {
     .where('email', '==', email)
     .orderBy('expiryTime', 'desc')
     .get();
-  console.log(querySnapshot.docs[0].data());
-  if (querySnapshot.empty) {
-    return {error: `no OTP code found with ${email}`};
-  }
-  else {
-    return querySnapshot.docs[0].data();
-  }
+  if (querySnapshot.empty) return {error: `no OTP code found with ${email}`};
+  return querySnapshot.docs[0].data();
 };
 
 exports.deleteOTPDocumentsByEmail = async email => {
@@ -77,7 +65,7 @@ exports.deleteOTPDocumentsByEmail = async email => {
       .collection('reset-password-otp')
       .where('email', '==', email)
       .get();
-    if (querySnapshot.size >= 1) {
+    if (!querySnapshot.empty) {
       querySnapshot.forEach(snapshot => {
         snapshot.ref.delete();
       });
@@ -127,11 +115,11 @@ const isEmail = email => {
   return Boolean(email.match(regEx));
 };
 
-exports.validateAccountData = data => {
+exports.validateAccountData = (email, password) => {
   let errors = {};
 
-  validateEmailData(data.email, errors);
-  validatePasswordData(data.password, errors);
+  validateEmailData(email, errors);
+  validatePasswordData(password, errors);
 
   return {
     errors,

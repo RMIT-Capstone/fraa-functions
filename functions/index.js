@@ -3,12 +3,19 @@ const app = require('express')();
 const cors = require('cors');
 
 // routes
-const COURSE_ROUTES = require('./routes/courses');
-const ATTENDANCE_SESSION_ROUTES = require('./routes/attendance-session');
+const COURSES_ROUTES = require('./routes/courses');
+const ATTENDANCE_SESSIONS_ROUTES = require('./routes/attendance-sessions');
+const USERS_ROUTES = require('./routes/users');
 
 // handlers
-const {createUserInFirestore, deleteUserInFirestore} = require('./handlers/users/background');
-const {verifyOTP, generateOTP, signIn, createUserInAuth, changeUserPassword} = require('./handlers/users/https');
+const {
+  onCreateUser,
+  verifyOTP,
+  generateOTP,
+  signIn,
+  changeUserPassword
+} = require('./handlers/users/https');
+
 const {
   createCourse,
   getCourses,
@@ -21,6 +28,7 @@ const {
   subscribeUserToCourses,
   unsubscribeStudentFromCourses
 } = require('./handlers/courses/https');
+
 const {
   createAttendanceSession,
   getAttendanceSessionsByCourseCode,
@@ -30,55 +38,54 @@ const {
 } = require('./handlers/attendance-sessions/https');
 
 //middlewares
-const courseValidator = require('./utils/middlewares/courses');
-const attendanceSessionValidator = require('./utils/middlewares/attendance-sessions');
+const coursesValidator = require('./utils/middlewares/courses');
+const attendanceSessionsValidator = require('./utils/middlewares/attendance-sessions');
+const usersValidator = require('./utils/middlewares/users');
 
 app.use(cors());
 
-//TODO: check request parameters for users
 //TODO: check auth headers when doing CRUD operations
 
 // attendance session handlers
-app.post(`/${ATTENDANCE_SESSION_ROUTES.CREATE_ATTENDANCE_SESSION}`,
-  attendanceSessionValidator,
+app.post(`/${ATTENDANCE_SESSIONS_ROUTES.CREATE_ATTENDANCE_SESSION}`,
+  attendanceSessionsValidator,
   createAttendanceSession
 );
-app.post(`/${ATTENDANCE_SESSION_ROUTES.GET_ATTENDANCE_SESSIONS_BY_COURSE_CODE}`,
-  attendanceSessionValidator,
+app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_ATTENDANCE_SESSIONS_BY_COURSE_CODE}`,
+  attendanceSessionsValidator,
   getAttendanceSessionsByCourseCode
 );
-app.post(`/${ATTENDANCE_SESSION_ROUTES.GET_MORE_ATTENDANCE_SESSIONS_BY_COURSE_CODE}`,
-  attendanceSessionValidator,
+app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_MORE_ATTENDANCE_SESSIONS_BY_COURSE_CODE}`,
+  attendanceSessionsValidator,
   getMoreAttendanceSessionsByCourseCode
 );
-app.post(`/${ATTENDANCE_SESSION_ROUTES.GET_ATTENDANCE_SESSIONS_IN_DATE_RANGE}`,
-  attendanceSessionValidator,
+app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_ATTENDANCE_SESSIONS_IN_DATE_RANGE}`,
+  attendanceSessionsValidator,
   getAttendanceSessionsInDateRangeWithCourseCode
 );
-app.post(`/${ATTENDANCE_SESSION_ROUTES.GET_TODAY_ATTENDANCE_SESSIONS}`,
-  attendanceSessionValidator,
+app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_TODAY_ATTENDANCE_SESSIONS}`,
+  attendanceSessionsValidator,
   getTodayAttendanceSessionsByCourseCode
 );
 
 //courses
-app.post(`/${COURSE_ROUTES.CREATE_COURSE}`, courseValidator, createCourse);
-app.post(`/${COURSE_ROUTES.GET_COURSES}`, getCourses);
-app.post(`/${COURSE_ROUTES.GET_MORE_COURSES}`, courseValidator, getMoreCourses);
-app.post(`/${COURSE_ROUTES.GET_COURSES_BY_NAME}`, courseValidator, getCoursesByName);
-app.post(`/${COURSE_ROUTES.GET_MORE_COURSES_BY_NAME}`, courseValidator, getMoreCoursesByName);
-app.post(`/${COURSE_ROUTES.GET_COURSE_BY_CODE}`, courseValidator, getCourseByCode);
-app.post(`/${COURSE_ROUTES.UPDATE_COURSE}`, courseValidator, updateCourse);
-app.post(`/${COURSE_ROUTES.DELETE_COURSE}`, courseValidator, deleteCourse);
-app.post(`/${COURSE_ROUTES.SUBSCRIBE_COURSES}`, courseValidator, subscribeUserToCourses);
-app.post(`/${COURSE_ROUTES.UNSUBSCRIBE_COURSES}`, courseValidator, unsubscribeStudentFromCourses);
+app.post(`/${COURSES_ROUTES.CREATE_COURSE}`, coursesValidator, createCourse);
+app.post(`/${COURSES_ROUTES.GET_COURSES}`, getCourses);
+app.post(`/${COURSES_ROUTES.GET_MORE_COURSES}`, coursesValidator, getMoreCourses);
+app.post(`/${COURSES_ROUTES.GET_COURSES_BY_NAME}`, coursesValidator, getCoursesByName);
+app.post(`/${COURSES_ROUTES.GET_MORE_COURSES_BY_NAME}`, coursesValidator, getMoreCoursesByName);
+app.post(`/${COURSES_ROUTES.GET_COURSE_BY_CODE}`, coursesValidator, getCourseByCode);
+app.post(`/${COURSES_ROUTES.UPDATE_COURSE}`, coursesValidator, updateCourse);
+app.post(`/${COURSES_ROUTES.DELETE_COURSE}`, coursesValidator, deleteCourse);
+app.post(`/${COURSES_ROUTES.SUBSCRIBE_COURSES}`, coursesValidator, subscribeUserToCourses);
+app.post(`/${COURSES_ROUTES.UNSUBSCRIBE_COURSES}`, coursesValidator, unsubscribeStudentFromCourses);
 
 // user handlers
-app.post('/create_user', createUserInAuth);
-app.post('/sign_in', signIn);
-app.post('/generate_OTP', generateOTP);
-app.post('/verify_OTP', verifyOTP);
-app.post('/change_user_password', changeUserPassword);
+app.post(`/${USERS_ROUTES.CREATE_USER}`, usersValidator, onCreateUser);
+app.post(`/${USERS_ROUTES.CREATE_LECTURER}`, usersValidator, onCreateUser);
+app.post(`/${USERS_ROUTES.SIGN_IN}`, usersValidator, signIn);
+app.post(`/${USERS_ROUTES.CHANGE_PASSWORD}`, usersValidator, changeUserPassword);
+app.post(`/${USERS_ROUTES.GENERATE_OTP}`, usersValidator, generateOTP);
+app.post(`/${USERS_ROUTES.VERIFY_OTP}`, usersValidator, verifyOTP);
 
 exports.api = functions.region('asia-northeast1').https.onRequest(app);
-exports.onUserCreatedInAuth = functions.region('asia-northeast1').auth.user().onCreate(createUserInFirestore);
-exports.onUserDeletedInAuth = functions.region('asia-northeast1').auth.user().onDelete(deleteUserInFirestore);
