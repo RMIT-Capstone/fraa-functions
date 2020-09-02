@@ -1,7 +1,6 @@
-const {userDocumentExists} = require('../../users/helper');
 const {db} = require('../../../admin');
 
-exports.courseAlreadyExistsWithCourseCode = async code => {
+exports.getCourseDocumentIdWithCode = async code => {
   try {
     const querySnapshot = await db
       .collection('courses')
@@ -22,18 +21,14 @@ exports.courseAlreadyExistsWithCourseCode = async code => {
   }
 };
 
-exports.userAlreadySubscribedToCourse = async (userDocId, courseDocId) => {
+exports.userAlreadySubscribedToCourse = async (userDocId, courseCode) => {
   try {
-    const userDocExists = await userDocumentExists(userDocId);
-    if (!userDocExists) {
-      return null;
-    }
     const querySnapshot = await db
       .collection('users')
       .doc(userDocId)
       .get();
     const {subscribedCourses} = querySnapshot.data();
-    return subscribedCourses.includes(courseDocId);
+    return subscribedCourses.includes(courseCode);
   }
   catch (errorUserAlreadySubscribedToCourse) {
     console.error(errorUserAlreadySubscribedToCourse.message);

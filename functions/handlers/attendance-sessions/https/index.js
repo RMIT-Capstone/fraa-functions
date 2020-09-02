@@ -28,12 +28,14 @@ exports.getAttendanceSessionsByCourseCode = async (req, res) => {
       .orderBy('validOn')
       .limit(5)
       .get();
+
     querySnapshot.forEach(snapshot => {
       let data = snapshot.data();
       const {createdAt, expireOn, validOn} = data;
       data.createdAt = createdAt.toDate();
       data.expireOn = expireOn.toDate();
       data.validOn = validOn.toDate();
+      data.id = snapshot.id;
       sessions.push(data);
     });
     return res.json({sessions});
@@ -86,6 +88,7 @@ exports.getAttendanceSessionsInDateRangeWithCourseCode = async (req, res) => {
       data.createdAt = createdAt.toDate();
       data.expireOn = expireOn.toDate();
       data.validOn = validOn.toDate();
+      data.id = snapshot.id;
       if (courseCode === code) sessions.push(data);
     });
     return res.json({sessions});
@@ -131,8 +134,11 @@ exports.getTodayAttendanceSessionsByCourseCode = async (req, res) => {
   }
 };
 
+// exports.getUserAttendanceSession = async (req, res) => {
+//   const {email} = req.body;
+// }
+
 exports.registerStudentToAttendanceSession = async (req, res) => {
-  // TODO: check if user/attendance session exists
   const {email, sessionId} = req.body;
   try {
     await db

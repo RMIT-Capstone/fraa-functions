@@ -1,6 +1,6 @@
 const {db, admin} = require('../../../admin');
 
-exports.getUserDocumentIdWithId = async email => {
+exports.getUserDocumentIdWithEmail = async email => {
   try {
     const querySnapshot = await db
       .collection('users')
