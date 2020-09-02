@@ -4,6 +4,7 @@ const cors = require('cors');
 
 // routes
 const COURSE_ROUTES = require('./routes/courses');
+const ATTENDANCE_SESSION_ROUTES = require('./routes/attendance-session');
 
 // handlers
 const {createUserInFirestore, deleteUserInFirestore} = require('./handlers/users/background');
@@ -18,12 +19,19 @@ const {
   updateCourse,
   deleteCourse,
   subscribeUserToCourses,
-  unsubscribeStudentFromCourses,
+  unsubscribeStudentFromCourses
 } = require('./handlers/courses/https');
-const {createAttendanceSession} = require('./handlers/attendance-session/https');
+const {
+  createAttendanceSession,
+  getAttendanceSessionsByCourseCode,
+  getMoreAttendanceSessionsByCourseCode,
+  getAttendanceSessionsInDateRangeWithCourseCode,
+  getTodayAttendanceSessionsByCourseCode
+} = require('./handlers/attendance-sessions/https');
 
 //middlewares
 const courseValidator = require('./utils/middlewares/courses');
+const attendanceSessionValidator = require('./utils/middlewares/attendance-sessions');
 
 app.use(cors());
 
@@ -31,7 +39,26 @@ app.use(cors());
 //TODO: check auth headers when doing CRUD operations
 
 // attendance session handlers
-app.post('/create_attendance_session', createAttendanceSession);
+app.post(`/${ATTENDANCE_SESSION_ROUTES.CREATE_ATTENDANCE_SESSION}`,
+  attendanceSessionValidator,
+  createAttendanceSession
+);
+app.post(`/${ATTENDANCE_SESSION_ROUTES.GET_ATTENDANCE_SESSIONS_BY_COURSE_CODE}`,
+  attendanceSessionValidator,
+  getAttendanceSessionsByCourseCode
+);
+app.post(`/${ATTENDANCE_SESSION_ROUTES.GET_MORE_ATTENDANCE_SESSIONS_BY_COURSE_CODE}`,
+  attendanceSessionValidator,
+  getMoreAttendanceSessionsByCourseCode
+);
+app.post(`/${ATTENDANCE_SESSION_ROUTES.GET_ATTENDANCE_SESSIONS_IN_DATE_RANGE}`,
+  attendanceSessionValidator,
+  getAttendanceSessionsInDateRangeWithCourseCode
+);
+app.post(`/${ATTENDANCE_SESSION_ROUTES.GET_TODAY_ATTENDANCE_SESSIONS}`,
+  attendanceSessionValidator,
+  getTodayAttendanceSessionsByCourseCode
+);
 
 //courses
 app.post(`/${COURSE_ROUTES.CREATE_COURSE}`, courseValidator, createCourse);
