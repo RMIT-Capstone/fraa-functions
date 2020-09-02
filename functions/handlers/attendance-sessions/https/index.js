@@ -1,4 +1,4 @@
-const {db} = require('../../../utils/admin');
+const {db, admin} = require('../../../utils/admin');
 
 exports.createAttendanceSession = async (req, res) => {
   const {content: QRCodeContent} = req.body;
@@ -10,7 +10,7 @@ exports.createAttendanceSession = async (req, res) => {
     await db
       .collection('attendance-sessions')
       .add(QRCodeContent);
-    return res.json({message: 'attendance session created'});
+    return res.json({success: 'attendance session created'});
   }
   catch (errorGenerateQrCode) {
     console.error(`Failed to generateQrCode: ${errorGenerateQrCode}`);
@@ -104,7 +104,7 @@ exports.getTodayAttendanceSessionsByCourseCode = async (req, res) => {
     const start = new Date();
     start.setHours(0, 0, 0, 0);
     const end = new Date();
-    end.setHours(23, 59, 59, 59);
+    end.setHours(23, 59, 59, 999);
     const querySnapshot = await db
       .collection('attendance-sessions')
       .where('validOn', '>=', start)
@@ -118,6 +118,7 @@ exports.getTodayAttendanceSessionsByCourseCode = async (req, res) => {
       data.createdAt = createdAt.toDate();
       data.validOn = validOn.toDate();
       data.expireOn = expireOn.toDate();
+      data.id = snapshot.id;
       if (courseCode === code) sessions.push(data);
     });
     return res.json({sessions});
@@ -127,5 +128,25 @@ exports.getTodayAttendanceSessionsByCourseCode = async (req, res) => {
       'Something went wrong with get today attendance session by course code: ',
       errorGetTodaySessionsByCourseCode);
     return res.json({error: errorGetTodaySessionsByCourseCode});
+  }
+};
+
+exports.registerStudentToAttendanceSession = async (req, res) => {
+  // TODO: check if user/attendance session exists
+  const {email, sessionId} = req.body;
+  try {
+    await db
+      .collection('attendance-sessions')
+      .doc(sessionId)
+      .update({
+        attendees: admin.firestore.FieldValue.arrayUnion(email)
+      });
+    return res.json({success: 'user registered'});
+  }
+  catch (errorRegisterStudentToAttendanceSession) {
+    console.error(
+      'Something went wrong with register student to attendance session',
+      errorRegisterStudentToAttendanceSession);
+    return res.json({error: 'Something went wrong. Try again'});
   }
 };

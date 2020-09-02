@@ -16,7 +16,7 @@ exports.sendEmail = async (req, res) => {
   };
   try {
     await sgMail.send(msg);
-    return res.json({message: 'email sent'});
+    return res.json({success: 'email sent'});
   }
   catch (errorSendEmail) {
     return res.json({error: errorSendEmail});
@@ -37,6 +37,6 @@ exports.sendOTPToUser = async (email, OTP) => {
     await sgMail.send(msg);
   }
   catch (errorSendEmail) {
-    console.error(`Something went wrong with sendOTPToUser() - ${errorSendEmail}`);
+    console.error(`Something went wrong with send OTP to user: ${errorSendEmail}`);
   }
 };

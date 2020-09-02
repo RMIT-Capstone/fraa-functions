@@ -34,7 +34,8 @@ const {
   getAttendanceSessionsByCourseCode,
   getMoreAttendanceSessionsByCourseCode,
   getAttendanceSessionsInDateRangeWithCourseCode,
-  getTodayAttendanceSessionsByCourseCode
+  getTodayAttendanceSessionsByCourseCode,
+  registerStudentToAttendanceSession
 } = require('./handlers/attendance-sessions/https');
 
 //middlewares
@@ -45,6 +46,7 @@ const usersValidator = require('./utils/middlewares/users');
 app.use(cors());
 
 //TODO: check auth headers when doing CRUD operations
+//TODO: register student to attendance session
 
 // attendance session handlers
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.CREATE_ATTENDANCE_SESSION}`,
@@ -66,6 +68,10 @@ app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_ATTENDANCE_SESSIONS_IN_DATE_RANGE}`,
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_TODAY_ATTENDANCE_SESSIONS}`,
   attendanceSessionsValidator,
   getTodayAttendanceSessionsByCourseCode
+);
+app.post(`/${ATTENDANCE_SESSIONS_ROUTES.REGISTER_STUDENT_TO_ATTENDANCE_SESSION}`,
+  attendanceSessionsValidator,
+  registerStudentToAttendanceSession
 );
 
 //courses
