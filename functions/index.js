@@ -47,6 +47,8 @@ app.use(cors());
 
 //TODO: check auth headers when doing CRUD operations
 //TODO: check missing fields in request headers
+//TODO: Fix request body missing fields message
+//TODO: Replace error message with error function and success messages with message function
 
 // attendance session handlers
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.CREATE_ATTENDANCE_SESSION}`,
