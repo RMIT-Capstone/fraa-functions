@@ -31,7 +31,9 @@ exports.getCourses = async (req, res) => {
       .limit(5)
       .get();
     querySnapshot.forEach(snap => {
-      courses.push(snap.data());
+      const data = snap.data();
+      data.createdAt = data.createdAt.toDate();
+      courses.push(data);
     });
     return res.json({courses});
   }

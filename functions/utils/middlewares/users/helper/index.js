@@ -1,4 +1,5 @@
 const {db, admin} = require('../../../admin');
+const ERROR_MESSAGE = require('../../../../handlers/constants/ErrorMessages');
 
 exports.getUserDocumentIdWithEmail = async email => {
   try {
@@ -116,29 +117,34 @@ const isEmail = email => {
 };
 
 exports.validateAccountData = (email, password) => {
-  let errors = {};
-
-  validateEmailData(email, errors);
-  validatePasswordData(password, errors);
-
+  let error = {};
+  validateEmailData(email, error);
+  validatePasswordData(password, error);
   return {
-    errors,
-    valid: Object.keys(errors).length === 0
+    error,
+    valid: Object.keys(error).length === 0
   };
 };
 
-const validateEmailData = (email, errors) => {
+const validateEmailData = (email, errorObj) => {
   if (stringIsEmpty(email)) {
-    errors.email = 'Email must not be empty';
+    errorObj.email = 'Email must not be empty';
   }
   else if (!isEmail(email)) {
-    errors.email = 'Invalid email address';
+    errorObj.email = 'Invalid email address';
   }
 };
 
-const validatePasswordData = (password, errors) => {
-  if (stringIsEmpty(password)) errors.password = 'Password must not be empty';
-  else if (password.length < 6) errors.password = 'Password length must be more than 6 characters';
+const validatePasswordData = (password, errorObj) => {
+  if (stringIsEmpty(password)) errorObj.password = 'Password must not be empty';
+  else if (password.length < 6) errorObj.password = 'Password length must be more than 6 characters';
+};
+
+exports.validateCreateLecturerRequest = (name, school) => {
+  let error = {};
+  if (!name) error.name = `${ERROR_MESSAGE.MISSING_FIELD} lecturer name.`;
+  if (!school) error.school = `${ERROR_MESSAGE.MISSING_FIELD} school.`;
+  return {error, valid: Object.keys(error).length === 0};
 };
 
 
