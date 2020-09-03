@@ -81,7 +81,7 @@ const createUserInAuth = async (email, password) => {
     }
     else {
       console.error('Something went wrong with create user in auth: ', errorCreateUserInAuth);
-      return {idToken: null, error: e};
+      return {idToken: null, error: errorCreateUserInAuth};
     }
   }
 };

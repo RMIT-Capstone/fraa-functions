@@ -9,6 +9,7 @@ const ERROR_MESSAGES = require('../../constants/ErrorMessages');
 exports.createCourse = async (req, res) => {
   const {course} = req.body;
   course.name = course.name.toLowerCase().split(' ');
+  course.createdAt = new Date();
   try {
     await db
       .collection('courses')
@@ -126,6 +127,7 @@ exports.getMoreCoursesByName = async (req, res) => {
 };
 
 exports.updateCourse = async (req, res) => {
+  // very important thing to note is that course code cannot be updated
   const {course} = req.body;
   course.name = course.name.toLowerCase().split(' ');
   try {

@@ -46,7 +46,7 @@ const usersValidator = require('./utils/middlewares/users');
 app.use(cors());
 
 //TODO: check auth headers when doing CRUD operations
-//TODO: register student to attendance session
+//TODO: check missing fields in request headers
 
 // attendance session handlers
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.CREATE_ATTENDANCE_SESSION}`,
