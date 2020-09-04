@@ -5,7 +5,7 @@ const {
   generateOTPCode,
   getOTPDocumentsByEmail,
   deleteOTPDocumentsByEmail,
-} = require('../../../utils/middlewares/users/helper');
+} = require('../../../helpers/users-helpers');
 const ERROR_MESSAGE = require('../../constants/ErrorMessages');
 
 exports.onCreateUser = async (req, res) => {
@@ -14,18 +14,17 @@ exports.onCreateUser = async (req, res) => {
     const createUser = await Promise.all([
       isLecturer ? createLecturerInFirestore(email, name, school) : createUserInFirestore(email),
       createUserInAuth(email, password)]);
-    // needs a better way to catch errors from the promises, may be map and catch ?
     const {error: errorCreateInFirestore} = createUser[0];
     const {error: errorCreateInFirebaseAuth, idToken} = createUser[1];
     if (errorCreateInFirestore) {
       console.error('Something went wrong with create user: ', errorCreateInFirestore);
-      return res.json({error: ERROR_MESSAGE.GENERIC_ERROR_MESSAGE});
+      return res.status(500).send({error: `${ERROR_MESSAGE.GENERIC_ERROR_MESSAGE}`});
     }
     if (errorCreateInFirebaseAuth) {
-      console.error('Something went wrong with create user: ', errorCreateInFirebaseAuth);
-      return res.json({error: ERROR_MESSAGE.GENERIC_ERROR_MESSAGE});
+      console.error('Something went wrong with create user: ', errorCreateInFirestore);
+      return res.status(500).send({error: `${ERROR_MESSAGE.GENERIC_ERROR_MESSAGE}`});
     }
-    return res.json({token: idToken});
+    return res.status(200).json({idToken});
   }
   catch (errorOnCreateUser) {
     console.error('Something went wrong with create user: ', errorOnCreateUser);
@@ -137,7 +136,6 @@ exports.verifyOTP = async (req, res) => {
     else {
       const {OTP, expiryTime} = otpDocumentSnapshot;
       const now = new Date();
-      console.log(OTP, expiryTime.toDate(), now.toISOString(), 'aaa');
 
       if (expiryTime.toDate() < now) {
         return res.json({error: 'OTP expired.'});

@@ -1,12 +1,12 @@
-const {sendErrorMessage, sendErrorObject} = require('../../helpers');
-const {getUserDocumentIdWithEmail} = require('../users/helper');
+const {sendErrorMessage, sendErrorObject} = require('../../../helpers/express-helpers');
+const {getUserDocumentIdWithEmail} = require('../../../helpers/users-helpers');
 const {
   getCourseDocumentIdWithCode,
   validateCreateCourseRequest,
   validateGetMoreCoursesByNameRequest,
   validateCourseSubscriptionRequest
-} = require('./helper');
-const COURSE_ROUTES = require('../../../routes/courses');
+} = require('../../../helpers/courses-helpers');
+const COURSE_ROUTES = require('../../routes/courses');
 const ERROR_MESSAGES = require('../../../handlers/constants/ErrorMessages');
 
 
@@ -65,7 +65,7 @@ module.exports = async (req, res, next) => {
     const {error, valid} = validateCourseSubscriptionRequest(email, courses);
     if (!valid) return sendErrorObject(res, error);
     let invalidCourses = [];
-    // use promise all to concurrently check for courses that do not exist
+    // use promise all to concurrently check for courses-helpers that do not exist
     // cannot use for each or map because it will throw an error for sending a response message when a message is
     // already sent
     await Promise.all(courses.map(async courseCode => {

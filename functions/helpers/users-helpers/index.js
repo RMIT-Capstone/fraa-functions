@@ -1,5 +1,5 @@
-const {db, admin} = require('../../../admin');
-const ERROR_MESSAGE = require('../../../../handlers/constants/ErrorMessages');
+const {db, admin} = require('../../utils/admin');
+const ERROR_MESSAGE = require('../../handlers/constants/ErrorMessages');
 
 exports.getUserDocumentIdWithEmail = async email => {
   try {

@@ -1,8 +1,8 @@
-const {getUserDocumentIdWithEmail} = require('../../../utils/middlewares/users/helper');
+const {getUserDocumentIdWithEmail} = require('../../../helpers/users-helpers');
 const {
   userAlreadySubscribedToCourse,
   getCourseDocumentIdWithCode
-} = require('../../../utils/middlewares/courses/helper');
+} = require('../../../helpers/courses-helpers');
 const {db, admin} = require('../../../utils/admin');
 const ERROR_MESSAGES = require('../../constants/ErrorMessages');
 
@@ -38,7 +38,7 @@ exports.getCourses = async (req, res) => {
     return res.json({courses});
   }
   catch (errorGetCourses) {
-    console.error('Something went wrong with get courses: ', errorGetCourses);
+    console.error('Something went wrong with get courses-helpers: ', errorGetCourses);
     return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
   }
 };
@@ -60,7 +60,7 @@ exports.getMoreCourses = async (req, res) => {
     return res.json({courses});
   }
   catch (errorGetMoreCourses) {
-    console.error('Something went wrong with get more courses: ', errorGetMoreCourses);
+    console.error('Something went wrong with get more courses-helpers: ', errorGetMoreCourses);
     return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
   }
 };
@@ -123,7 +123,7 @@ exports.getMoreCoursesByName = async (req, res) => {
     return res.json({courses});
   }
   catch (errorGetMoreCoursesByName) {
-    console.error('Something went wrong with get more courses by name: ', errorGetMoreCoursesByName);
+    console.error('Something went wrong with get more courses-helpers by name: ', errorGetMoreCoursesByName);
     return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
   }
 };
@@ -184,7 +184,7 @@ exports.subscribeUserToCourses = async (req, res) => {
     return res.json({success: 'User subscribed to course(s).'});
   }
   catch (errorSubscribeUserToCourses) {
-    console.error('Something went wrong with subscribe user to courses: ', errorSubscribeUserToCourses);
+    console.error('Something went wrong with subscribe user to courses-helpers: ', errorSubscribeUserToCourses);
     return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
   }
 };
@@ -218,7 +218,7 @@ exports.unsubscribeStudentFromCourses = async (req, res) => {
     return res.json({success: 'User unsubscribed from course(s).'});
   }
   catch (errorUnsubscribeUserFromCourses) {
-    console.error('Something went wrong with unsubscribe user from courses: ', errorUnsubscribeUserFromCourses);
+    console.error('Something went wrong with unsubscribe user from courses-helpers: ', errorUnsubscribeUserFromCourses);
     return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
   }
 };

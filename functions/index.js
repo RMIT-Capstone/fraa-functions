@@ -3,9 +3,9 @@ const app = require('express')();
 const cors = require('cors');
 
 // routes
-const COURSES_ROUTES = require('./routes/courses');
-const ATTENDANCE_SESSIONS_ROUTES = require('./routes/attendance-sessions');
-const USERS_ROUTES = require('./routes/users');
+const COURSES_ROUTES = require('./utils/routes/courses');
+const ATTENDANCE_SESSIONS_ROUTES = require('./utils/routes/attendance-sessions');
+const USERS_ROUTES = require('./utils/routes/users');
 
 // handlers
 const {
@@ -33,8 +33,9 @@ const {
   createAttendanceSession,
   getAttendanceSessionsByCourseCode,
   getMoreAttendanceSessionsByCourseCode,
-  getAttendanceSessionsInDateRangeWithCourseCode,
-  getTodayAttendanceSessionsByCourseCode,
+  getAttendanceSessionsInDateRangeOfCourses,
+  getDailyAttendanceSessionsOfCourses,
+  getMonthlyAttendanceSessionOfCourses,
   registerStudentToAttendanceSession
 } = require('./handlers/attendance-sessions/https');
 
@@ -46,9 +47,7 @@ const usersValidator = require('./utils/middlewares/users');
 app.use(cors());
 
 //TODO: check auth headers when doing CRUD operations
-//TODO: check missing fields in request headers
-//TODO: Fix request body missing fields message
-//TODO: Replace error message with error function and success messages with message function
+//TODO: make sure get monthly attendance session month is between 0 - 11
 
 // attendance session handlers
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.CREATE_ATTENDANCE_SESSION}`,
@@ -65,18 +64,22 @@ app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_MORE_ATTENDANCE_SESSIONS_BY_COURSE_C
 );
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_ATTENDANCE_SESSIONS_IN_DATE_RANGE}`,
   attendanceSessionsValidator,
-  getAttendanceSessionsInDateRangeWithCourseCode
+  getAttendanceSessionsInDateRangeOfCourses
 );
-app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_TODAY_ATTENDANCE_SESSIONS}`,
+app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_DAILY_ATTENDANCE_SESSION}`,
   attendanceSessionsValidator,
-  getTodayAttendanceSessionsByCourseCode
+  getDailyAttendanceSessionsOfCourses
+);
+app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_MONTHLY_ATTENDANCE_SESSIONS}`,
+  attendanceSessionsValidator,
+  getMonthlyAttendanceSessionOfCourses
 );
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.REGISTER_STUDENT_TO_ATTENDANCE_SESSION}`,
   attendanceSessionsValidator,
   registerStudentToAttendanceSession
 );
 
-//courses
+//courses-helpers
 app.post(`/${COURSES_ROUTES.CREATE_COURSE}`, coursesValidator, createCourse);
 app.post(`/${COURSES_ROUTES.GET_COURSES}`, getCourses);
 app.post(`/${COURSES_ROUTES.GET_MORE_COURSES}`, coursesValidator, getMoreCourses);

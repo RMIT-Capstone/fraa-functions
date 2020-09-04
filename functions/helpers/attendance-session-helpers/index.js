@@ -1,5 +1,5 @@
-const {db} = require('../../../admin');
-const ERROR_MESSAGES = require('../../../../handlers/constants/ErrorMessages');
+const {db} = require('../../utils/admin');
+const ERROR_MESSAGES = require('../../handlers/constants/ErrorMessages');
 
 exports.getAttendanceSessionDocumentIdByDate = async date => {
   try {
@@ -54,9 +54,9 @@ exports.validateGetMoreAttendanceByCourseCodeRequest = (courseCode, startAfter) 
   return {error, valid: Object.keys(error).length === 0};
 };
 
-exports.validateGetAttendanceSessionInDateRangeRequest = (courseCode, startTime, endTime) => {
+exports.validateGetAttendanceSessionInDateRangeRequest = (courses, startTime, endTime) => {
   let error = {};
-  if (!courseCode) error.courseCode = `${ERROR_MESSAGES.MISSING_FIELD} course code.`;
+  if (!courses) error.courseCode = `${ERROR_MESSAGES.MISSING_FIELD} courses.`;
   if (!startTime) error.startTime = `${ERROR_MESSAGES.MISSING_FIELD} startTime.`;
   if (!endTime) error.endTime = `${ERROR_MESSAGES.MISSING_FIELD} endTime.`;
   return {error, valid: Object.keys(error).length === 0};

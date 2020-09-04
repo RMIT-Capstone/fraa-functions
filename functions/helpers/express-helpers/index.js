@@ -9,3 +9,7 @@ exports.sendErrorObject = (response, error) => {
 exports.sendSuccessMessage = (response, message) => {
   return response.status(200).send({success: message});
 };
+
+exports.sendSuccessObject = (response, success) => {
+  return response.status(200).send({success});
+};

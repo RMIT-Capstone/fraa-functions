@@ -1,5 +1,5 @@
-const ERROR_MESSAGES = require('../../../../handlers/constants/ErrorMessages');
-const {db} = require('../../../admin');
+const ERROR_MESSAGES = require('../../handlers/constants/ErrorMessages');
+const {db} = require('../../utils/admin');
 
 exports.getCourseDocumentIdWithCode = async code => {
   try {

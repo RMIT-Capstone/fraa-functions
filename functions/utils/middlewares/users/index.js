@@ -1,9 +1,13 @@
-const USERS_ROUTES = require('../../../routes/users');
-const {getUserDocumentIdWithEmail, lecturerAlreadyExistsWithEmail, validateAccountData} = require('./helper');
+const USERS_ROUTES = require('../../routes/users');
+const {
+  getUserDocumentIdWithEmail,
+  lecturerAlreadyExistsWithEmail,
+  validateAccountData
+} = require('../../../helpers/users-helpers');
 const ERROR_MESSAGES = require('../../../handlers/constants/ErrorMessages');
-const {validateCreateLecturerRequest} = require('./helper');
-const {sendErrorObject} = require('../../helpers');
-const {sendErrorMessage} = require("../../helpers");
+const {validateCreateLecturerRequest} = require('../../../helpers/users-helpers');
+const {sendErrorObject} = require('../../../helpers/express-helpers');
+const {sendErrorMessage} = require("../../../helpers/express-helpers");
 
 module.exports = async (req, res, next) => {
   const path = req.path.split('/')[1];
