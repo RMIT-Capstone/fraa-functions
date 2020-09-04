@@ -1,4 +1,5 @@
 const {db, admin} = require('../../../utils/admin');
+const ERROR_MESSAGES = require('../../constants/ErrorMessages');
 
 exports.createAttendanceSession = async (req, res) => {
   const {content: QRCodeContent} = req.body;
@@ -10,67 +11,16 @@ exports.createAttendanceSession = async (req, res) => {
     await db
       .collection('attendance-sessions')
       .add(QRCodeContent);
-    return res.json({success: 'attendance session created'});
+    return res.json({success: 'Attendance session created.'});
   }
   catch (errorGenerateQrCode) {
     console.error(`Failed to generateQrCode: ${errorGenerateQrCode}`);
-    return res.json({error: 'Something went wrong. Try again.'});
+    return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
   }
 };
 
-exports.getAttendanceSessionsByCourseCode = async (req, res) => {
-  const {courseCode} = req.body;
-  try {
-    let sessions = [];
-    const querySnapshot = await db
-      .collection('attendance-sessions')
-      .where('courseCode', '==', courseCode)
-      .orderBy('validOn')
-      .limit(5)
-      .get();
-    querySnapshot.forEach(snapshot => {
-      let data = snapshot.data();
-      const {createdAt, expireOn, validOn} = data;
-      data.createdAt = createdAt.toDate();
-      data.expireOn = expireOn.toDate();
-      data.validOn = validOn.toDate();
-      sessions.push(data);
-    });
-    return res.json({sessions});
-  }
-  catch (errorGetAttendanceSessionByCourseCode) {
-    console.error('Something went wrong with get attendance session by course code: ',
-      errorGetAttendanceSessionByCourseCode);
-    return res.json({error: 'Something went wrong. Try again'});
-  }
-};
-
-exports.getMoreAttendanceSessionsByCourseCode = async (req, res) => {
-  const {courseCode, startAfter} = req.body;
-  try {
-    let sessions = [];
-    const querySnapshot = await db
-      .collection('attendance-sessions')
-      .where('courseCode', '==', courseCode)
-      .orderBy('validOn')
-      .startAfter(startAfter)
-      .limit(5)
-      .get();
-
-    querySnapshot.forEach(snapshot => {
-      sessions.push(snapshot.data());
-    });
-    return res.json({sessions});
-  }
-  catch (errorGetMoreAttendanceSessions) {
-    console.error('Something went wrong with get more attendance session by course code: ',
-      errorGetMoreAttendanceSessions);
-    return res.json({error: 'Something went wrong. Try again'});
-  }
-};
-
-exports.getAttendanceSessionsInDateRangeWithCourseCode = async (req, res) => {
-  const {courseCode, startTime, endTime} = req.body;
+exports.getAttendanceSessionsInDateRangeOfCourses = async (req, res) => {
+  const {courses, startTime, endTime} = req.body;
   try {
     let sessions = [];
     const querySnapshot = await db
@@ -82,25 +32,25 @@ exports.getAttendanceSessionsInDateRangeWithCourseCode = async (req, res) => {
 
     querySnapshot.forEach(snapshot => {
       let data = snapshot.data();
-      const {createdAt, expireOn, validOn, courseCode: code} = data;
-      data.createdAt = createdAt.toDate();
-      data.expireOn = expireOn.toDate();
-      data.validOn = validOn.toDate();
-      if (courseCode === code) sessions.push(data);
+      const {courseCode} = data;
+      transformAttendanceSessionData(data, snapshot);
+      if (courses.includes(courseCode)) sessions.push(data);
     });
     return res.json({sessions});
   }
   catch (errorGetAttendanceSessionByDateWithCourseCode) {
     console.error('Something went wrong with get attendance sessions by date with course code: ',
       errorGetAttendanceSessionByDateWithCourseCode);
-    return res.json({error: 'Something went wrong. Try again'});
+    return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
   }
 };
 
-exports.getTodayAttendanceSessionsByCourseCode = async (req, res) => {
-  const {courseCode} = req.body;
+exports.getDailyAttendanceSessionsOfCourses = async (req, res) => {
+  const {courses} = req.body;
   try {
-    let sessions = [];
+    let sessions = {};
+    courses.map(course => sessions[`${course}`] = []);
+
     const start = new Date();
     start.setHours(0, 0, 0, 0);
     const end = new Date();
@@ -114,12 +64,10 @@ exports.getTodayAttendanceSessionsByCourseCode = async (req, res) => {
 
     querySnapshot.forEach(snapshot => {
       let data = snapshot.data();
-      const {createdAt, validOn, expireOn, courseCode: code} = data;
-      data.createdAt = createdAt.toDate();
-      data.validOn = validOn.toDate();
-      data.expireOn = expireOn.toDate();
-      data.id = snapshot.id;
-      if (courseCode === code) sessions.push(data);
+      const {courseCode: code} = data;
+      for (const courseCode in sessions) {
+        if (courseCode === code) sessions[courseCode].push(data);
+      }
     });
     return res.json({sessions});
   }
@@ -127,12 +75,45 @@ exports.getTodayAttendanceSessionsByCourseCode = async (req, res) => {
     console.error(
       'Something went wrong with get today attendance session by course code: ',
       errorGetTodaySessionsByCourseCode);
-    return res.json({error: errorGetTodaySessionsByCourseCode});
+    return res.json({error: `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`});
+  }
+};
+
+exports.getMonthlyAttendanceSessionOfCourses = async (req, res) => {
+  const {courses, month} = req.body;
+  try {
+    let sessions = {};
+    courses.map(course => sessions[`${course}`] = []);
+
+    const today = new Date();
+    const firstDayOfMonth = new Date(today.getFullYear(), month, 1);
+    const lastDayOfMonth = new Date(today.getFullYear(), month + 1, 0);
+    const querySnapshot = await db
+      .collection('attendance-sessions')
+      .where('validOn', '>=', firstDayOfMonth)
+      .where('validOn', '<=', lastDayOfMonth)
+      .orderBy('validOn')
+      .get();
+
+    querySnapshot.forEach(snapshot => {
+      let data = snapshot.data();
+      const {courseCode: code} = data;
+      transformAttendanceSessionData(data, snapshot);
+      for (const courseCode in sessions) {
+        if (courseCode === code) sessions[courseCode].push(data);
+      }
+    });
+    return res.json({sessions});
+  }
+  catch (errorGetMonthlyAttendanceSessionOfUser) {
+    console.error(
+      'Something went wrong with get monthly attendance session: ',
+      errorGetMonthlyAttendanceSessionOfUser);
+    return res.json({error: `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`});
   }
 };
 
 exports.registerStudentToAttendanceSession = async (req, res) => {
-  // TODO: check if user/attendance session exists
   const {email, sessionId} = req.body;
   try {
     await db
@@ -141,12 +122,20 @@ exports.registerStudentToAttendanceSession = async (req, res) => {
       .update({
         attendees: admin.firestore.FieldValue.arrayUnion(email)
       });
-    return res.json({success: 'user registered'});
+    return res.json({success: 'User registered.'});
   }
   catch (errorRegisterStudentToAttendanceSession) {
     console.error(
       'Something went wrong with register student to attendance session',
       errorRegisterStudentToAttendanceSession);
-    return res.json({error: 'Something went wrong. Try again'});
+    return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
   }
+};
+
+const transformAttendanceSessionData = (data, snapshot) => {
+  const {createdAt, expireOn, validOn} = data;
+  data.createdAt = createdAt.toDate();
+  data.expireOn = expireOn.toDate();
+  data.validOn = validOn.toDate();
+  data.id = snapshot.id;
 };

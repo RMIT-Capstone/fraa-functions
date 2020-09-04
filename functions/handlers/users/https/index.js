@@ -5,31 +5,30 @@ const {
   generateOTPCode,
   getOTPDocumentsByEmail,
   deleteOTPDocumentsByEmail,
-} = require('../../../utils/middlewares/users/helper');
+} = require('../../../helpers/users-helpers');
+const ERROR_MESSAGE = require('../../constants/ErrorMessages');
 
 exports.onCreateUser = async (req, res) => {
   const {email, password, name, school, isLecturer} = req.body;
-  console.log(isLecturer);
   try {
     const createUser = await Promise.all([
       isLecturer ? createLecturerInFirestore(email, name, school) : createUserInFirestore(email),
       createUserInAuth(email, password)]);
-    // needs a better way to catch errors from the promises, may be map and catch ?
     const {error: errorCreateInFirestore} = createUser[0];
     const {error: errorCreateInFirebaseAuth, idToken} = createUser[1];
     if (errorCreateInFirestore) {
       console.error('Something went wrong with create user: ', errorCreateInFirestore);
-      return res.json({error: 'Something went wrong. Try again'});
+      return res.status(500).send({error: `${ERROR_MESSAGE.GENERIC_ERROR_MESSAGE}`});
     }
     if (errorCreateInFirebaseAuth) {
-      console.error('Something went wrong with create user: ', errorCreateInFirebaseAuth);
-      return res.json({error: 'Something went wrong. Try again'});
+      console.error('Something went wrong with create user: ', errorCreateInFirestore);
+      return res.status(500).send({error: `${ERROR_MESSAGE.GENERIC_ERROR_MESSAGE}`});
     }
-    return res.json({token: idToken});
+    return res.status(200).json({idToken});
   }
   catch (errorOnCreateUser) {
     console.error('Something went wrong with create user: ', errorOnCreateUser);
-    return res.json({error: 'Something went wrong. Try again'});
+    return res.json({error: ERROR_MESSAGE.GENERIC_ERROR_MESSAGE});
   }
 };
 
@@ -81,7 +80,7 @@ const createUserInAuth = async (email, password) => {
     }
     else {
       console.error('Something went wrong with create user in auth: ', errorCreateUserInAuth);
-      return {idToken: null, error: e};
+      return {idToken: null, error: errorCreateUserInAuth};
     }
   }
 };
@@ -101,8 +100,8 @@ exports.signIn = async (req, res) => {
       return res.json({error: 'User does not exist'});
     }
     else {
-      console.error('Something went wrong with sign in', errorSignIn);
-      return res.json({error: 'Something went wrong. Try again.'});
+      console.error('Something went wrong with sign in: ', errorSignIn);
+      return res.json({error: ERROR_MESSAGE.GENERIC_ERROR_MESSAGE});
     }
   }
 };
@@ -120,11 +119,11 @@ exports.generateOTP = async (req, res) => {
       expiryTime: fiveMinutesFromNow,
     });
     await sendOTPToUser(email, OTP);
-    return res.json({success: 'OTP code created'});
+    return res.json({success: 'OTP code created.'});
   }
   catch (errorGenerateOTP) {
     console.error('Something went wrong with generate OTP: ', errorGenerateOTP);
-    return res.json({error: 'Something went wrong. Try again.'});
+    return res.json({error: ERROR_MESSAGE.GENERIC_ERROR_MESSAGE});
   }
 
 };
@@ -137,23 +136,22 @@ exports.verifyOTP = async (req, res) => {
     else {
       const {OTP, expiryTime} = otpDocumentSnapshot;
       const now = new Date();
-      console.log(OTP, expiryTime.toDate(), now.toISOString(), 'aaa');
 
       if (expiryTime.toDate() < now) {
-        return res.json({error: 'OTP expired'});
+        return res.json({error: 'OTP expired.'});
       }
       if (OTP === userOTP) {
         await deleteOTPDocumentsByEmail(email);
-        return res.json({success: 'valid OTP'});
+        return res.json({success: 'Valid OTP.'});
       }
       else {
-        return res.json({error: 'invalid OTP'});
+        return res.json({error: 'Invalid OTP.'});
       }
     }
   }
   catch (errorVerifyOTP) {
     console.error('Something went wrong with verify OTP: ', errorVerifyOTP);
-    return res.json({error: 'Something went wrong. Try again.'});
+    return res.json({error: ERROR_MESSAGE.GENERIC_ERROR_MESSAGE});
   }
 };
 
@@ -161,14 +159,14 @@ exports.changeUserPassword = async (req, res) => {
   const {email, password} = req.body;
   try {
     const recordId = await getUserIdInFBAuthWithEmail(email);
-    if (!recordId) return res.json({error: 'User does not exist'});
+    if (!recordId) return res.json({error: 'User does not exist.'});
     await admin.auth().updateUser(recordId, {
       password: password
     });
-    return res.json({success: 'password updated successfully'});
+    return res.json({success: 'Password updated successfully.'});
   }
   catch (errorChangeUserPassword) {
     console.error('Something went wrong with change user password: ', errorChangeUserPassword);
-    return res.json({error: 'Something went wrong. Try again.'});
+    return res.json({error: ERROR_MESSAGE.GENERIC_ERROR_MESSAGE});
   }
 };
