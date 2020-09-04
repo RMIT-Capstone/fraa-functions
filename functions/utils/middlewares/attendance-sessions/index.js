@@ -4,7 +4,6 @@ const {
   attendanceSessionExistsWithDocId,
   userAlreadyRegisteredToAttendanceSession,
   validateCreateAttendanceSessionRequest,
-  validateGetMoreAttendanceByCourseCodeRequest,
   validateGetAttendanceSessionInDateRangeRequest,
   validateRegisterStudentToAttendanceSessionRequest
 } = require('../../../helpers/attendance-session-helpers');
@@ -23,21 +22,6 @@ module.exports = async (req, res, next) => {
     if (!exists) return sendErrorMessage(res, `${ERROR_MESSAGE.COURSE_DOES_NOT_EXISTS} ${courseCode}.`);
   }
 
-  if (path === ATTENDANCE_SESSIONS_ROUTES.GET_ATTENDANCE_SESSIONS_BY_COURSE_CODE) {
-    const {courseCode} = req.body;
-    if (!courseCode) return sendErrorMessage(res, `${ERROR_MESSAGE.MISSING_FIELD} course code.`);
-    const {exists} = await getCourseDocumentIdWithCode(courseCode);
-    if (!exists) return sendErrorMessage(res, `${ERROR_MESSAGE.COURSE_DOES_NOT_EXISTS} ${courseCode}`);
-  }
-
-  if (path === ATTENDANCE_SESSIONS_ROUTES.GET_MORE_ATTENDANCE_SESSIONS_BY_COURSE_CODE) {
-    const {courseCode, startAfter} = req.body;
-    const {error, valid} = validateGetMoreAttendanceByCourseCodeRequest(courseCode, startAfter);
-    if (!valid) return sendErrorObject(res, error);
-    const {exists} = await getCourseDocumentIdWithCode(courseCode);
-    if (!exists) return sendErrorMessage(res, `${ERROR_MESSAGE.COURSE_DOES_NOT_EXISTS} ${courseCode}.`);
-  }
-
   if (path === ATTENDANCE_SESSIONS_ROUTES.GET_ATTENDANCE_SESSIONS_IN_DATE_RANGE) {
     const {courses, startTime, endTime} = req.body;
     const {error, valid} = validateGetAttendanceSessionInDateRangeRequest(courses, startTime, endTime);
@@ -45,10 +29,16 @@ module.exports = async (req, res, next) => {
     if (startTime > endTime) return res.json({error: 'Start time must be sooner than end time'});
   }
 
-  if (path === ATTENDANCE_SESSIONS_ROUTES.GET_DAILY_ATTENDANCE_SESSION ||
-    path === ATTENDANCE_SESSIONS_ROUTES.GET_MONTHLY_ATTENDANCE_SESSIONS) {
+  if (path === ATTENDANCE_SESSIONS_ROUTES.GET_DAILY_ATTENDANCE_SESSION) {
     const {courses} = req.body;
     if (!courses) return sendErrorMessage(res, `${ERROR_MESSAGE.MISSING_FIELD} courses.`);
+  }
+
+  if (path === ATTENDANCE_SESSIONS_ROUTES.GET_MONTHLY_ATTENDANCE_SESSIONS) {
+    const {courses, month} = req.body;
+    if (!courses) return sendErrorMessage(res, `${ERROR_MESSAGE.MISSING_FIELD} courses.`);
+    if (!month) return sendErrorMessage(res, `${ERROR_MESSAGE.MISSING_FIELD} month.`);
+    if (month < 0 || month > 11) return res.status(400).send({error: 'Month must be between 0 and 11'});
   }
 
   if (path === ATTENDANCE_SESSIONS_ROUTES.REGISTER_STUDENT_TO_ATTENDANCE_SESSION) {

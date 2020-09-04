@@ -19,57 +19,6 @@ exports.createAttendanceSession = async (req, res) => {
   }
 };
 
-exports.getAttendanceSessionsByCourseCode = async (req, res) => {
-  const {courseCode} = req.body;
-  try {
-    let sessions = [];
-    const querySnapshot = await db
-      .collection('attendance-sessions')
-      .where('courseCode', '==', courseCode)
-      .orderBy('validOn')
-      .limit(5)
-      .get();
-
-    querySnapshot.forEach(snapshot => {
-      let data = snapshot.data();
-      transformAttendanceSessionData(data, snapshot);
-      sessions.push(data);
-    });
-    return res.json({sessions});
-  }
-  catch (errorGetAttendanceSessionByCourseCode) {
-    console.error('Something went wrong with get attendance session by course code: ',
-      errorGetAttendanceSessionByCourseCode);
-    return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
-  }
-};
-
-exports.getMoreAttendanceSessionsByCourseCode = async (req, res) => {
-  const {courseCode, startAfter} = req.body;
-  try {
-    let sessions = [];
-    const querySnapshot = await db
-      .collection('attendance-sessions')
-      .where('courseCode', '==', courseCode)
-      .orderBy('validOn')
-      .startAfter(startAfter)
-      .limit(5)
-      .get();
-
-    querySnapshot.forEach(snapshot => {
-      let data = snapshot.data();
-      transformAttendanceSessionData(data, snapshot);
-      sessions.push(snapshot.data());
-    });
-    return res.json({sessions});
-  }
-  catch (errorGetMoreAttendanceSessions) {
-    console.error('Something went wrong with get more attendance session by course code: ',
-      errorGetMoreAttendanceSessions);
-    return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
-  }
-};
-
 exports.getAttendanceSessionsInDateRangeOfCourses = async (req, res) => {
   const {courses, startTime, endTime} = req.body;
   try {
