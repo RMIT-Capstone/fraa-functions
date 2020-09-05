@@ -28,12 +28,13 @@ exports.getCourses = async (req, res) => {
     const querySnapshot = await db
       .collection('courses')
       .orderBy('code')
-      .limit(5)
+      .limit(25)
       .get();
     querySnapshot.forEach(snap => {
-      const data = snap.data();
-      data.createdAt = data.createdAt.toDate();
-      courses.push(data);
+      let course = snap.data();
+      const {createdAt} = course;
+      course.createdAt = createdAt.toDate();
+      courses.push(course);
     });
     return res.json({courses});
   }
@@ -51,11 +52,14 @@ exports.getMoreCourses = async (req, res) => {
       .collection('courses')
       .orderBy('code')
       .startAfter(startAfter)
-      .limit(5)
+      .limit(25)
       .get();
 
     querySnapshot.forEach(snap => {
-      courses.push(snap.data());
+      let course = snap.data();
+      const {createdAt} = course;
+      course.createdAt = createdAt.toDate();
+      courses.push(course);
     });
     return res.json({courses});
   }
