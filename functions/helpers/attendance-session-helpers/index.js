@@ -8,35 +8,60 @@ exports.getAttendanceSessionDocumentIdByDate = async date => {
       .where('validOn', '==', new Date(date))
       .get();
 
-    if (querySnapshot.empty) return {exists: false, id: null};
+    if (querySnapshot.empty) return {id: null, error: null};
     else {
       const id = querySnapshot.docs[0].id;
-      return {exists: true, id};
+      return {id, error: null};
     }
   }
   catch (errorGetAttendanceSessionDocumentIdByDate) {
-    console.error('Something went wrong with get attendance session document id by date: ',
+    console.error(
+      'Something went wrong with getAttendanceSessionDocumentIdByDate: ',
       errorGetAttendanceSessionDocumentIdByDate);
-    return {exists: false, id: null};
+    return {id: null, error: errorGetAttendanceSessionDocumentIdByDate};
   }
 };
 
 exports.attendanceSessionExistsWithDocId = async docId => {
-  const documentSnapshot = await db
-    .collection('attendance-sessions')
-    .doc(docId)
-    .get();
+  try {
+    const documentSnapshot = await db
+      .collection('attendance-sessions')
+      .doc(docId)
+      .get();
 
-  return documentSnapshot.exists;
+    return {
+      exists: documentSnapshot.exists,
+      error: null
+    };
+  }
+  catch (errorAttendanceSessionExistsWithDocId) {
+    console.error(
+      'Something went wrong with attendanceSessionExistsWithDocId: ',
+      errorAttendanceSessionExistsWithDocId);
+    return {exists: null, error: errorAttendanceSessionExistsWithDocId};
+  }
 };
 
 exports.userAlreadyRegisteredToAttendanceSession = async (email, sessionId) => {
-  const documentSnapshot = await db
-    .collection('attendance-sessions')
-    .doc(sessionId)
-    .get();
+  try {
+    const documentSnapshot = await db
+      .collection('attendance-sessions')
+      .doc(sessionId)
+      .get();
 
-  return Boolean(documentSnapshot.data().attendees.includes(email));
+    const {attendees} = documentSnapshot.data();
+    if (!attendees) return {attended: false, error: null};
+    return {
+      attended: Boolean(attendees.includes(email)),
+      error: null
+    };
+  }
+  catch (errorUserAlreadyRegisteredToAttendanceSession) {
+    console.error(
+      'Something went wrong with userAlreadyRegisteredToAttendanceSession: ',
+      errorUserAlreadyRegisteredToAttendanceSession);
+    return {attended: null, error: errorUserAlreadyRegisteredToAttendanceSession};
+  }
 };
 
 exports.validateCreateAttendanceSessionRequest = (validOn, expireOn, courseCode) => {

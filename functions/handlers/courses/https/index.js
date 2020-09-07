@@ -1,10 +1,8 @@
 const {getUserDocumentIdWithEmail} = require('../../../helpers/users-helpers');
-const {
-  userAlreadySubscribedToCourse,
-  getCourseDocumentIdWithCode
-} = require('../../../helpers/courses-helpers');
+const {getCourseDocumentIdWithCode} = require('../../../helpers/courses-helpers');
 const {db, admin} = require('../../../utils/admin');
 const ERROR_MESSAGES = require('../../constants/ErrorMessages');
+const {sendErrorMessage} = require('../../../helpers/express-helpers');
 
 exports.createCourse = async (req, res) => {
   const {course} = req.body;
@@ -139,10 +137,11 @@ exports.updateCourse = async (req, res) => {
   const {course} = req.body;
   course.name = course.name.toLowerCase().split(' ');
   try {
-    const courseExistsWithCode = await getCourseDocumentIdWithCode(course.code);
+    const {id, error} = await getCourseDocumentIdWithCode(course.code);
+    if (error) sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
     await db
       .collection('courses')
-      .doc(courseExistsWithCode.id)
+      .doc(id)
       .update(course);
     return res.json({success: 'Course updated.'});
   }
@@ -155,7 +154,8 @@ exports.updateCourse = async (req, res) => {
 exports.deleteCourse = async (req, res) => {
   const {code} = req.body;
   try {
-    const {id} = await getCourseDocumentIdWithCode(code);
+    const {id, error} = await getCourseDocumentIdWithCode(code);
+    if (error) return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
     await db
       .collection('courses')
       .doc(id)
@@ -168,23 +168,20 @@ exports.deleteCourse = async (req, res) => {
   }
 };
 
+// TODO: check if user already subscribed to course(s)
 exports.subscribeUserToCourses = async (req, res) => {
   const {courses, email} = req.body;
-  const {id: userDocId} = await getUserDocumentIdWithEmail(email);
+  const {id: userDocId, error} = await getUserDocumentIdWithEmail(email);
+  if (error) return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}.`);
   try {
     // https://stackoverflow.com/questions/35612428/call-async-await-functions-in-parallel
     await Promise.all(courses.map(async course => {
-      const {exists} = await getCourseDocumentIdWithCode(course);
-      if (exists) {
-        await db
-          .collection('users')
-          .doc(userDocId)
-          .update({
-            subscribedCourses: admin.firestore.FieldValue.arrayUnion(course)
-          });
-      } else {
-        console.log(`Course with code: ${course} does not exist`);
-      }
+      await db
+        .collection('users')
+        .doc(userDocId)
+        .update({
+          subscribedCourses: admin.firestore.FieldValue.arrayUnion(course)
+        });
     }));
 
     return res.json({success: 'User subscribed to course(s).'});
@@ -195,31 +192,21 @@ exports.subscribeUserToCourses = async (req, res) => {
   }
 };
 
+// TODO: check if user subscribed to course(s)
 exports.unsubscribeStudentFromCourses = async (req, res) => {
   const {courses, email} = req.body;
-  const {id: userDocId} = await getUserDocumentIdWithEmail(email);
+  const {id: userDocId, error} = await getUserDocumentIdWithEmail(email);
+  if (error) return res.json({error: `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}.`});
 
   try {
     await Promise.all(courses.map(async course => {
-      const {exists} = await getCourseDocumentIdWithCode(course);
-      if (exists) {
-        const {id} = await getCourseDocumentIdWithCode(course);
-        const userSubscribedToCourse = await userAlreadySubscribedToCourse(email, id);
-        if (userSubscribedToCourse) {
-          await db
-            .collection('users')
-            .doc(userDocId)
-            .update({
-              subscribedCourses: admin.firestore.FieldValue.arrayRemove(course)
-            });
-        }
-        else {
-          console.log(`Student is not subscribed in ${course}`);
-        }
-      }
-      else {
-        console.log(`Course with code: ${course} does not exist`);
-      }
+      await db
+        .collection('users')
+        .doc(userDocId)
+        .update({
+          subscribedCourses: admin.firestore.FieldValue.arrayRemove(course)
+        });
+
     }));
     return res.json({success: 'User unsubscribed from course(s).'});
   }

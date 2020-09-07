@@ -16,10 +16,13 @@ module.exports = async (req, res, next) => {
 
   if (path === ATTENDANCE_SESSIONS_ROUTES.CREATE_ATTENDANCE_SESSION) {
     const {validOn, expireOn, courseCode} = req.body.content;
+
     const {error, valid} = validateCreateAttendanceSessionRequest(validOn, expireOn, courseCode);
     if (!valid) return sendErrorObject(res, error);
-    const {exists} = await getCourseDocumentIdWithCode(courseCode);
-    if (!exists) return sendErrorMessage(res, `${ERROR_MESSAGE.COURSE_DOES_NOT_EXISTS} ${courseCode}.`);
+
+    const {id: courseDocId, error: courseDocIdError} = await getCourseDocumentIdWithCode(courseCode);
+    if (!courseDocId) return sendErrorMessage(res, `${ERROR_MESSAGE.COURSE_DOES_NOT_EXISTS} ${courseCode}.`);
+    if (courseDocIdError) return sendErrorMessage(res, `${ERROR_MESSAGE.GENERIC_ERROR_MESSAGE}`);
   }
 
   if (path === ATTENDANCE_SESSIONS_ROUTES.GET_ATTENDANCE_SESSIONS_IN_DATE_RANGE) {
@@ -45,11 +48,17 @@ module.exports = async (req, res, next) => {
     const {email, sessionId} = req.body;
     const {error, valid} = validateRegisterStudentToAttendanceSessionRequest(email, sessionId);
     if (!valid) return sendErrorObject(res, error);
-    const {exists: userExists} = await getUserDocumentIdWithEmail(email);
-    if (!userExists) return res.json({error: `User with email: ${email} does not exist`});
-    const exists = await attendanceSessionExistsWithDocId(sessionId);
-    if (!exists) return res.json({error: `Attendance session with id: ${sessionId} does not exist`});
-    const attended = await userAlreadyRegisteredToAttendanceSession(email, sessionId);
+    const {id: userDocId, error: userDocIdError} = await getUserDocumentIdWithEmail(email);
+    if (!userDocId) return res.json({error: `${ERROR_MESSAGE.USER_DOES_NOT_EXIST} ${email}.`});
+    if (userDocIdError) return sendErrorMessage(res, `${ERROR_MESSAGE.GENERIC_ERROR_MESSAGE}`);
+    const {
+      exists: attendanceSessionExists,
+      error: errorAttendanceSessionExists
+    } = await attendanceSessionExistsWithDocId(sessionId);
+    if (!attendanceSessionExists) return res.json({error: `Attendance session with id: ${sessionId} does not exist`});
+    if (errorAttendanceSessionExists) return sendErrorMessage(res, `${ERROR_MESSAGE.GENERIC_ERROR_MESSAGE}`);
+    const {attended, error: errorAttended} = await userAlreadyRegisteredToAttendanceSession(email, sessionId);
+    if (errorAttended) return sendErrorMessage(res, `${ERROR_MESSAGE.GENERIC_ERROR_MESSAGE}.`);
     if (attended) return res.json({error: `User already registered to attendance session`});
   }
 

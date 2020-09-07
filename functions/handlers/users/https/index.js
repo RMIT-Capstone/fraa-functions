@@ -3,7 +3,7 @@ const {sendOTPToUser} = require('../../email');
 const {
   getUserIdInFBAuthWithEmail,
   generateOTPCode,
-  getOTPDocumentsByEmail,
+  getLatestOTPDocumentOfUser,
   deleteOTPDocumentsByEmail,
 } = require('../../../helpers/users-helpers');
 const ERROR_MESSAGE = require('../../constants/ErrorMessages');
@@ -131,10 +131,10 @@ exports.generateOTP = async (req, res) => {
 exports.verifyOTP = async (req, res) => {
   const {email, OTP: userOTP} = req.body;
   try {
-    const otpDocumentSnapshot = await getOTPDocumentsByEmail(email);
-    if (otpDocumentSnapshot.error) return res.json({error: otpDocumentSnapshot.error});
+    const {data, error} = await getLatestOTPDocumentOfUser(email);
+    if (error) return res.json({error});
     else {
-      const {OTP, expiryTime} = otpDocumentSnapshot;
+      const {OTP, expiryTime} = data;
       const now = new Date();
 
       if (expiryTime.toDate() < now) {
