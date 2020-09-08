@@ -45,10 +45,17 @@ exports.getLecturerDocumentIdWithEmail = async email => {
 };
 
 exports.deleteUserInFirestore = async userDocId => {
-  return db
-    .collection('users')
-    .doc(userDocId)
-    .delete();
+  try {
+    await db
+      .collection('users')
+      .doc(userDocId)
+      .delete();
+    return {success: true, error: null};
+  }
+  catch (errorDeleteUserInFirestore) {
+    console.error('Something went wrong with deleteUserInFirestore: ', errorDeleteUserInFirestore);
+    return {success: false, error: errorDeleteUserInFirestore};
+  }
 };
 
 exports.getLatestOTPDocumentOfUser = async email => {
@@ -78,9 +85,11 @@ exports.deleteOTPDocumentsByEmail = async email => {
         snapshot.ref.delete();
       });
     }
+    return {success: true};
   }
   catch (errorDeleteOTPDocuments) {
-    console.error(errorDeleteOTPDocuments.message);
+    console.error('Something went wrong with deleteOTPDocumentsByEmail', errorDeleteOTPDocuments);
+    return {success: false};
   }
 };
 

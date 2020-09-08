@@ -7,6 +7,7 @@ const {
   deleteOTPDocumentsByEmail,
 } = require('../../../helpers/users-helpers');
 const ERROR_MESSAGE = require('../../constants/ErrorMessages');
+const {sendErrorMessage} = require('../../../helpers/express-helpers');
 
 exports.onCreateUser = async (req, res) => {
   const {email, password, name, school, isLecturer} = req.body;
@@ -131,22 +132,20 @@ exports.generateOTP = async (req, res) => {
 exports.verifyOTP = async (req, res) => {
   const {email, OTP: userOTP} = req.body;
   try {
-    const {data, error} = await getLatestOTPDocumentOfUser(email);
-    if (error) return res.json({error});
-    else {
-      const {OTP, expiryTime} = data;
-      const now = new Date();
+    const {data} = await getLatestOTPDocumentOfUser(email);
+    const {OTP, expiryTime} = data;
+    const now = new Date();
 
-      if (expiryTime.toDate() < now) {
-        return res.json({error: 'OTP expired.'});
-      }
-      if (OTP === userOTP) {
-        await deleteOTPDocumentsByEmail(email);
-        return res.json({success: 'Valid OTP.'});
-      }
-      else {
-        return res.json({error: 'Invalid OTP.'});
-      }
+    if (expiryTime.toDate() < now) {
+      return res.json({error: 'OTP expired.'});
+    }
+    if (OTP === userOTP) {
+      const {success} = await deleteOTPDocumentsByEmail(email);
+      if (success) return res.json({success: 'Valid OTP.'});
+      else return sendErrorMessage(res, `${ERROR_MESSAGE.GENERIC_ERROR_MESSAGE}`);
+    }
+    else {
+      return res.json({error: 'Invalid OTP.'});
     }
   }
   catch (errorVerifyOTP) {
@@ -159,7 +158,6 @@ exports.changeUserPassword = async (req, res) => {
   const {email, password} = req.body;
   try {
     const recordId = await getUserIdInFBAuthWithEmail(email);
-    if (!recordId) return res.json({error: 'User does not exist.'});
     await admin.auth().updateUser(recordId, {
       password: password
     });

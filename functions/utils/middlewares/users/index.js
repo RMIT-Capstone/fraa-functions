@@ -1,13 +1,13 @@
-const USERS_ROUTES = require('../../routes/users');
 const {
   getUserDocumentIdWithEmail,
   getLecturerDocumentIdWithEmail,
-  validateAccountData
+  validateAccountData,
+  getLatestOTPDocumentOfUser,
+  validateCreateLecturerRequest
 } = require('../../../helpers/users-helpers');
+const {sendErrorMessage, sendErrorObject} = require("../../../helpers/express-helpers");
+const USERS_ROUTES = require('../../routes/users');
 const ERROR_MESSAGES = require('../../../handlers/constants/ErrorMessages');
-const {validateCreateLecturerRequest} = require('../../../helpers/users-helpers');
-const {sendErrorObject} = require('../../../helpers/express-helpers');
-const {sendErrorMessage} = require("../../../helpers/express-helpers");
 
 module.exports = async (req, res, next) => {
   const path = req.path.split('/')[1];
@@ -35,9 +35,14 @@ module.exports = async (req, res, next) => {
   if (path === USERS_ROUTES.GENERATE_OTP || path === USERS_ROUTES.VERIFY_OTP) {
     const {email} = req.body;
     if (!email) return sendErrorMessage(res, `${ERROR_MESSAGES.MISSING_FIELD} email.`);
+
     const {id, error: userDocIdError} = await getUserDocumentIdWithEmail(email);
     if (!id) return sendErrorMessage(res, `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}.`);
     if (userDocIdError) return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
+
+    const {data, error: OTPDocumentError} = await getLatestOTPDocumentOfUser(email);
+    if (!data) return sendErrorMessage(res, `No OTP documents is found with ${email}.`);
+    if (OTPDocumentError) return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 
   if (path === USERS_ROUTES.CREATE_LECTURER) {
