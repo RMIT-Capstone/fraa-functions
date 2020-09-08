@@ -1,5 +1,6 @@
 module.exports = {
   GENERIC_ERROR_MESSAGE: 'Something went wrong. Try again.',
+  GENERIC_CONSOLE_ERROR_MESSAGE: 'Something went wrong with ',
   MISSING_FIELD: 'Must include',
   COURSE_ALREADY_EXISTS: 'Course already exists with code:',
   COURSE_DOES_NOT_EXISTS: 'No course exists with code:',

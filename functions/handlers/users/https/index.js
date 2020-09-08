@@ -6,7 +6,7 @@ const {
   getLatestOTPDocumentOfUser,
   deleteOTPDocumentsByEmail,
 } = require('../../../helpers/users-helpers');
-const ERROR_MESSAGE = require('../../constants/ErrorMessages');
+const ERROR_MESSAGES = require('../../constants/ErrorMessages');
 const {sendErrorMessage} = require('../../../helpers/express-helpers');
 
 exports.onCreateUser = async (req, res) => {
@@ -18,18 +18,18 @@ exports.onCreateUser = async (req, res) => {
     const {error: errorCreateInFirestore} = createUser[0];
     const {error: errorCreateInFirebaseAuth, idToken} = createUser[1];
     if (errorCreateInFirestore) {
-      console.error('Something went wrong with create user: ', errorCreateInFirestore);
-      return res.status(500).send({error: `${ERROR_MESSAGE.GENERIC_ERROR_MESSAGE}`});
+      console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} onCreateUser: `, errorCreateInFirestore);
+      return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
     }
     if (errorCreateInFirebaseAuth) {
-      console.error('Something went wrong with create user: ', errorCreateInFirestore);
-      return res.status(500).send({error: `${ERROR_MESSAGE.GENERIC_ERROR_MESSAGE}`});
+      console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} onCreateUser: `, errorCreateInFirebaseAuth);
+      return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
     }
     return res.status(200).json({idToken});
   }
   catch (errorOnCreateUser) {
-    console.error('Something went wrong with create user: ', errorOnCreateUser);
-    return res.json({error: ERROR_MESSAGE.GENERIC_ERROR_MESSAGE});
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} onCreateUser:`, errorOnCreateUser);
+    return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
   }
 };
 
@@ -47,7 +47,10 @@ const createLecturerInFirestore = async (email, name, school) => {
     return {error: null};
   }
   catch (errorCreateLecturerInFirestore) {
-    console.error('Something went wrong with create lecturer in Firestore: ', errorCreateLecturerInFirestore);
+    console.error(
+      `${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} createLecturerInFirestore: `,
+      errorCreateLecturerInFirestore
+    );
     return {error: errorCreateLecturerInFirestore};
   }
 };
@@ -64,7 +67,10 @@ const createUserInFirestore = async email => {
     return {error: null};
   }
   catch (errorCreateUserInFirestore) {
-    console.error('Something went wrong with create user in Firestore: ', errorCreateUserInFirestore);
+    console.error(
+      `${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} createUserInFirestore: `,
+      errorCreateUserInFirestore
+    );
     return {error: errorCreateUserInFirestore};
   }
 };
@@ -80,7 +86,7 @@ const createUserInAuth = async (email, password) => {
       return {idToken: null, error: 'Email already in use'};
     }
     else {
-      console.error('Something went wrong with create user in auth: ', errorCreateUserInAuth);
+      console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} createUserInAuth: `, errorCreateUserInAuth);
       return {idToken: null, error: errorCreateUserInAuth};
     }
   }
@@ -101,8 +107,8 @@ exports.signIn = async (req, res) => {
       return res.json({error: 'User does not exist'});
     }
     else {
-      console.error('Something went wrong with sign in: ', errorSignIn);
-      return res.json({error: ERROR_MESSAGE.GENERIC_ERROR_MESSAGE});
+      console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} signIn: `, errorSignIn);
+      return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
     }
   }
 };
@@ -123,10 +129,9 @@ exports.generateOTP = async (req, res) => {
     return res.json({success: 'OTP code created.'});
   }
   catch (errorGenerateOTP) {
-    console.error('Something went wrong with generate OTP: ', errorGenerateOTP);
-    return res.json({error: ERROR_MESSAGE.GENERIC_ERROR_MESSAGE});
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} generateOTP: `, errorGenerateOTP);
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
-
 };
 
 exports.verifyOTP = async (req, res) => {
@@ -142,15 +147,15 @@ exports.verifyOTP = async (req, res) => {
     if (OTP === userOTP) {
       const {success} = await deleteOTPDocumentsByEmail(email);
       if (success) return res.json({success: 'Valid OTP.'});
-      else return sendErrorMessage(res, `${ERROR_MESSAGE.GENERIC_ERROR_MESSAGE}`);
+      else return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
     }
     else {
       return res.json({error: 'Invalid OTP.'});
     }
   }
   catch (errorVerifyOTP) {
-    console.error('Something went wrong with verify OTP: ', errorVerifyOTP);
-    return res.json({error: ERROR_MESSAGE.GENERIC_ERROR_MESSAGE});
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} verifyOTP: `, errorVerifyOTP);
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
 
@@ -164,7 +169,7 @@ exports.changeUserPassword = async (req, res) => {
     return res.json({success: 'Password updated successfully.'});
   }
   catch (errorChangeUserPassword) {
-    console.error('Something went wrong with change user password: ', errorChangeUserPassword);
-    return res.json({error: ERROR_MESSAGE.GENERIC_ERROR_MESSAGE});
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} changeUserPassword: `, errorChangeUserPassword);
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };

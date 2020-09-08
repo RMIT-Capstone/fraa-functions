@@ -1,5 +1,6 @@
 const {db, admin} = require('../../../utils/admin');
 const ERROR_MESSAGES = require('../../constants/ErrorMessages');
+const {sendErrorMessage} = require('../../../helpers/express-helpers');
 
 exports.createAttendanceSession = async (req, res) => {
   const {content: QRCodeContent} = req.body;
@@ -13,9 +14,9 @@ exports.createAttendanceSession = async (req, res) => {
       .add(QRCodeContent);
     return res.json({success: 'Attendance session created.'});
   }
-  catch (errorGenerateQrCode) {
-    console.error(`Failed to generateQrCode: ${errorGenerateQrCode}`);
-    return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
+  catch (errorCreateAttendance) {
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} createAttendanceSession: `, errorCreateAttendance);
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
 
@@ -39,9 +40,11 @@ exports.getAttendanceSessionsInDateRangeOfCourses = async (req, res) => {
     return res.json({sessions});
   }
   catch (errorGetAttendanceSessionByDateWithCourseCode) {
-    console.error('Something went wrong with get attendance sessions by date with course code: ',
-      errorGetAttendanceSessionByDateWithCourseCode);
-    return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
+    console.error(
+      `${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getAttendanceSessionInDateRangeOfCourses: `,
+      errorGetAttendanceSessionByDateWithCourseCode
+    );
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
 
@@ -73,13 +76,14 @@ exports.getDailyAttendanceSessionsOfCourses = async (req, res) => {
   }
   catch (errorGetTodaySessionsByCourseCode) {
     console.error(
-      'Something went wrong with get today attendance session by course code: ',
-      errorGetTodaySessionsByCourseCode);
-    return res.json({error: `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`});
+      `${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getTodaySessionsByCourseCode: `,
+      errorGetTodaySessionsByCourseCode
+    );
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
 
-exports.getMonthlyAttendanceSessionOfCourses = async (req, res) => {
+exports.getMonthlyAttendanceSessionsOfCourses = async (req, res) => {
   const {courses, month} = req.body;
   try {
     let sessions = {};
@@ -106,10 +110,8 @@ exports.getMonthlyAttendanceSessionOfCourses = async (req, res) => {
     return res.json({sessions});
   }
   catch (errorGetMonthlyAttendanceSessionOfUser) {
-    console.error(
-      'Something went wrong with get monthly attendance session: ',
-      errorGetMonthlyAttendanceSessionOfUser);
-    return res.json({error: `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`});
+    console.error('Something went wrong with getMonthlyAttendanceSessions: ', errorGetMonthlyAttendanceSessionOfUser);
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
 
@@ -126,9 +128,10 @@ exports.registerStudentToAttendanceSession = async (req, res) => {
   }
   catch (errorRegisterStudentToAttendanceSession) {
     console.error(
-      'Something went wrong with register student to attendance session',
-      errorRegisterStudentToAttendanceSession);
-    return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
+      'Something went wrong with registerStudentToAttendanceSession: ',
+      errorRegisterStudentToAttendanceSession
+    );
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
 

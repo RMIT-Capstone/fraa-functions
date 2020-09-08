@@ -15,8 +15,8 @@ exports.createCourse = async (req, res) => {
     return res.json({success: 'Course created.'});
   }
   catch (errorCreateCourse) {
-    console.error('Something went wrong with create course: ', errorCreateCourse);
-    return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} createCourse: `, errorCreateCourse);
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
 
@@ -37,8 +37,8 @@ exports.getCourses = async (req, res) => {
     return res.json({courses});
   }
   catch (errorGetCourses) {
-    console.error('Something went wrong with get courses-helpers: ', errorGetCourses);
-    return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getCourses: `, errorGetCourses);
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
 
@@ -62,8 +62,8 @@ exports.getMoreCourses = async (req, res) => {
     return res.json({courses});
   }
   catch (errorGetMoreCourses) {
-    console.error('Something went wrong with get more courses-helpers: ', errorGetMoreCourses);
-    return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getMoreCourses: `, errorGetMoreCourses);
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
 
@@ -82,8 +82,8 @@ exports.getCourseByCode = async (req, res) => {
     return res.json({course});
   }
   catch (errorGetCourseByCode) {
-    console.error('Something went wrong with get course by code: ', errorGetCourseByCode);
-    return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getCourseByCode: `, errorGetCourseByCode);
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
 
@@ -103,9 +103,9 @@ exports.getCoursesByName = async (req, res) => {
     });
     return res.json({courses});
   }
-  catch (errorGetCourseByName) {
-    console.error('Something went wrong with get course by name: ', errorGetCourseByName);
-    return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
+  catch (errorGetCoursesByName) {
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getCoursesByName: `, errorGetCoursesByName);
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
 
@@ -127,8 +127,8 @@ exports.getMoreCoursesByName = async (req, res) => {
     return res.json({courses});
   }
   catch (errorGetMoreCoursesByName) {
-    console.error('Something went wrong with get more courses-helpers by name: ', errorGetMoreCoursesByName);
-    return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getMoreCoursesByName: `, errorGetMoreCoursesByName);
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
 
@@ -146,8 +146,8 @@ exports.updateCourse = async (req, res) => {
     return res.json({success: 'Course updated.'});
   }
   catch (errorUpdateCourse) {
-    console.error('Something went wrong with update course: ', errorUpdateCourse);
-    return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} updateCourse: `, errorUpdateCourse);
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
 
@@ -163,12 +163,11 @@ exports.deleteCourse = async (req, res) => {
     return res.json({success: 'Course deleted.'});
   }
   catch (errorDeleteCourse) {
-    console.error('Something went wrong with delete course: ', errorDeleteCourse);
-    return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} deleteCourse: `, errorDeleteCourse);
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
 
-// TODO: check if user already subscribed to course(s)
 exports.subscribeUserToCourses = async (req, res) => {
   const {courses, email} = req.body;
   const {id: userDocId, error} = await getUserDocumentIdWithEmail(email);
@@ -187,12 +186,14 @@ exports.subscribeUserToCourses = async (req, res) => {
     return res.json({success: 'User subscribed to course(s).'});
   }
   catch (errorSubscribeUserToCourses) {
-    console.error('Something went wrong with subscribe user to courses-helpers: ', errorSubscribeUserToCourses);
-    return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
+    console.error(
+      `${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} subscribeUserToCourses: `,
+      errorSubscribeUserToCourses
+    );
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
 
-// TODO: check if user subscribed to course(s)
 exports.unsubscribeStudentFromCourses = async (req, res) => {
   const {courses, email} = req.body;
   const {id: userDocId, error} = await getUserDocumentIdWithEmail(email);
@@ -211,7 +212,10 @@ exports.unsubscribeStudentFromCourses = async (req, res) => {
     return res.json({success: 'User unsubscribed from course(s).'});
   }
   catch (errorUnsubscribeUserFromCourses) {
-    console.error('Something went wrong with unsubscribe user from courses-helpers: ', errorUnsubscribeUserFromCourses);
-    return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
+    console.error(
+      `${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE}`,
+      errorUnsubscribeUserFromCourses
+    );
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };

@@ -33,7 +33,7 @@ const {
   createAttendanceSession,
   getAttendanceSessionsInDateRangeOfCourses,
   getDailyAttendanceSessionsOfCourses,
-  getMonthlyAttendanceSessionOfCourses,
+  getMonthlyAttendanceSessionsOfCourses,
   registerStudentToAttendanceSession
 } = require('./handlers/attendance-sessions/https');
 
@@ -62,7 +62,7 @@ app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_DAILY_ATTENDANCE_SESSION}`,
 );
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_MONTHLY_ATTENDANCE_SESSIONS}`,
   attendanceSessionsValidator,
-  getMonthlyAttendanceSessionOfCourses
+  getMonthlyAttendanceSessionsOfCourses
 );
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.REGISTER_STUDENT_TO_ATTENDANCE_SESSION}`,
   attendanceSessionsValidator,
