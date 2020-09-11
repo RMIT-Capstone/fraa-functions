@@ -86,8 +86,7 @@ exports.getDailyAttendanceSessionsOfCourses = async (req, res) => {
 exports.getMonthlyAttendanceSessionsOfCourses = async (req, res) => {
   const {courses, month} = req.body;
   try {
-    let sessions = {};
-    courses.map(course => sessions[`${course}`] = []);
+    let sessions = [];
 
     const today = new Date();
     const firstDayOfMonth = new Date(today.getFullYear(), month, 1);
@@ -101,11 +100,16 @@ exports.getMonthlyAttendanceSessionsOfCourses = async (req, res) => {
 
     querySnapshot.forEach(snapshot => {
       let data = snapshot.data();
-      const {courseCode: code} = data;
-      transformAttendanceSessionData(data, snapshot);
-      for (const courseCode in sessions) {
-        if (courseCode === code) sessions[courseCode].push(data);
+      const {courseCode} = data;
+      if (courses.includes(courseCode)) {
+        transformAttendanceSessionData(data, snapshot);
+        sessions.push(data);
       }
+      // const {courseCode: code} = data;
+      // transformAttendanceSessionData(data, snapshot);
+      // for (const courseCode in sessions) {
+      //   if (courseCode === code) sessions[courseCode].push(data);
+      // }
     });
     return res.json({sessions});
   }

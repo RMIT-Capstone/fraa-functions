@@ -45,7 +45,8 @@ const usersValidator = require('./utils/middlewares/users');
 app.use(cors());
 
 //TODO: check auth headers when doing CRUD operations
-//TODO: make sure get monthly attendance session month is between 0 - 11
+// VERY IMPORTANT TODO:
+// REFACTOR MIDDLEWARES CODE, FIND SIMILAR SANITY CHECK FOR ENDPOINTS. CODE SUCKS
 
 // attendance session handlers
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.CREATE_ATTENDANCE_SESSION}`,

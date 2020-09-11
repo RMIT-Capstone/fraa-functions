@@ -85,8 +85,10 @@ module.exports = async (req, res, next) => {
     await Promise.all(courses.map(async courseCode => {
       const {id, error} = await getCourseDocumentIdWithCode(courseCode);
       const {subscribed, error: errorUserSubscription} = await userAlreadySubscribedToCourse(userDocId, courseCode);
+
       if (!id) invalidCourses.push(courseCode);
       if (error) invalidCoursesErrors.push(error);
+
       if (path === COURSE_ROUTES.SUBSCRIBE_COURSES) {
         if (subscribed) subscribedCourses.push(courseCode);
       }
