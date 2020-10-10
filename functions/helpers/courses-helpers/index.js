@@ -8,15 +8,15 @@ exports.getCourseDocumentIdWithCode = async code => {
       .where('code', '==', code)
       .get();
 
-    if (querySnapshot.empty) return {exists: false, id: null};
+    if (querySnapshot.empty) return {id: null, error: null};
     else {
       const documentId = querySnapshot.docs[0].id;
-      return {exists: true, id: documentId};
+      return {id: documentId, error: null};
     }
   }
   catch (errorCourseAlreadyExistsWithCourseCode) {
-    console.error(errorCourseAlreadyExistsWithCourseCode);
-    return {exists: false, id: null};
+    console.error('Something went wrong with getCourseDocumentIdWith');
+    return {id: null, error: errorCourseAlreadyExistsWithCourseCode};
   }
 };
 
@@ -27,11 +27,15 @@ exports.userAlreadySubscribedToCourse = async (userDocId, courseCode) => {
       .doc(userDocId)
       .get();
     const {subscribedCourses} = querySnapshot.data();
-    return subscribedCourses.includes(courseCode);
+    if (!subscribedCourses) return {subscribed: false, error: null};
+    return {
+      subscribed: subscribedCourses.includes(courseCode),
+      error: null
+    };
   }
   catch (errorUserAlreadySubscribedToCourse) {
-    console.error(errorUserAlreadySubscribedToCourse.message);
-    return null;
+    console.error('Something went wrong with userAlreadySubscribedToCourse: ', errorUserAlreadySubscribedToCourse);
+    return {subscribed: null, error: errorUserAlreadySubscribedToCourse};
   }
 };
 

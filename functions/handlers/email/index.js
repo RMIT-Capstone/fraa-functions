@@ -1,6 +1,7 @@
 const sgMail = require('@sendgrid/mail');
 const SENDGRID_API_KEY = require('../../config/SendGridConfig');
 const ERROR_MESSAGES = require('../constants/ErrorMessages');
+const {sendErrorMessage} = require('../../helpers/express-helpers');
 
 sgMail.setApiKey(SENDGRID_API_KEY);
 
@@ -20,8 +21,8 @@ exports.sendEmail = async (req, res) => {
     return res.json({success: 'email sent'});
   }
   catch (errorSendEmail) {
-    console.error('Something went wrong with send email: ', errorSendEmail);
-    return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} sendEmail: `, errorSendEmail);
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
 
@@ -39,6 +40,6 @@ exports.sendOTPToUser = async (email, OTP) => {
     await sgMail.send(msg);
   }
   catch (errorSendEmail) {
-    console.error(`Something went wrong with send OTP to user: ${errorSendEmail}`);
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} sendOTPToUser: `, errorSendEmail);
   }
 };

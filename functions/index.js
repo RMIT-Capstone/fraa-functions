@@ -33,7 +33,7 @@ const {
   createAttendanceSession,
   getAttendanceSessionsInDateRangeOfCourses,
   getDailyAttendanceSessionsOfCourses,
-  getMonthlyAttendanceSessionOfCourses,
+  getMonthlyAttendanceSessionsOfCourses,
   registerStudentToAttendanceSession
 } = require('./handlers/attendance-sessions/https');
 
@@ -45,7 +45,8 @@ const usersValidator = require('./utils/middlewares/users');
 app.use(cors());
 
 //TODO: check auth headers when doing CRUD operations
-//TODO: make sure get monthly attendance session month is between 0 - 11
+// VERY IMPORTANT TODO:
+// REFACTOR MIDDLEWARES CODE, FIND SIMILAR SANITY CHECK FOR ENDPOINTS. CODE SUCKS
 
 // attendance session handlers
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.CREATE_ATTENDANCE_SESSION}`,
@@ -62,7 +63,7 @@ app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_DAILY_ATTENDANCE_SESSION}`,
 );
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_MONTHLY_ATTENDANCE_SESSIONS}`,
   attendanceSessionsValidator,
-  getMonthlyAttendanceSessionOfCourses
+  getMonthlyAttendanceSessionsOfCourses
 );
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.REGISTER_STUDENT_TO_ATTENDANCE_SESSION}`,
   attendanceSessionsValidator,

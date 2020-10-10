@@ -10,16 +10,20 @@ const {
 const {getUserDocumentIdWithEmail} = require('../../../helpers/users-helpers');
 const {getCourseDocumentIdWithCode} = require('../../../helpers/courses-helpers');
 const ERROR_MESSAGE = require('../../../handlers/constants/ErrorMessages');
+const {userAlreadySubscribedToCourse} = require('../../../helpers/courses-helpers');
 
 module.exports = async (req, res, next) => {
   const path = req.path.split('/')[1];
 
   if (path === ATTENDANCE_SESSIONS_ROUTES.CREATE_ATTENDANCE_SESSION) {
     const {validOn, expireOn, courseCode} = req.body.content;
+
     const {error, valid} = validateCreateAttendanceSessionRequest(validOn, expireOn, courseCode);
     if (!valid) return sendErrorObject(res, error);
-    const {exists} = await getCourseDocumentIdWithCode(courseCode);
-    if (!exists) return sendErrorMessage(res, `${ERROR_MESSAGE.COURSE_DOES_NOT_EXISTS} ${courseCode}.`);
+
+    const {id: courseDocId, error: courseDocIdError} = await getCourseDocumentIdWithCode(courseCode);
+    if (!courseDocId) return sendErrorMessage(res, `${ERROR_MESSAGE.COURSE_DOES_NOT_EXISTS} ${courseCode}.`);
+    if (courseDocIdError) return sendErrorMessage(res, `${ERROR_MESSAGE.GENERIC_ERROR_MESSAGE}`);
   }
 
   if (path === ATTENDANCE_SESSIONS_ROUTES.GET_ATTENDANCE_SESSIONS_IN_DATE_RANGE) {
@@ -35,9 +39,39 @@ module.exports = async (req, res, next) => {
   }
 
   if (path === ATTENDANCE_SESSIONS_ROUTES.GET_MONTHLY_ATTENDANCE_SESSIONS) {
-    const {courses, month} = req.body;
+    const {courses, month, email} = req.body;
     if (!courses) return sendErrorMessage(res, `${ERROR_MESSAGE.MISSING_FIELD} courses.`);
     if (!month) return sendErrorMessage(res, `${ERROR_MESSAGE.MISSING_FIELD} month.`);
+    if (!email) return sendErrorMessage(res, `${ERROR_MESSAGE.MISSING_FIELD} email.`);
+
+    const {id: userDocId, error: userDocIdError} = await getUserDocumentIdWithEmail(email);
+    if (!userDocId) return res.json({error: `${ERROR_MESSAGE.USER_DOES_NOT_EXIST} ${email}.`});
+    if (userDocIdError) return sendErrorMessage(res, `${ERROR_MESSAGE.GENERIC_ERROR_MESSAGE}`);
+
+    let invalidCourses = [];
+    let errorCheckCourseExists = [];
+    let notSubscribedCourses = [];
+    let errorCheckUserSubscription = [];
+
+    await Promise.all(courses.map(async courseCode => {
+      const {id, error} = await getCourseDocumentIdWithCode(courseCode);
+      const {subscribed, error: errorUserSubscription} = await userAlreadySubscribedToCourse(userDocId, courseCode);
+
+      if (!id) invalidCourses.push(courseCode);
+      if (error) errorCheckCourseExists.push(error);
+
+      if (!subscribed) notSubscribedCourses.push(courseCode);
+      if (errorUserSubscription) errorCheckUserSubscription.push(courseCode);
+    }));
+
+    if (invalidCourses.length > 0) return sendErrorMessage(res, `Course(s) do not exist: ${invalidCourses}.`);
+    if (errorCheckCourseExists.length > 0) return sendErrorMessage(res, `${ERROR_MESSAGE.GENERIC_ERROR_MESSAGE}`);
+
+    if (notSubscribedCourses.length > 0) return sendErrorMessage(
+      res,
+      `User is not subscribed to course(s): ${notSubscribedCourses}.`
+    );
+    if (errorCheckUserSubscription.length > 0) return sendErrorMessage(res, `${ERROR_MESSAGE.GENERIC_ERROR_MESSAGE}`);
     if (month < 0 || month > 11) return res.status(400).send({error: 'Month must be between 0 and 11'});
   }
 
@@ -45,11 +79,17 @@ module.exports = async (req, res, next) => {
     const {email, sessionId} = req.body;
     const {error, valid} = validateRegisterStudentToAttendanceSessionRequest(email, sessionId);
     if (!valid) return sendErrorObject(res, error);
-    const {exists: userExists} = await getUserDocumentIdWithEmail(email);
-    if (!userExists) return res.json({error: `User with email: ${email} does not exist`});
-    const exists = await attendanceSessionExistsWithDocId(sessionId);
-    if (!exists) return res.json({error: `Attendance session with id: ${sessionId} does not exist`});
-    const attended = await userAlreadyRegisteredToAttendanceSession(email, sessionId);
+    const {id: userDocId, error: userDocIdError} = await getUserDocumentIdWithEmail(email);
+    if (!userDocId) return res.json({error: `${ERROR_MESSAGE.USER_DOES_NOT_EXIST} ${email}.`});
+    if (userDocIdError) return sendErrorMessage(res, `${ERROR_MESSAGE.GENERIC_ERROR_MESSAGE}`);
+    const {
+      exists: attendanceSessionExists,
+      error: errorAttendanceSessionExists
+    } = await attendanceSessionExistsWithDocId(sessionId);
+    if (!attendanceSessionExists) return res.json({error: `Attendance session with id: ${sessionId} does not exist`});
+    if (errorAttendanceSessionExists) return sendErrorMessage(res, `${ERROR_MESSAGE.GENERIC_ERROR_MESSAGE}`);
+    const {attended, error: errorAttended} = await userAlreadyRegisteredToAttendanceSession(email, sessionId);
+    if (errorAttended) return sendErrorMessage(res, `${ERROR_MESSAGE.GENERIC_ERROR_MESSAGE}.`);
     if (attended) return res.json({error: `User already registered to attendance session`});
   }
 

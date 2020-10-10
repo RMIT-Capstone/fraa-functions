@@ -1,10 +1,8 @@
 const {getUserDocumentIdWithEmail} = require('../../../helpers/users-helpers');
-const {
-  userAlreadySubscribedToCourse,
-  getCourseDocumentIdWithCode
-} = require('../../../helpers/courses-helpers');
+const {getCourseDocumentIdWithCode} = require('../../../helpers/courses-helpers');
 const {db, admin} = require('../../../utils/admin');
 const ERROR_MESSAGES = require('../../constants/ErrorMessages');
+const {sendErrorMessage} = require('../../../helpers/express-helpers');
 
 exports.createCourse = async (req, res) => {
   const {course} = req.body;
@@ -17,8 +15,8 @@ exports.createCourse = async (req, res) => {
     return res.json({success: 'Course created.'});
   }
   catch (errorCreateCourse) {
-    console.error('Something went wrong with create course: ', errorCreateCourse);
-    return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} createCourse: `, errorCreateCourse);
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
 
@@ -39,8 +37,8 @@ exports.getCourses = async (req, res) => {
     return res.json({courses});
   }
   catch (errorGetCourses) {
-    console.error('Something went wrong with get courses-helpers: ', errorGetCourses);
-    return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getCourses: `, errorGetCourses);
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
 
@@ -64,8 +62,8 @@ exports.getMoreCourses = async (req, res) => {
     return res.json({courses});
   }
   catch (errorGetMoreCourses) {
-    console.error('Something went wrong with get more courses-helpers: ', errorGetMoreCourses);
-    return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getMoreCourses: `, errorGetMoreCourses);
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
 
@@ -84,8 +82,8 @@ exports.getCourseByCode = async (req, res) => {
     return res.json({course});
   }
   catch (errorGetCourseByCode) {
-    console.error('Something went wrong with get course by code: ', errorGetCourseByCode);
-    return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getCourseByCode: `, errorGetCourseByCode);
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
 
@@ -105,9 +103,9 @@ exports.getCoursesByName = async (req, res) => {
     });
     return res.json({courses});
   }
-  catch (errorGetCourseByName) {
-    console.error('Something went wrong with get course by name: ', errorGetCourseByName);
-    return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
+  catch (errorGetCoursesByName) {
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getCoursesByName: `, errorGetCoursesByName);
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
 
@@ -129,8 +127,8 @@ exports.getMoreCoursesByName = async (req, res) => {
     return res.json({courses});
   }
   catch (errorGetMoreCoursesByName) {
-    console.error('Something went wrong with get more courses-helpers by name: ', errorGetMoreCoursesByName);
-    return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getMoreCoursesByName: `, errorGetMoreCoursesByName);
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
 
@@ -139,23 +137,25 @@ exports.updateCourse = async (req, res) => {
   const {course} = req.body;
   course.name = course.name.toLowerCase().split(' ');
   try {
-    const courseExistsWithCode = await getCourseDocumentIdWithCode(course.code);
+    const {id, error} = await getCourseDocumentIdWithCode(course.code);
+    if (error) sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
     await db
       .collection('courses')
-      .doc(courseExistsWithCode.id)
+      .doc(id)
       .update(course);
     return res.json({success: 'Course updated.'});
   }
   catch (errorUpdateCourse) {
-    console.error('Something went wrong with update course: ', errorUpdateCourse);
-    return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} updateCourse: `, errorUpdateCourse);
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
 
 exports.deleteCourse = async (req, res) => {
   const {code} = req.body;
   try {
-    const {id} = await getCourseDocumentIdWithCode(code);
+    const {id, error} = await getCourseDocumentIdWithCode(code);
+    if (error) return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
     await db
       .collection('courses')
       .doc(id)
@@ -163,68 +163,59 @@ exports.deleteCourse = async (req, res) => {
     return res.json({success: 'Course deleted.'});
   }
   catch (errorDeleteCourse) {
-    console.error('Something went wrong with delete course: ', errorDeleteCourse);
-    return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} deleteCourse: `, errorDeleteCourse);
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
 
 exports.subscribeUserToCourses = async (req, res) => {
   const {courses, email} = req.body;
-  const {id: userDocId} = await getUserDocumentIdWithEmail(email);
+  const {id: userDocId, error} = await getUserDocumentIdWithEmail(email);
+  if (error) return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}.`);
   try {
     // https://stackoverflow.com/questions/35612428/call-async-await-functions-in-parallel
     await Promise.all(courses.map(async course => {
-      const {exists} = await getCourseDocumentIdWithCode(course);
-      if (exists) {
-        await db
-          .collection('users')
-          .doc(userDocId)
-          .update({
-            subscribedCourses: admin.firestore.FieldValue.arrayUnion(course)
-          });
-      } else {
-        console.log(`Course with code: ${course} does not exist`);
-      }
+      await db
+        .collection('users')
+        .doc(userDocId)
+        .update({
+          subscribedCourses: admin.firestore.FieldValue.arrayUnion(course)
+        });
     }));
 
     return res.json({success: 'User subscribed to course(s).'});
   }
   catch (errorSubscribeUserToCourses) {
-    console.error('Something went wrong with subscribe user to courses-helpers: ', errorSubscribeUserToCourses);
-    return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
+    console.error(
+      `${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} subscribeUserToCourses: `,
+      errorSubscribeUserToCourses
+    );
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
 
 exports.unsubscribeStudentFromCourses = async (req, res) => {
   const {courses, email} = req.body;
-  const {id: userDocId} = await getUserDocumentIdWithEmail(email);
+  const {id: userDocId, error} = await getUserDocumentIdWithEmail(email);
+  if (error) return res.json({error: `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}.`});
 
   try {
     await Promise.all(courses.map(async course => {
-      const {exists} = await getCourseDocumentIdWithCode(course);
-      if (exists) {
-        const {id} = await getCourseDocumentIdWithCode(course);
-        const userSubscribedToCourse = await userAlreadySubscribedToCourse(email, id);
-        if (userSubscribedToCourse) {
-          await db
-            .collection('users')
-            .doc(userDocId)
-            .update({
-              subscribedCourses: admin.firestore.FieldValue.arrayRemove(course)
-            });
-        }
-        else {
-          console.log(`Student is not subscribed in ${course}`);
-        }
-      }
-      else {
-        console.log(`Course with code: ${course} does not exist`);
-      }
+      await db
+        .collection('users')
+        .doc(userDocId)
+        .update({
+          subscribedCourses: admin.firestore.FieldValue.arrayRemove(course)
+        });
+
     }));
     return res.json({success: 'User unsubscribed from course(s).'});
   }
   catch (errorUnsubscribeUserFromCourses) {
-    console.error('Something went wrong with unsubscribe user from courses-helpers: ', errorUnsubscribeUserFromCourses);
-    return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
+    console.error(
+      `${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE}`,
+      errorUnsubscribeUserFromCourses
+    );
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };

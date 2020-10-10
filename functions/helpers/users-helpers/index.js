@@ -9,20 +9,20 @@ exports.getUserDocumentIdWithEmail = async email => {
       .get();
 
     if (querySnapshot.empty) {
-      return {exists: false, id: null};
+      return {id: null, error: null};
     }
     else {
       const documentId = querySnapshot.docs[0].id;
-      return {exists: true, id: documentId};
+      return {id: documentId, error: null};
     }
   }
   catch (errorUserAlreadyExistsWithEmail) {
-    console.error(errorUserAlreadyExistsWithEmail);
-    return {exists: false, id: null};
+    console.error('Something went wrong with getUserDocumentIdWithEmail: ', errorUserAlreadyExistsWithEmail);
+    return {id: null, error: errorUserAlreadyExistsWithEmail};
   }
 };
 
-exports.lecturerAlreadyExistsWithEmail = async email => {
+exports.getLecturerDocumentIdWithEmail = async email => {
   try {
     const querySnapshot = await db
       .collection('lecturers')
@@ -30,34 +30,48 @@ exports.lecturerAlreadyExistsWithEmail = async email => {
       .get();
 
     if (querySnapshot.empty) {
-      return {exists: false, id: null};
+      return {id: null, error: null};
     }
     else {
       const documentId = querySnapshot.docs[0].id;
-      return {exists: true, id: documentId};
+      return {id: documentId, error: null};
     }
   }
-  catch (errorLecturerAlreadyExistsWithEmail) {
-    console.error(errorLecturerAlreadyExistsWithEmail);
-    return {exists: false, id: null};
+  catch (errorGetLecturerDocumentIdWithEmail) {
+    console.error(
+      'Something went wrong with getLecturerDocumentIdWithEmail: ', errorGetLecturerDocumentIdWithEmail);
+    return {id: null, error: errorGetLecturerDocumentIdWithEmail};
   }
 };
 
 exports.deleteUserInFirestore = async userDocId => {
-  return db
-    .collection('users')
-    .doc(userDocId)
-    .delete();
+  try {
+    await db
+      .collection('users')
+      .doc(userDocId)
+      .delete();
+    return {success: true, error: null};
+  }
+  catch (errorDeleteUserInFirestore) {
+    console.error('Something went wrong with deleteUserInFirestore: ', errorDeleteUserInFirestore);
+    return {success: false, error: errorDeleteUserInFirestore};
+  }
 };
 
-exports.getOTPDocumentsByEmail = async email => {
-  const querySnapshot = await db
-    .collection('reset-password-otp')
-    .where('email', '==', email)
-    .orderBy('expiryTime', 'desc')
-    .get();
-  if (querySnapshot.empty) return {error: `no OTP code found with ${email}`};
-  return querySnapshot.docs[0].data();
+exports.getLatestOTPDocumentOfUser = async email => {
+  try {
+    const querySnapshot = await db
+      .collection('reset-password-otp')
+      .where('email', '==', email)
+      .orderBy('expiryTime', 'desc')
+      .get();
+    if (querySnapshot.empty) return {error: `no OTP code found with ${email}`};
+    return {data: querySnapshot.docs[0].data(), error: null};
+  }
+  catch (errorGetLatestOTPDocumentOfUser) {
+    console.error('Something went wrong with getLatestOTPDocumentOfUser: ', errorGetLatestOTPDocumentOfUser);
+    return {data: null, error: errorGetLatestOTPDocumentOfUser};
+  }
 };
 
 exports.deleteOTPDocumentsByEmail = async email => {
@@ -71,9 +85,11 @@ exports.deleteOTPDocumentsByEmail = async email => {
         snapshot.ref.delete();
       });
     }
+    return {success: true};
   }
   catch (errorDeleteOTPDocuments) {
-    console.error(errorDeleteOTPDocuments.message);
+    console.error('Something went wrong with deleteOTPDocumentsByEmail', errorDeleteOTPDocuments);
+    return {success: false};
   }
 };
 
