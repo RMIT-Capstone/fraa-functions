@@ -3,15 +3,15 @@ const ERROR_MESSAGES = require('../../constants/ErrorMessages');
 const {sendErrorMessage} = require('../../../helpers/express-helpers');
 
 exports.createAttendanceSession = async (req, res) => {
-  const {content: QRCodeContent} = req.body;
-  QRCodeContent.createdAt = new Date();
-  const {validOn, expireOn} = QRCodeContent;
-  QRCodeContent.validOn = new Date(validOn);
-  QRCodeContent.expireOn = new Date(expireOn);
+  const {content} = req.body;
+  content.createdAt = new Date();
+  const {validOn, expireOn} = content;
+  content.validOn = new Date(validOn);
+  content.expireOn = new Date(expireOn);
   try {
     await db
       .collection('attendance-sessions')
-      .add(QRCodeContent);
+      .add(content);
     return res.json({success: 'Attendance session created.'});
   }
   catch (errorCreateAttendance) {
