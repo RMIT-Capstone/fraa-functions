@@ -8,14 +8,17 @@ const ATTENDANCE_SESSIONS_ROUTES = require('./utils/routes/attendance-sessions')
 const USERS_ROUTES = require('./utils/routes/users');
 
 // handlers
+// user handlers
 const {
   onCreateUser,
   verifyOTP,
   generateOTP,
   signIn,
-  changeUserPassword
+  changeUserPassword,
+  getUserByEmail
 } = require('./handlers/users/https');
 
+// course handlers
 const {
   createCourse,
   getCourses,
@@ -29,6 +32,7 @@ const {
   unsubscribeStudentFromCourses
 } = require('./handlers/courses/https');
 
+// attendance session handlers
 const {
   createAttendanceSession,
   getAttendanceSessionsInDateRangeOfCourses,
@@ -45,8 +49,6 @@ const usersValidator = require('./utils/middlewares/users');
 app.use(cors());
 
 //TODO: check auth headers when doing CRUD operations
-// VERY IMPORTANT TODO:
-// REFACTOR MIDDLEWARES CODE, FIND SIMILAR SANITY CHECK FOR ENDPOINTS. CODE SUCKS
 
 // attendance session handlers
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.CREATE_ATTENDANCE_SESSION}`,
@@ -89,5 +91,6 @@ app.post(`/${USERS_ROUTES.SIGN_IN}`, usersValidator, signIn);
 app.post(`/${USERS_ROUTES.CHANGE_PASSWORD}`, usersValidator, changeUserPassword);
 app.post(`/${USERS_ROUTES.GENERATE_OTP}`, usersValidator, generateOTP);
 app.post(`/${USERS_ROUTES.VERIFY_OTP}`, usersValidator, verifyOTP);
+app.post(`/${USERS_ROUTES.GET_USER}`, usersValidator, getUserByEmail);
 
 exports.api = functions.region('asia-northeast1').https.onRequest(app);

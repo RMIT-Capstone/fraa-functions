@@ -63,5 +63,14 @@ module.exports = async (req, res, next) => {
     if (lecturerIdError) return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 
+  if (path === USERS_ROUTES.GET_USER) {
+    const {email}  = req.body;
+    if (!email) return sendErrorMessage(res, `${ERROR_MESSAGES.MISSING_FIELD} email.`);
+
+    const {id, error: userDocIdError} = await getUserDocumentIdWithEmail(email);
+    if (!id) return sendErrorMessage(res, `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}.`);
+    if (userDocIdError) return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
+  }
+
   return next();
 };
