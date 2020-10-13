@@ -44,6 +44,8 @@ module.exports = async (req, res, next) => {
     if (!month) return sendErrorMessage(res, `${ERROR_MESSAGE.MISSING_FIELD} month.`);
     if (!email) return sendErrorMessage(res, `${ERROR_MESSAGE.MISSING_FIELD} email.`);
 
+    if (month < 0 || month > 11) return sendErrorMessage(res, 'Month must be between 0 and 11');
+
     const {id: userDocId, error: userDocIdError} = await getUserDocumentIdWithEmail(email);
     if (userDocIdError) return sendErrorMessage(res, `${ERROR_MESSAGE.GENERIC_ERROR_MESSAGE}`);
     if (!userDocId) return res.json({error: `${ERROR_MESSAGE.USER_DOES_NOT_EXIST} ${email}.`});
@@ -73,7 +75,6 @@ module.exports = async (req, res, next) => {
       `User is not subscribed to course(s): ${notSubscribedCourses}.`
     );
 
-    if (month < 0 || month > 11) return res.status(400).send({error: 'Month must be between 0 and 11'});
   }
 
   if (path === ATTENDANCE_SESSIONS_ROUTES.REGISTER_STUDENT_TO_ATTENDANCE_SESSION) {
