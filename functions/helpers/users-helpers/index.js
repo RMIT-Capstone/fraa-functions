@@ -156,7 +156,7 @@ const validatePasswordData = (password, errorObj) => {
   else if (password.length < 6) errorObj.password = 'Password length must be more than 6 characters';
 };
 
-exports.validateCreateLecturerRequest = (name, school) => {
+exports.validateLecturerData = (name, school) => {
   let error = {};
   if (!name) error.name = `${ERROR_MESSAGE.MISSING_FIELD} lecturer name.`;
   if (!school) error.school = `${ERROR_MESSAGE.MISSING_FIELD} school.`;
