@@ -35,8 +35,8 @@ module.exports = async (req, res, next) => {
     if (!code) return sendErrorMessage(res, `${ERROR_MESSAGES.MISSING_FIELD} course code.`);
 
     const {id, error} = await getCourseDocumentIdWithCode(code);
-    if (!id) return sendErrorMessage(res, `${ERROR_MESSAGES.COURSE_DOES_NOT_EXISTS} ${code}.`);
     if (error) return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
+    if (!id) return sendErrorMessage(res, `${ERROR_MESSAGES.COURSE_DOES_NOT_EXISTS} ${code}.`);
   }
 
   if (path === COURSE_ROUTES.GET_COURSES_BY_NAME) {
@@ -57,8 +57,8 @@ module.exports = async (req, res, next) => {
     if (!course) return sendErrorMessage(res, `${ERROR_MESSAGES.MISSING_FIELD} course.`);
 
     const {id, error} = await getCourseDocumentIdWithCode(code);
-    if (!id) return sendErrorMessage(res, `${ERROR_MESSAGES.COURSE_DOES_NOT_EXISTS} ${code}.`);
     if (error) return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
+    if (!id) return sendErrorMessage(res, `${ERROR_MESSAGES.COURSE_DOES_NOT_EXISTS} ${code}.`);
   }
 
   if (path === COURSE_ROUTES.DELETE_COURSE) {
@@ -66,8 +66,8 @@ module.exports = async (req, res, next) => {
     if (!code) return sendErrorMessage(res, `${ERROR_MESSAGES.MISSING_FIELD} course code.`);
 
     const {id, error} = await getCourseDocumentIdWithCode(code);
-    if (!id) return sendErrorMessage(res, `${ERROR_MESSAGES.COURSE_DOES_NOT_EXISTS} ${code}.`);
     if (error) return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
+    if (!id) return sendErrorMessage(res, `${ERROR_MESSAGES.COURSE_DOES_NOT_EXISTS} ${code}.`);
   }
 
   if (path === COURSE_ROUTES.SUBSCRIBE_COURSES || path === COURSE_ROUTES.UNSUBSCRIBE_COURSES) {
@@ -98,8 +98,8 @@ module.exports = async (req, res, next) => {
 
       if (errorUserSubscription) errorCheckUserSubscription.push(courseCode);
     }));
-    if (invalidCourses.length > 0) return sendErrorMessage(res, `Course(s) do not exist: ${invalidCourses}.`);
     if (invalidCoursesErrors.length > 0) return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
+    if (invalidCourses.length > 0) return sendErrorMessage(res, `Course(s) do not exist: ${invalidCourses}.`);
 
 
     if (path === COURSE_ROUTES.SUBSCRIBE_COURSES && subscribedCourses.length > 0) {

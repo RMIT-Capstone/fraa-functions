@@ -173,3 +173,21 @@ exports.changeUserPassword = async (req, res) => {
     return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
+
+exports.getUserByEmail = async (req, res) => {
+  const {email} = req.body;
+  try {
+    const querySnapshot = await db
+      .collection('users')
+      .where('email', '==', email)
+      .get();
+
+    const data = querySnapshot.docs[0].data();
+    data.createdAt = data.createdAt.toDate();
+    return res.json({data});
+  }
+  catch (errorGetUserByEmail) {
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getUserByEmail: `, errorGetUserByEmail);
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
+  }
+};
