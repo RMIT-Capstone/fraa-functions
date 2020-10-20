@@ -79,11 +79,19 @@ exports.validateGetMoreAttendanceByCourseCodeRequest = (courseCode, startAfter) 
   return {error, valid: Object.keys(error).length === 0};
 };
 
-exports.validateGetAttendanceSessionInDateRangeRequest = (courses, startTime, endTime) => {
+exports.validateGetAttendanceSessionsInDateRangeRequest = (courses, startTime, endTime) => {
   let error = {};
   if (!courses) error.courseCode = `${ERROR_MESSAGES.MISSING_FIELD} courses.`;
   if (!startTime) error.startTime = `${ERROR_MESSAGES.MISSING_FIELD} startTime.`;
   if (!endTime) error.endTime = `${ERROR_MESSAGES.MISSING_FIELD} endTime.`;
+  return {error, valid: Object.keys(error).length === 0};
+};
+
+exports.validateGetAttendanceSessionsInMonthRangeRequest = (courses, startMonth, endMonth) => {
+  let error = {};
+  if (!courses) error.courses = `${ERROR_MESSAGES.MISSING_FIELD} courses.`;
+  if (!startMonth) error.startMonth = `${ERROR_MESSAGES.MISSING_FIELD} startMonth.`;
+  if (!endMonth) error.endMonth = `${ERROR_MESSAGES.MISSING_FIELD} endMonth`;
   return {error, valid: Object.keys(error).length === 0};
 };
 

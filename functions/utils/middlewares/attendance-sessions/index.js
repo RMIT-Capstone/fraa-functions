@@ -4,7 +4,8 @@ const {
   attendanceSessionExistsWithDocId,
   userAlreadyRegisteredToAttendanceSession,
   validateCreateAttendanceSessionRequest,
-  validateGetAttendanceSessionInDateRangeRequest,
+  validateGetAttendanceSessionsInDateRangeRequest,
+  validateGetAttendanceSessionsInMonthRangeRequest,
   validateRegisterStudentToAttendanceSessionRequest
 } = require('../../../helpers/attendance-session-helpers');
 const {getUserDocumentIdWithEmail} = require('../../../helpers/users-helpers');
@@ -28,9 +29,19 @@ module.exports = async (req, res, next) => {
 
   if (path === ATTENDANCE_SESSIONS_ROUTES.GET_ATTENDANCE_SESSIONS_IN_DATE_RANGE) {
     const {courses, startTime, endTime} = req.body;
-    const {error, valid} = validateGetAttendanceSessionInDateRangeRequest(courses, startTime, endTime);
+    const {error, valid} = validateGetAttendanceSessionsInDateRangeRequest(courses, startTime, endTime);
     if (!valid) return sendErrorObject(res, error);
     if (startTime > endTime) return res.json({error: 'Start time must be sooner than end time'});
+  }
+
+  if (path === ATTENDANCE_SESSIONS_ROUTES.GET_ATTENDANCE_SESSIONS_IN_MONTH_RANGE) {
+    const {courses, startMonth, endMonth} = req.body;
+    const {error, valid} = validateGetAttendanceSessionsInMonthRangeRequest(courses, startMonth, endMonth);
+    if (!valid) return sendErrorMessage(res, error);
+
+    if (startMonth > endMonth) {
+      return sendErrorMessage(res, `startMonth must be lower than endMonth`);
+    }
   }
 
   if (path === ATTENDANCE_SESSIONS_ROUTES.GET_DAILY_ATTENDANCE_SESSION) {
