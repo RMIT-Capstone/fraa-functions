@@ -35,13 +35,9 @@ module.exports = async (req, res, next) => {
   }
 
   if (path === ATTENDANCE_SESSIONS_ROUTES.GET_ATTENDANCE_SESSIONS_IN_MONTH_RANGE) {
-    const {courses, startMonth, endMonth} = req.body;
-    const {error, valid} = validateGetAttendanceSessionsInMonthRangeRequest(courses, startMonth, endMonth);
+    const {courses, startMonth, monthRange} = req.body;
+    const {error, valid} = validateGetAttendanceSessionsInMonthRangeRequest(courses, startMonth, monthRange);
     if (!valid) return sendErrorMessage(res, error);
-
-    if (startMonth > endMonth) {
-      return sendErrorMessage(res, `startMonth must be lower than endMonth`);
-    }
   }
 
   if (path === ATTENDANCE_SESSIONS_ROUTES.GET_DAILY_ATTENDANCE_SESSION) {

@@ -51,12 +51,12 @@ exports.getAttendanceSessionsInDateRange = async (req, res) => {
 };
 
 exports.getAttendanceSessionsInMonthRange = async (req, res) => {
-  const {courses, startMonth, endMonth} = req.body;
+  const {courses, startMonth, monthRange} = req.body;
   try {
     let sessions = [];
 
     const firstDayOfStartMonth = new Date(today.getFullYear(), startMonth, 1, 0, 0, 0, 0);
-    const lastDayOfEndMonth = new Date(today.getFullYear(), endMonth + 1, 23, 59, 59, 59, 999);
+    const lastDayOfEndMonth = new Date(today.getFullYear(), startMonth + monthRange - 1, 23, 59, 59, 59, 999);
     const querySnapshot = await db
       .collection('attendance-sessions')
       .where('validOn', '>=', firstDayOfStartMonth)

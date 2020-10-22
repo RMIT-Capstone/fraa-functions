@@ -36,6 +36,7 @@ const {
 const {
   createAttendanceSession,
   getAttendanceSessionsInDateRange,
+  getAttendanceSessionsInMonthRange,
   getDailyAttendanceSessions,
   getMonthlyAttendanceSessions,
   registerStudentToAttendanceSession
@@ -58,6 +59,10 @@ app.post(`/${ATTENDANCE_SESSIONS_ROUTES.CREATE_ATTENDANCE_SESSION}`,
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_ATTENDANCE_SESSIONS_IN_DATE_RANGE}`,
   attendanceSessionsValidator,
   getAttendanceSessionsInDateRange
+);
+app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_ATTENDANCE_SESSIONS_IN_MONTH_RANGE}`,
+  attendanceSessionsValidator,
+  getAttendanceSessionsInMonthRange,
 );
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_DAILY_ATTENDANCE_SESSION}`,
   attendanceSessionsValidator,
