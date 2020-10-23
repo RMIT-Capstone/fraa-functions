@@ -40,6 +40,7 @@ const createUserInFirestore = async (email, displayName, school, isLecturer) => 
         email,
         displayName,
         school,
+        subscribedCourses: [],
         createdAt: new Date(),
         firstTimePassword: true,
       });
