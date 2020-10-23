@@ -35,9 +35,10 @@ const {
 // attendance session handlers
 const {
   createAttendanceSession,
-  getAttendanceSessionsInDateRangeOfCourses,
-  getDailyAttendanceSessionsOfCourses,
-  getMonthlyAttendanceSessionsOfCourses,
+  getAttendanceSessionsInDateRange,
+  getAttendanceSessionsInMonthRange,
+  getDailyAttendanceSessions,
+  getMonthlyAttendanceSessions,
   registerStudentToAttendanceSession
 } = require('./handlers/attendance-sessions/https');
 
@@ -57,15 +58,19 @@ app.post(`/${ATTENDANCE_SESSIONS_ROUTES.CREATE_ATTENDANCE_SESSION}`,
 );
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_ATTENDANCE_SESSIONS_IN_DATE_RANGE}`,
   attendanceSessionsValidator,
-  getAttendanceSessionsInDateRangeOfCourses
+  getAttendanceSessionsInDateRange
+);
+app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_ATTENDANCE_SESSIONS_IN_MONTH_RANGE}`,
+  attendanceSessionsValidator,
+  getAttendanceSessionsInMonthRange,
 );
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_DAILY_ATTENDANCE_SESSION}`,
   attendanceSessionsValidator,
-  getDailyAttendanceSessionsOfCourses
+  getDailyAttendanceSessions
 );
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_MONTHLY_ATTENDANCE_SESSIONS}`,
   attendanceSessionsValidator,
-  getMonthlyAttendanceSessionsOfCourses
+  getMonthlyAttendanceSessions
 );
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.REGISTER_STUDENT_TO_ATTENDANCE_SESSION}`,
   attendanceSessionsValidator,
