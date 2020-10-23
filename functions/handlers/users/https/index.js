@@ -184,7 +184,7 @@ exports.getUserByEmail = async (req, res) => {
 
     const data = querySnapshot.docs[0].data();
     data.createdAt = data.createdAt.toDate();
-    return res.json({data});
+    return res.json(data);
   }
   catch (errorGetUserByEmail) {
     console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getUserByEmail: `, errorGetUserByEmail);
