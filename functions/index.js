@@ -42,6 +42,9 @@ const {
   registerStudentToAttendanceSession
 } = require('./handlers/attendance-sessions/https');
 
+// background functions
+const {onUserDeleteInAuth} = require('./handlers/users/background');
+
 //middlewares
 const coursesValidator = require('./utils/middlewares/courses');
 const attendanceSessionsValidator = require('./utils/middlewares/attendance-sessions');
@@ -77,7 +80,7 @@ app.post(`/${ATTENDANCE_SESSIONS_ROUTES.REGISTER_STUDENT_TO_ATTENDANCE_SESSION}`
   registerStudentToAttendanceSession
 );
 
-//courses-helpers
+// courses-helpers
 app.post(`/${COURSES_ROUTES.CREATE_COURSE}`, coursesValidator, createCourse);
 app.post(`/${COURSES_ROUTES.GET_COURSES}`, getCourses);
 app.post(`/${COURSES_ROUTES.GET_MORE_COURSES}`, coursesValidator, getMoreCourses);
@@ -98,4 +101,8 @@ app.post(`/${USERS_ROUTES.GENERATE_OTP}`, usersValidator, generateOTP);
 app.post(`/${USERS_ROUTES.VERIFY_OTP}`, usersValidator, verifyOTP);
 app.post(`/${USERS_ROUTES.GET_USER}`, usersValidator, getUserByEmail);
 
+// user background functions
+exports.onUserDeleteInAuth = functions.region('asia-northeast1').auth.user().onDelete(onUserDeleteInAuth);
+
+// api
 exports.api = functions.region('asia-northeast1').https.onRequest(app);
