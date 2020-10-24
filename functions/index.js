@@ -50,6 +50,7 @@ const usersValidator = require('./utils/middlewares/users');
 app.use(cors());
 
 //TODO: check auth headers when doing CRUD operations
+//TODO: delete firestore record when delete in firebase auth
 
 // attendance session handlers
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.CREATE_ATTENDANCE_SESSION}`,

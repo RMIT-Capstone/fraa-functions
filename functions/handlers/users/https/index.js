@@ -10,21 +10,19 @@ const ERROR_MESSAGES = require('../../constants/ErrorMessages');
 const {sendErrorMessage} = require('../../../helpers/express-helpers');
 
 exports.onCreateUser = async (req, res) => {
-  const {email, password, name, school, isLecturer} = req.body;
+  const {email, password, displayName, school, isLecturer} = req.body;
   try {
-    const createUser = await Promise.all([
-      isLecturer ? createLecturerInFirestore(email, name, school) : createUserInFirestore(email),
-      createUserInAuth(email, password)]);
-    const {error: errorCreateInFirestore} = createUser[0];
-    const {error: errorCreateInFirebaseAuth, idToken} = createUser[1];
-    if (errorCreateInFirestore) {
-      console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} onCreateUser: `, errorCreateInFirestore);
-      return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
+    const {idToken, error} = await createUserInAuth(email, password);
+    if (error) {
+      if (error === 'Email already in use')
+        return sendErrorMessage(res, `${ERROR_MESSAGES.USER_ALREADY_EXISTS} ${email}`);
+      else {
+        console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} onCreateUser: `, error);
+        return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
+      }
     }
-    if (errorCreateInFirebaseAuth) {
-      console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} onCreateUser: `, errorCreateInFirebaseAuth);
-      return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
-    }
+    await createUserInFirestore(email, displayName, school, isLecturer);
+
     return res.status(200).json({idToken});
   }
   catch (errorOnCreateUser) {
@@ -33,45 +31,25 @@ exports.onCreateUser = async (req, res) => {
   }
 };
 
-const createLecturerInFirestore = async (email, name, school) => {
+const createUserInFirestore = async (email, displayName, school, isLecturer) => {
   try {
+    const collection = isLecturer ? 'lecturers' : 'users';
     await db
-      .collection('lecturers')
+      .collection(collection)
       .add({
         email,
-        name: name.split(' ').map(letter => letter.toLowerCase()),
+        displayName,
         school,
+        subscribedCourses: [],
         createdAt: new Date(),
         firstTimePassword: true,
       });
-    return {error: null};
-  }
-  catch (errorCreateLecturerInFirestore) {
-    console.error(
-      `${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} createLecturerInFirestore: `,
-      errorCreateLecturerInFirestore
-    );
-    return {error: errorCreateLecturerInFirestore};
-  }
-};
-
-const createUserInFirestore = async email => {
-  try {
-    await db
-      .collection('users')
-      .add({
-        email,
-        createdAt: new Date(),
-        firstTimePassword: true,
-      });
-    return {error: null};
   }
   catch (errorCreateUserInFirestore) {
     console.error(
       `${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} createUserInFirestore: `,
       errorCreateUserInFirestore
     );
-    return {error: errorCreateUserInFirestore};
   }
 };
 
@@ -126,7 +104,7 @@ exports.generateOTP = async (req, res) => {
       expiryTime: fiveMinutesFromNow,
     });
     await sendOTPToUser(email, OTP);
-    return res.json({success: 'OTP code created.'});
+    return res.status(200).json({success: 'OTP code created.'});
   }
   catch (errorGenerateOTP) {
     console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} generateOTP: `, errorGenerateOTP);

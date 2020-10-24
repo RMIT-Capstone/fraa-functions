@@ -1,5 +1,4 @@
 const {db, admin} = require('../../utils/admin');
-const ERROR_MESSAGE = require('../../handlers/constants/ErrorMessages');
 
 exports.getUserDocumentIdWithEmail = async email => {
   try {
@@ -16,9 +15,30 @@ exports.getUserDocumentIdWithEmail = async email => {
       return {id: documentId, error: null};
     }
   }
-  catch (errorUserAlreadyExistsWithEmail) {
-    console.error('Something went wrong with getUserDocumentIdWithEmail: ', errorUserAlreadyExistsWithEmail);
-    return {id: null, error: errorUserAlreadyExistsWithEmail};
+  catch (errorGetUserDocumentIdWithEmail) {
+    console.error('Something went wrong with getUserDocumentIdWithEmail: ', errorGetUserDocumentIdWithEmail);
+    return {id: null, error: errorGetUserDocumentIdWithEmail};
+  }
+};
+
+exports.getLecturerDocumentIdWithEmail = async email => {
+  try {
+    const querySnapshot = await db
+      .collection('lecturers')
+      .where('email', '==', email)
+      .get();
+
+    if (querySnapshot.empty) {
+      return {id: null, error: null};
+    }
+    else {
+      const documentId = querySnapshot.docs[0].id;
+      return {id: documentId, error: null};
+    }
+  }
+  catch (errorGetLecturerDocumentIdWithEmail) {
+    console.error('Something wnt wrong with getLecturerDocumentIdWithEmail: ', errorGetLecturerDocumentIdWithEmail);
+    return {id: null, error: errorGetLecturerDocumentIdWithEmail};
   }
 };
 
@@ -121,7 +141,7 @@ exports.generateOTPCode = () => {
 };
 
 const stringIsEmpty = string => {
-  if (!(typeof string === 'string')) return true;
+  if (!(typeof string === 'string') || !string) return true;
   return string.trim() === '';
 };
 
@@ -132,8 +152,13 @@ const isEmail = email => {
   return Boolean(email.match(regEx));
 };
 
-exports.validateAccountData = (email, password) => {
+exports.validateAccountData = (email, password, displayName, school, isLecturer) => {
   let error = {};
+  if (!displayName) error.displayName = 'displayName must not be empty.';
+  if (!school) error.school = 'school must not be empty.';
+  if (isLecturer === undefined || !(typeof isLecturer === 'boolean')) {
+    error.isLecturer = 'isLecturer must not be empty/in incorrect format.';
+  }
   validateEmailData(email, error);
   validatePasswordData(password, error);
   return {
@@ -144,23 +169,15 @@ exports.validateAccountData = (email, password) => {
 
 const validateEmailData = (email, errorObj) => {
   if (stringIsEmpty(email)) {
-    errorObj.email = 'Email must not be empty';
+    return errorObj.email = 'Email must not be empty';
   }
   else if (!isEmail(email)) {
-    errorObj.email = 'Invalid email address';
+    return errorObj.email = 'Invalid email address';
   }
+  return null;
 };
 
 const validatePasswordData = (password, errorObj) => {
   if (stringIsEmpty(password)) errorObj.password = 'Password must not be empty';
   else if (password.length < 6) errorObj.password = 'Password length must be more than 6 characters';
 };
-
-exports.validateLecturerData = (name, school) => {
-  let error = {};
-  if (!name) error.name = `${ERROR_MESSAGE.MISSING_FIELD} lecturer name.`;
-  if (!school) error.school = `${ERROR_MESSAGE.MISSING_FIELD} school.`;
-  return {error, valid: Object.keys(error).length === 0};
-};
-
-
