@@ -95,7 +95,7 @@ exports.getAttendanceSessionsInMonthRange = async (req, res) => {
 exports.getDailyAttendanceSessions = async (req, res) => {
   const {courses} = req.body;
   try {
-    let sessions = [];
+    let sessions = [], markedDates = [];
 
     const start = new Date();
     start.setHours(0, 0, 0, 0);
@@ -118,10 +118,9 @@ exports.getDailyAttendanceSessions = async (req, res) => {
     });
 
     if (sessions.length !== 0) {
-      const markedDates = markAttendanceSessionsDate(sessions);
-      return res.json({sessions, markedDates});
+      markedDates = markAttendanceSessionsDate(sessions);
     }
-    return res.json({sessions});
+    return res.json({sessions, markedDates});
   }
   catch (errorGetDailyAttendanceSessions) {
     console.error(
@@ -135,7 +134,7 @@ exports.getDailyAttendanceSessions = async (req, res) => {
 exports.getMonthlyAttendanceSessions = async (req, res) => {
   const {courses, month} = req.body;
   try {
-    let sessions = [];
+    let sessions = [], markedDates = [];
 
     const firstDayOfMonth = new Date(today.getFullYear(), month, 1, 0, 0, 0, 0);
     const lastDayOfMonth = new Date(today.getFullYear(), month + 1, 0, 23, 59, 59, 999);
@@ -159,7 +158,10 @@ exports.getMonthlyAttendanceSessions = async (req, res) => {
       //   if (courseCode === code) sessions[courseCode].push(data);
       // }
     });
-    const markedDates = markAttendanceSessionsDate(sessions);
+
+    if (sessions.length !== 0) {
+      markedDates = markAttendanceSessionsDate(sessions);
+    }
     return res.json({sessions, markedDates});
   }
   catch (errorGetMonthlyAttendanceSessions) {

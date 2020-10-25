@@ -11,7 +11,6 @@ const {
 const {getUserDocumentIdWithEmail} = require('../../../helpers/users-helpers');
 const {getCourseDocumentIdWithCode} = require('../../../helpers/courses-helpers');
 const ERROR_MESSAGE = require('../../../handlers/constants/ErrorMessages');
-const {userAlreadySubscribedToCourse} = require('../../../helpers/courses-helpers');
 
 module.exports = async (req, res, next) => {
   const path = req.path.split('/')[1];
@@ -46,42 +45,11 @@ module.exports = async (req, res, next) => {
   }
 
   if (path === ATTENDANCE_SESSIONS_ROUTES.GET_MONTHLY_ATTENDANCE_SESSIONS) {
-    const {courses, month, email} = req.body;
+    const {courses, month} = req.body;
     if (!courses) return sendErrorMessage(res, `${ERROR_MESSAGE.MISSING_FIELD} courses.`);
     if (!month) return sendErrorMessage(res, `${ERROR_MESSAGE.MISSING_FIELD} month.`);
-    if (!email) return sendErrorMessage(res, `${ERROR_MESSAGE.MISSING_FIELD} email.`);
 
     if (month < 0 || month > 11) return sendErrorMessage(res, 'Month must be between 0 and 11');
-
-    const {id: userDocId, error: userDocIdError} = await getUserDocumentIdWithEmail(email);
-    if (userDocIdError) return sendErrorMessage(res, `${ERROR_MESSAGE.GENERIC_ERROR_MESSAGE}`);
-    if (!userDocId) return res.json({error: `${ERROR_MESSAGE.USER_DOES_NOT_EXIST} ${email}.`});
-
-    let invalidCourses = [];
-    let errorCheckCourseExists = [];
-    let notSubscribedCourses = [];
-    let errorCheckUserSubscription = [];
-
-    await Promise.all(courses.map(async courseCode => {
-      const {id, error} = await getCourseDocumentIdWithCode(courseCode);
-      const {subscribed, error: errorUserSubscription} = await userAlreadySubscribedToCourse(userDocId, courseCode);
-
-      if (!id) invalidCourses.push(courseCode);
-      if (error) errorCheckCourseExists.push(error);
-
-      if (!subscribed) notSubscribedCourses.push(courseCode);
-      if (errorUserSubscription) errorCheckUserSubscription.push(courseCode);
-    }));
-
-    if (errorCheckCourseExists.length > 0) return sendErrorMessage(res, `${ERROR_MESSAGE.GENERIC_ERROR_MESSAGE}`);
-    if (invalidCourses.length > 0) return sendErrorMessage(res, `Course(s) do not exist: ${invalidCourses}.`);
-
-    if (errorCheckUserSubscription.length > 0) return sendErrorMessage(res, `${ERROR_MESSAGE.GENERIC_ERROR_MESSAGE}`);
-    if (notSubscribedCourses.length > 0) return sendErrorMessage(
-      res,
-      `User is not subscribed to course(s): ${notSubscribedCourses}.`
-    );
-
   }
 
   if (path === ATTENDANCE_SESSIONS_ROUTES.REGISTER_STUDENT_TO_ATTENDANCE_SESSION) {
