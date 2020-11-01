@@ -14,9 +14,9 @@ exports.getCourseDocumentIdWithCode = async code => {
       return {id: documentId, error: null};
     }
   }
-  catch (errorCourseAlreadyExistsWithCourseCode) {
-    console.error('Something went wrong with getCourseDocumentIdWith');
-    return {id: null, error: errorCourseAlreadyExistsWithCourseCode};
+  catch (errorGetCourseDocumentIdWithCode) {
+    console.error('Something went wrong with getCourseDocumentIdWithCode', errorGetCourseDocumentIdWithCode);
+    return {id: null, error: errorGetCourseDocumentIdWithCode};
   }
 };
 

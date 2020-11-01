@@ -1,20 +1,29 @@
 const {db, admin} = require('../../../utils/admin');
 const ERROR_MESSAGES = require('../../constants/ErrorMessages');
+const {getCourseDocumentIdWithCode} = require('../../../helpers/courses-helpers');
 const {sendErrorMessage} = require('../../../helpers/express-helpers');
 
 const today = new Date();
 
-// return content, check attendance sessions code tmr
 exports.createAttendanceSession = async (req, res) => {
   const {content} = req.body;
-  const {validOn, expireOn} = content;
+  const {validOn, expireOn, courseCode} = content;
   content.createdAt = new Date();
   content.validOn = new Date(validOn);
   content.expireOn = new Date(expireOn);
+  content.attendees = [];
   try {
     await db
       .collection('attendance-sessions')
       .add(content);
+
+    const {id} = await getCourseDocumentIdWithCode(courseCode);
+    await db
+      .collection('courses')
+      .doc(id)
+      .update({
+        sessionCounts: admin.firestore.FieldValue.increment(1)
+      });
     return res.json(content);
   }
   catch (errorCreateAttendance) {
@@ -200,7 +209,6 @@ const markAttendanceSessionsDate = sessions => {
   sessions.forEach((session) => {
     const { validOn } = session;
     const eventDate = new Date(validOn).toISOString().split('T')[0];
-    console.log(eventDate);
     markedDates[eventDate] = {};
     markedDates[eventDate].marked = true;
     markedDates[eventDate].dotColor = '#E60028';
