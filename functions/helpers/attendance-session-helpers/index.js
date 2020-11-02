@@ -64,11 +64,26 @@ exports.userAlreadyRegisteredToAttendanceSession = async (email, sessionId) => {
   }
 };
 
-exports.validateCreateAttendanceSessionRequest = (validOn, expireOn, courseCode) => {
+exports.validateCreateAttendanceSessionRequest = async (validOn, expireOn, courseCode) => {
   let error = {};
   if (!validOn) error.validOn = `${ERROR_MESSAGES.MISSING_FIELD} validOn.`;
   if (!expireOn) error.expireOn = `${ERROR_MESSAGES.MISSING_FIELD} expireOn.`;
   if (!courseCode) error.courseCode = `${ERROR_MESSAGES.MISSING_FIELD} course code.`;
+
+  let start = new Date(validOn);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(validOn);
+  end.setHours(23, 59, 59, 999);
+  const querySnapshot = await db
+    .collection('attendance-sessions')
+    .where('validOn', '>=', start)
+    .where('validOn', '<=', end)
+    .get();
+
+  if (!querySnapshot.empty) {
+    error.invalidRequest = 'Cannot create 2 attendance session of the same day with the same course.';
+  }
+
   return {error, valid: Object.keys(error).length === 0};
 };
 

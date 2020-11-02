@@ -18,7 +18,7 @@ module.exports = async (req, res, next) => {
   if (path === ATTENDANCE_SESSIONS_ROUTES.CREATE_ATTENDANCE_SESSION) {
     const {validOn, expireOn, courseCode} = req.body.content;
 
-    const {error, valid} = validateCreateAttendanceSessionRequest(validOn, expireOn, courseCode);
+    const {error, valid} = await validateCreateAttendanceSessionRequest(validOn, expireOn, courseCode);
     if (!valid) return sendErrorObject(res, error);
 
     const {id: courseDocId, error: courseDocIdError} = await getCourseDocumentIdWithCode(courseCode);
