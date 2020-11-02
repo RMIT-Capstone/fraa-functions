@@ -43,7 +43,7 @@ const {
 } = require('./handlers/attendance-sessions/https');
 
 // background functions
-const {onUserDeleteInAuth} = require('./handlers/users/background');
+const { onUserDeleteInAuth } = require('./handlers/users/background');
 
 //middlewares
 const coursesValidator = require('./utils/middlewares/courses');
@@ -53,7 +53,6 @@ const usersValidator = require('./utils/middlewares/users');
 app.use(cors());
 
 //TODO: check auth headers when doing CRUD operations
-//TODO: delete firestore record when delete in firebase auth
 
 // attendance session handlers
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.CREATE_ATTENDANCE_SESSION}`,
