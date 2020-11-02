@@ -1,5 +1,5 @@
-const {sendErrorMessage, sendErrorObject} = require('../../../helpers/express-helpers');
-const {getUserDocumentIdWithEmail} = require('../../../helpers/users-helpers');
+const { sendErrorMessage, sendErrorObject } = require('../../../helpers/express-helpers');
+const { getUserDocumentIdWithEmail } = require('../../../helpers/users-helpers');
 const {
   getCourseDocumentIdWithCode,
   validateCreateCourseRequest,
@@ -9,70 +9,62 @@ const {
 } = require('../../../helpers/courses-helpers');
 const COURSE_ROUTES = require('../../routes/courses');
 const ERROR_MESSAGES = require('../../../handlers/constants/ErrorMessages');
+const { validateUpdateCourseRequest } = require('../../../helpers/courses-helpers');
+const { validateGetMoreCoursesRequest } = require('../../../helpers/courses-helpers');
+const { validateGetCourseByCodeRequest } = require('../../../helpers/courses-helpers');
 
-
+// TODO: reconfirm if these functions work
 module.exports = async (req, res, next) => {
   const path = req.path.split('/')[1];
 
   if (path === COURSE_ROUTES.CREATE_COURSE) {
-    const {course, course: {code}} = req.body;
+    const { course } = req.body;
 
-    const {error, valid} = validateCreateCourseRequest(course);
+    const { error, valid } = await validateCreateCourseRequest(course);
     if (!valid) return sendErrorObject(res, error);
-
-    const {id: courseDocId, error: courseDocError} = await getCourseDocumentIdWithCode(code);
-    if (courseDocId) return sendErrorMessage(res, `${ERROR_MESSAGES.COURSE_ALREADY_EXISTS} ${code}.`);
-    if (courseDocError) return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 
   if (path === COURSE_ROUTES.GET_MORE_COURSES) {
-    const {startAfter} = req.body;
-    if (!startAfter) return sendErrorMessage(res, `${ERROR_MESSAGES.MISSING_FIELD} startAfter.`);
+    const { startAfter } = req.body;
+    const { error, valid } = validateGetMoreCoursesRequest(startAfter);
+    if (!valid) return sendErrorObject(res, error);
   }
 
   if (path === COURSE_ROUTES.GET_COURSE_BY_CODE) {
-    const {code} = req.body;
-    if (!code) return sendErrorMessage(res, `${ERROR_MESSAGES.MISSING_FIELD} course code.`);
-
-    const {id, error} = await getCourseDocumentIdWithCode(code);
-    if (error) return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
-    if (!id) return sendErrorMessage(res, `${ERROR_MESSAGES.COURSE_DOES_NOT_EXISTS} ${code}.`);
+    const { courseCode } = req.body;
+    const { error, valid } = await validateGetCourseByCodeRequest(courseCode);
+    if (!valid) return sendErrorObject(res, error);
   }
 
   if (path === COURSE_ROUTES.GET_COURSES_BY_NAME) {
-    const {name} = req.body;
+    const { name } = req.body;
     if (!name) return sendErrorMessage(res, `${ERROR_MESSAGES.MISSING_FIELD} course name.`);
   }
 
   if (path === COURSE_ROUTES.GET_MORE_COURSES_BY_NAME) {
-    const {name, startAfter} = req.body;
-    const {error, valid} = validateGetMoreCoursesByNameRequest(name, startAfter);
+    const { name, startAfter } = req.body;
+    const { error, valid } = validateGetMoreCoursesByNameRequest(name, startAfter);
     if (!valid) return sendErrorObject(res, error);
-    if (!name) return sendErrorMessage(res, `${ERROR_MESSAGES.MISSING_FIELD} course name.`);
-    if (!startAfter) return sendErrorMessage(res, `${ERROR_MESSAGES.MISSING_FIELD} startAfter.`);
   }
 
   if (path === COURSE_ROUTES.UPDATE_COURSE) {
-    const {course, course: {code}} = req.body;
-    if (!course) return sendErrorMessage(res, `${ERROR_MESSAGES.MISSING_FIELD} course.`);
-
-    const {id, error} = await getCourseDocumentIdWithCode(code);
-    if (error) return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
-    if (!id) return sendErrorMessage(res, `${ERROR_MESSAGES.COURSE_DOES_NOT_EXISTS} ${code}.`);
+    const { course } = req.body;
+    const { error, valid } = await validateUpdateCourseRequest(course);
+    if (!valid) return sendErrorObject(res, error);
   }
 
   if (path === COURSE_ROUTES.DELETE_COURSE) {
-    const {code} = req.body;
+    const { code } = req.body;
     if (!code) return sendErrorMessage(res, `${ERROR_MESSAGES.MISSING_FIELD} course code.`);
 
-    const {id, error} = await getCourseDocumentIdWithCode(code);
+    const { id, error } = await getCourseDocumentIdWithCode(code);
     if (error) return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
     if (!id) return sendErrorMessage(res, `${ERROR_MESSAGES.COURSE_DOES_NOT_EXISTS} ${code}.`);
   }
 
   if (path === COURSE_ROUTES.SUBSCRIBE_COURSES || path === COURSE_ROUTES.UNSUBSCRIBE_COURSES) {
-    const {email, courses} = req.body;
-    const {error, valid} = validateCourseSubscriptionRequest(email, courses);
+    const { email, courses } = req.body;
+    const { error, valid } = validateCourseSubscriptionRequest(email, courses);
     if (!valid) return sendErrorObject(res, error);
 
     let invalidCourses = [];
@@ -81,10 +73,10 @@ module.exports = async (req, res, next) => {
     let notSubscribedCourses = [];
     let errorCheckUserSubscription = [];
 
-    const {id: userDocId} = await getUserDocumentIdWithEmail(email);
+    const { id: userDocId } = await getUserDocumentIdWithEmail(email);
     await Promise.all(courses.map(async courseCode => {
-      const {id, error} = await getCourseDocumentIdWithCode(courseCode);
-      const {subscribed, error: errorUserSubscription} = await userAlreadySubscribedToCourse(userDocId, courseCode);
+      const { id, error } = await getCourseDocumentIdWithCode(courseCode);
+      const { subscribed, error: errorUserSubscription } = await userAlreadySubscribedToCourse(userDocId, courseCode);
 
       if (!id) invalidCourses.push(courseCode);
       if (error) invalidCoursesErrors.push(error);
@@ -121,7 +113,7 @@ module.exports = async (req, res, next) => {
     );
 
 
-    const {id, error: userDocIdError} = await getUserDocumentIdWithEmail(email);
+    const { id, error: userDocIdError } = await getUserDocumentIdWithEmail(email);
     if (!id) return sendErrorMessage(res, `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}`);
     if (userDocIdError) return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
