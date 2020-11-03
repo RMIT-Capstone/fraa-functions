@@ -46,7 +46,7 @@ const validateCreateCourseRequest = async course => {
   let error = {};
   if (!code) error.code = `${ERROR_MESSAGES.MISSING_FIELD} code.`;
   else {
-    const { id, error: errorCourseDocId } = await getCourseDocumentIdWithCode(code);
+    const { id, errorCourseDocId } = await getCourseDocumentIdWithCode(code);
     if (errorCourseDocId) error.course = 'Error retrieving course document id.';
     if (id) error.course = `${ERROR_MESSAGES.COURSE_ALREADY_EXISTS} ${code}.`;
   }
@@ -100,7 +100,7 @@ const validateUpdateCourseRequest = async (course) => {
   const { code } = course;
   if (!code) error.code = `${ERROR_MESSAGES.MISSING_FIELD} code`;
   else {
-    const { id, error: errorCourseDocId } = await getCourseDocumentIdWithCode(code);
+    const { id, errorCourseDocId } = await getCourseDocumentIdWithCode(code);
     if (errorCourseDocId) error.course = 'Error retrieving course document id';
     if (!id) error.course = `${ERROR_MESSAGES.COURSE_DOES_NOT_EXISTS} ${code}`;
   }
@@ -112,8 +112,8 @@ const validateDeleteCourseRequest = async (courseCode) => {
   let error = {};
   if (!courseCode) error.courseCode = `${ERROR_MESSAGES.MISSING_FIELD} courseCode.`;
   else {
-    const { id, error } = await getCourseDocumentIdWithCode(courseCode);
-    if (error) error.courseCode = 'Error retrieving course document id';
+    const { id, errorCourseDocumentId } = await getCourseDocumentIdWithCode(courseCode);
+    if (errorCourseDocumentId) error.courseCode = 'Error retrieving course document id';
     if (!id) error.course = `${ERROR_MESSAGES.COURSE_DOES_NOT_EXISTS} ${courseCode}`;
   }
 
@@ -133,12 +133,13 @@ const validateCourseSubscriptionRequest = async (email, courses, path) => {
     if (userDocIdError) error.user = 'Error retrieving user document id.';
     if (!userDocId) error.user = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}`;
 
+    // TODO: is this really necessary ?
     await Promise.all(courses.map(async courseCode => {
-      const { id, error } = await getCourseDocumentIdWithCode(courseCode);
+      const { id: courseDocId, error: errorCourseDocId } = await getCourseDocumentIdWithCode(courseCode);
       const { subscribed, error: errorUserSubscription } = await userAlreadySubscribedToCourse(userDocId, courseCode);
 
-      if (!id) invalidCourses.push(courseCode);
-      if (error) error.request = 'Error retrieving course document id.';
+      if (!courseDocId) invalidCourses.push(courseCode);
+      if (errorCourseDocId) error.request = 'Error retrieving course document id.';
 
       if (path === COURSE_ROUTES.SUBSCRIBE_COURSES) {
         if (subscribed) subscribedCourses.push(courseCode);
@@ -156,8 +157,6 @@ const validateCourseSubscriptionRequest = async (email, courses, path) => {
       if (path === COURSE_ROUTES.UNSUBSCRIBE_COURSES && notSubscribedCourses.length > 0) {
         error.user = `User is not subscribed to course(s): ${notSubscribedCourses}.`;
       }
-
-
     }));
   }
 

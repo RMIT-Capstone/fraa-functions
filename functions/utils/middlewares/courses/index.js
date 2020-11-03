@@ -60,7 +60,7 @@ module.exports = async (req, res, next) => {
 
   if (path === COURSE_ROUTES.SUBSCRIBE_COURSES || path === COURSE_ROUTES.UNSUBSCRIBE_COURSES) {
     const { email, courses } = req.body;
-    const { error, valid } = validateCourseSubscriptionRequest(email, courses);
+    const { error, valid } = await validateCourseSubscriptionRequest(email, courses, path);
     if (!valid) return sendErrorObject(res, error);
   }
 

@@ -3,7 +3,7 @@ const ERROR_MESSAGES = require('../../handlers/constants/ErrorMessages');
 const { getUserDocumentIdWithEmail } = require('../users-helpers');
 const { getCourseDocumentIdWithCode } = require('../courses-helpers');
 
-exports.getAttendanceSessionDocumentIdByDate = async date => {
+const getAttendanceSessionDocumentIdByDate = async date => {
   try {
     const querySnapshot = await db
       .collection('attendance-sessions')
@@ -24,7 +24,7 @@ exports.getAttendanceSessionDocumentIdByDate = async date => {
   }
 };
 
-exports.attendanceSessionExistsWithDocId = async docId => {
+const attendanceSessionExistsWithDocId = async docId => {
   try {
     const documentSnapshot = await db
       .collection('attendance-sessions')
@@ -44,7 +44,7 @@ exports.attendanceSessionExistsWithDocId = async docId => {
   }
 };
 
-exports.userAlreadyRegisteredToAttendanceSession = async (email, sessionId) => {
+const userAlreadyRegisteredToAttendanceSession = async (email, sessionId) => {
   try {
     const documentSnapshot = await db
       .collection('attendance-sessions')
@@ -67,51 +67,51 @@ exports.userAlreadyRegisteredToAttendanceSession = async (email, sessionId) => {
 };
 
 //validations
-exports
-  .validateCreateAttendanceSessionRequest = async (courseCode, courseName, lecturer, validOn, expireOn, location) => {
-    let error = {};
-    if (!courseCode) error.courseCode = `${ERROR_MESSAGES.MISSING_FIELD} courseCode.`;
-    else {
-      const { id, error: docIdError } = await getCourseDocumentIdWithCode(courseCode);
-      if (docIdError) {
-        error.course = 'Error retrieving course doc id.';
-      }
-      if (!id) {
-        error.course = `${ERROR_MESSAGES.COURSE_DOES_NOT_EXISTS} ${courseCode}`;
-      }
+// eslint-disable-next-line max-len
+const validateCreateAttendanceSessionRequest = async (courseCode, courseName, lecturer, validOn, expireOn, location) => {
+  let error = {};
+  if (!courseCode) error.courseCode = `${ERROR_MESSAGES.MISSING_FIELD} courseCode.`;
+  else {
+    const { id, docIdError } = await getCourseDocumentIdWithCode(courseCode);
+    if (docIdError) {
+      error.course = 'Error retrieving course doc id.';
     }
-    if (!courseName) error.courseName = `${ERROR_MESSAGES.MISSING_FIELD} courseName.`;
-    if (!lecturer) error.lecturer = `${ERROR_MESSAGES.MISSING_FIELD} lecturer.`;
-    if (!validOn) error.validOn = `${ERROR_MESSAGES.MISSING_FIELD} validOn.`;
-    else {
-      let start = new Date(validOn);
-      start.setHours(0, 0, 0, 0);
-      const end = new Date(validOn);
-      end.setHours(23, 59, 59, 999);
-      const querySnapshot = await db
-        .collection('attendance-sessions')
-        .where('validOn', '>=', start)
-        .where('validOn', '<=', end)
-        .get();
-
-      if (!querySnapshot.empty) {
-        error.invalidRequest = 'Cannot create 2 attendance session of the same day with the same course.';
-      }
+    if (!id) {
+      error.course = `${ERROR_MESSAGES.COURSE_DOES_NOT_EXISTS} ${courseCode}`;
     }
-    if (!expireOn) error.expireOn = `${ERROR_MESSAGES.MISSING_FIELD} expireOn.`;
-    if (!location) error.location = `${ERROR_MESSAGES.MISSING_FIELD} location.`;
+  }
+  if (!courseName) error.courseName = `${ERROR_MESSAGES.MISSING_FIELD} courseName.`;
+  if (!lecturer) error.lecturer = `${ERROR_MESSAGES.MISSING_FIELD} lecturer.`;
+  if (!validOn) error.validOn = `${ERROR_MESSAGES.MISSING_FIELD} validOn.`;
+  else {
+    let start = new Date(validOn);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(validOn);
+    end.setHours(23, 59, 59, 999);
+    const querySnapshot = await db
+      .collection('attendance-sessions')
+      .where('validOn', '>=', start)
+      .where('validOn', '<=', end)
+      .get();
 
-    return { error, valid: Object.keys(error).length === 0 };
-  };
+    if (!querySnapshot.empty) {
+      error.invalidRequest = 'Cannot create 2 attendance session of the same day with the same course.';
+    }
+  }
+  if (!expireOn) error.expireOn = `${ERROR_MESSAGES.MISSING_FIELD} expireOn.`;
+  if (!location) error.location = `${ERROR_MESSAGES.MISSING_FIELD} location.`;
 
-exports.validateGetMoreAttendanceByCourseCodeRequest = (courseCode, startAfter) => {
+  return { error, valid: Object.keys(error).length === 0 };
+};
+
+const validateGetMoreAttendanceByCourseCodeRequest = (courseCode, startAfter) => {
   let error = {};
   if (!courseCode) error.courseCode = `${ERROR_MESSAGES.MISSING_FIELD} course code.`;
   if (!startAfter) error.startAfter = `${ERROR_MESSAGES.MISSING_FIELD} startAfter.`;
   return { error, valid: Object.keys(error).length === 0 };
 };
 
-exports.validateGetAttendanceSessionsInDateRangeRequest = async (courses, startTime, endTime) => {
+const validateGetAttendanceSessionsInDateRangeRequest = (courses, startTime, endTime) => {
   let error = {};
   if (!courses) error.courseCode = `${ERROR_MESSAGES.MISSING_FIELD} courses.`;
   if (!startTime) error.startTime = `${ERROR_MESSAGES.MISSING_FIELD} startTime.`;
@@ -121,7 +121,7 @@ exports.validateGetAttendanceSessionsInDateRangeRequest = async (courses, startT
   return { error, valid: Object.keys(error).length === 0 };
 };
 
-exports.validateGetAttendanceSessionsInMonthRangeRequest = (courses, startMonth, monthRange) => {
+const validateGetAttendanceSessionsInMonthRangeRequest = (courses, startMonth, monthRange) => {
   let error = {};
   if (!courses) error.courses = `${ERROR_MESSAGES.MISSING_FIELD} courses.`;
   if (startMonth <= 0 || startMonth > 11) error.startMonth = `startMonth must be between 1 and 11`;
@@ -131,42 +131,55 @@ exports.validateGetAttendanceSessionsInMonthRangeRequest = (courses, startMonth,
   return { error, valid: Object.keys(error).length === 0 };
 };
 
-exports.validateRegisterStudentToAttendanceSessionRequest = async (email, sessionId) => {
+const validateRegisterStudentToAttendanceSessionRequest = async (email, sessionId) => {
   let error = {};
   if (!email) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email.`;
   if (!sessionId) error.sessionId = `${ERROR_MESSAGES.MISSING_FIELD} sessionId.`;
 
-  const { id, error: userDocIdError } = await getUserDocumentIdWithEmail(email);
+  const { id, userDocIdError } = await getUserDocumentIdWithEmail(email);
 
   if (userDocIdError) error.user = 'Error retrieving user document id.';
   if (!id) error.usere = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}.`;
 
   const {
-    exists: attendanceSessionExists,
-    error: errorAttendanceSessionExists
+    attendanceSessionExists,
+    errorAttendanceSessionExists
   } = await attendanceSessionExistsWithDocId(sessionId);
   if (errorAttendanceSessionExists) error.attendanceSession = `Error check attendance session exists.`;
   if (!attendanceSessionExists) error.attendanceSession = `No attendance session exists with id: ${sessionId}`;
 
-  const { attended, error: errorAttended } = await userAlreadyRegisteredToAttendanceSession(email, sessionId);
+  const { attended, errorAttended } = await userAlreadyRegisteredToAttendanceSession(email, sessionId);
   if (errorAttended) error.attended = 'Error check user attendance.';
   if (attended) error.attended = 'User already registered to attendance session.';
 
   return { error, valid: Object.keys(error).length === 0 };
 };
 
-exports.validateGetDailyAttendanceSessionsRequest = (courses) => {
+const validateGetDailyAttendanceSessionsRequest = (courses) => {
   let error = {};
   if (!courses) error.courses = 'Must include courses.';
 
   return { error, valid: Object.keys(error).length === 0 };
 };
 
-exports.validateGetMonthlyAttendanceSessionsRequest = (courses, month) => {
+const validateGetMonthlyAttendanceSessionsRequest = (courses, month) => {
   let error = {};
   if (!courses) error.courses = 'Must include courses.';
   if (!month) error.month = 'Must include month.';
   if (month < 0 || month > 11) error.month = 'Month must be between 0 and 11';
 
   return { error, valid: Object.keys(error).length === 0 };
+};
+
+module.exports = {
+  getAttendanceSessionDocumentIdByDate,
+  attendanceSessionExistsWithDocId,
+  userAlreadyRegisteredToAttendanceSession,
+  validateCreateAttendanceSessionRequest,
+  validateGetMoreAttendanceByCourseCodeRequest,
+  validateGetAttendanceSessionsInDateRangeRequest,
+  validateGetAttendanceSessionsInMonthRangeRequest,
+  validateRegisterStudentToAttendanceSessionRequest,
+  validateGetDailyAttendanceSessionsRequest,
+  validateGetMonthlyAttendanceSessionsRequest
 };
