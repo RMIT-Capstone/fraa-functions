@@ -1,17 +1,15 @@
-const { sendErrorMessage, sendErrorObject } = require('../../../helpers/express-helpers');
-const { getUserDocumentIdWithEmail } = require('../../../helpers/users-helpers');
+const { sendErrorObject } = require('../../../helpers/express-helpers');
 const {
-  getCourseDocumentIdWithCode,
   validateCreateCourseRequest,
+  validateGetMoreCoursesRequest,
+  validateGetCourseByCodeRequest,
+  validateUpdateCourseRequest,
+  validateDeleteCourseRequest,
+  validateGetCoursesByNameRequest,
   validateGetMoreCoursesByNameRequest,
   validateCourseSubscriptionRequest,
-  userAlreadySubscribedToCourse
 } = require('../../../helpers/courses-helpers');
 const COURSE_ROUTES = require('../../routes/courses');
-const ERROR_MESSAGES = require('../../../handlers/constants/ErrorMessages');
-const { validateUpdateCourseRequest } = require('../../../helpers/courses-helpers');
-const { validateGetMoreCoursesRequest } = require('../../../helpers/courses-helpers');
-const { validateGetCourseByCodeRequest } = require('../../../helpers/courses-helpers');
 
 // TODO: reconfirm if these functions work
 module.exports = async (req, res, next) => {
@@ -37,13 +35,14 @@ module.exports = async (req, res, next) => {
   }
 
   if (path === COURSE_ROUTES.GET_COURSES_BY_NAME) {
-    const { name } = req.body;
-    if (!name) return sendErrorMessage(res, `${ERROR_MESSAGES.MISSING_FIELD} course name.`);
+    const { courseName } = req.body;
+    const { error, valid } = validateGetCoursesByNameRequest(courseName);
+    if (!valid) return sendErrorObject(res, error);
   }
 
   if (path === COURSE_ROUTES.GET_MORE_COURSES_BY_NAME) {
-    const { name, startAfter } = req.body;
-    const { error, valid } = validateGetMoreCoursesByNameRequest(name, startAfter);
+    const { courseName, startAfter } = req.body;
+    const { error, valid } = validateGetMoreCoursesByNameRequest(courseName, startAfter);
     if (!valid) return sendErrorObject(res, error);
   }
 
@@ -54,68 +53,15 @@ module.exports = async (req, res, next) => {
   }
 
   if (path === COURSE_ROUTES.DELETE_COURSE) {
-    const { code } = req.body;
-    if (!code) return sendErrorMessage(res, `${ERROR_MESSAGES.MISSING_FIELD} course code.`);
-
-    const { id, error } = await getCourseDocumentIdWithCode(code);
-    if (error) return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
-    if (!id) return sendErrorMessage(res, `${ERROR_MESSAGES.COURSE_DOES_NOT_EXISTS} ${code}.`);
+    const { courseCode } = req.body;
+    const { error, valid } = await validateDeleteCourseRequest(courseCode, path);
+    if (!valid) return sendErrorObject(res, error);
   }
 
   if (path === COURSE_ROUTES.SUBSCRIBE_COURSES || path === COURSE_ROUTES.UNSUBSCRIBE_COURSES) {
     const { email, courses } = req.body;
     const { error, valid } = validateCourseSubscriptionRequest(email, courses);
     if (!valid) return sendErrorObject(res, error);
-
-    let invalidCourses = [];
-    let invalidCoursesErrors = [];
-    let subscribedCourses = [];
-    let notSubscribedCourses = [];
-    let errorCheckUserSubscription = [];
-
-    const { id: userDocId } = await getUserDocumentIdWithEmail(email);
-    await Promise.all(courses.map(async courseCode => {
-      const { id, error } = await getCourseDocumentIdWithCode(courseCode);
-      const { subscribed, error: errorUserSubscription } = await userAlreadySubscribedToCourse(userDocId, courseCode);
-
-      if (!id) invalidCourses.push(courseCode);
-      if (error) invalidCoursesErrors.push(error);
-
-      if (path === COURSE_ROUTES.SUBSCRIBE_COURSES) {
-        if (subscribed) subscribedCourses.push(courseCode);
-      }
-      else {
-        if (!subscribed) notSubscribedCourses.push(courseCode);
-      }
-
-      if (errorUserSubscription) errorCheckUserSubscription.push(courseCode);
-    }));
-    if (invalidCoursesErrors.length > 0) return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
-    if (invalidCourses.length > 0) return sendErrorMessage(res, `Course(s) do not exist: ${invalidCourses}.`);
-
-
-    if (path === COURSE_ROUTES.SUBSCRIBE_COURSES && subscribedCourses.length > 0) {
-      return sendErrorMessage(
-        res,
-        `User already subscribed to course(s): ${subscribedCourses}.`
-      );
-    }
-    if (path === COURSE_ROUTES.UNSUBSCRIBE_COURSES && notSubscribedCourses.length > 0) {
-      return sendErrorMessage(
-        res,
-        `User is not subscribed to course(s): ${notSubscribedCourses}.`
-      );
-    }
-
-    if (errorCheckUserSubscription.length > 0) return sendErrorMessage(
-      res,
-      `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`
-    );
-
-
-    const { id, error: userDocIdError } = await getUserDocumentIdWithEmail(email);
-    if (!id) return sendErrorMessage(res, `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}`);
-    if (userDocIdError) return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 
   return next();
