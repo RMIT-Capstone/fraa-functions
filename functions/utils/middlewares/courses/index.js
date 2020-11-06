@@ -7,11 +7,9 @@ const {
   validateDeleteCourseRequest,
   validateGetCoursesByNameRequest,
   validateGetMoreCoursesByNameRequest,
-  validateCourseSubscriptionRequest,
 } = require('../../../helpers/courses-helpers');
 const COURSE_ROUTES = require('../../routes/courses');
 
-// TODO: reconfirm if these functions work
 module.exports = async (req, res, next) => {
   const path = req.path.split('/')[1];
 
@@ -29,20 +27,20 @@ module.exports = async (req, res, next) => {
   }
 
   if (path === COURSE_ROUTES.GET_COURSE_BY_CODE) {
-    const { courseCode } = req.body;
-    const { error, valid } = await validateGetCourseByCodeRequest(courseCode);
+    const { code } = req.body;
+    const { error, valid } = await validateGetCourseByCodeRequest(code);
     if (!valid) return sendErrorObject(res, error);
   }
 
   if (path === COURSE_ROUTES.GET_COURSES_BY_NAME) {
-    const { courseName } = req.body;
-    const { error, valid } = validateGetCoursesByNameRequest(courseName);
+    const { name } = req.body;
+    const { error, valid } = validateGetCoursesByNameRequest(name);
     if (!valid) return sendErrorObject(res, error);
   }
 
   if (path === COURSE_ROUTES.GET_MORE_COURSES_BY_NAME) {
-    const { courseName, startAfter } = req.body;
-    const { error, valid } = validateGetMoreCoursesByNameRequest(courseName, startAfter);
+    const { name, startAfter } = req.body;
+    const { error, valid } = validateGetMoreCoursesByNameRequest(name, startAfter);
     if (!valid) return sendErrorObject(res, error);
   }
 
@@ -53,14 +51,8 @@ module.exports = async (req, res, next) => {
   }
 
   if (path === COURSE_ROUTES.DELETE_COURSE) {
-    const { courseCode } = req.body;
-    const { error, valid } = await validateDeleteCourseRequest(courseCode, path);
-    if (!valid) return sendErrorObject(res, error);
-  }
-
-  if (path === COURSE_ROUTES.SUBSCRIBE_COURSES || path === COURSE_ROUTES.UNSUBSCRIBE_COURSES) {
-    const { email, courses } = req.body;
-    const { error, valid } = await validateCourseSubscriptionRequest(email, courses, path);
+    const { id } = req.body;
+    const { error, valid } = await validateDeleteCourseRequest(id);
     if (!valid) return sendErrorObject(res, error);
   }
 

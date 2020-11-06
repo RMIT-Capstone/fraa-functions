@@ -1,8 +1,9 @@
 const {
-  validateGetUserRequest,
-  validateGenerateVerifyOTPRequest,
+  validateCreateUserRequest,
   validateSignInChangePasswordRequest,
-  validateCreateUserRequest
+  validateGenerateVerifyOTPRequest,
+  validateGetUserRequest,
+  validateUserSubscriptionRequest,
 } = require('../../../helpers/users-helpers');
 const { sendErrorObject } = require('../../../helpers/express-helpers');
 const USERS_ROUTES = require('../../routes/users');
@@ -25,15 +26,25 @@ module.exports = async (req, res, next) => {
   }
 
   if (path === USERS_ROUTES.GENERATE_OTP || path === USERS_ROUTES.VERIFY_OTP) {
-    const { email } = req.body;
-    const { error, valid } = await validateGenerateVerifyOTPRequest(email, path);
+    const { email, isLecturer } = req.body;
+    const { error, valid } = await validateGenerateVerifyOTPRequest(email, isLecturer, path);
     if (!valid) return sendErrorObject(res, error);
   }
 
-  if (path === USERS_ROUTES.GET_USER) {
-    const { email }  = req.body;
-    const { valid, error } = await validateGetUserRequest(email);
+  if (path === USERS_ROUTES.GET_USER_BY_EMAIL) {
+    const { email, isLecturer } = req.body;
+    const { valid, error } = await validateGetUserRequest(email, isLecturer);
     if (!valid) return sendErrorObject(res, error);
+  }
+
+  if (path === USERS_ROUTES.SUBSCRIBE_TO_COURSES || path === USERS_ROUTES.UNSUBSCRIBE_FROM_COURSES) {
+    const { email, courses } = req.body;
+    const { error, valid } = await validateUserSubscriptionRequest(email, courses, path);
+    if (!valid) return sendErrorObject(res, error);
+  }
+
+  if (path === USERS_ROUTES.REGISTER_TO_ATTENDANCE_SESSION) {
+    const { email, sessionId } = req.body;
   }
 
   return next();

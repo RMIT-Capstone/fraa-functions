@@ -1,13 +1,12 @@
-const {db, admin} = require('../../../utils/admin');
+const { db, admin } = require('../../../utils/admin');
 const ERROR_MESSAGES = require('../../constants/ErrorMessages');
-const {getCourseDocumentIdWithCode} = require('../../../helpers/courses-helpers');
-const {sendErrorMessage} = require('../../../helpers/express-helpers');
+const { sendErrorMessage } = require('../../../helpers/express-helpers');
 
 const today = new Date();
 
 exports.createAttendanceSession = async (req, res) => {
-  const {content} = req.body;
-  const {validOn, expireOn, courseCode} = content;
+  const { content } = req.body;
+  const { validOn, expireOn, courseId } = content;
   content.createdAt = new Date();
   content.validOn = new Date(validOn);
   content.expireOn = new Date(expireOn);
@@ -16,11 +15,9 @@ exports.createAttendanceSession = async (req, res) => {
     await db
       .collection('attendance-sessions')
       .add(content);
-
-    const {id} = await getCourseDocumentIdWithCode(courseCode);
     await db
       .collection('courses')
-      .doc(id)
+      .doc(courseId)
       .update({
         sessionCounts: admin.firestore.FieldValue.increment(1)
       });
@@ -33,7 +30,7 @@ exports.createAttendanceSession = async (req, res) => {
 };
 
 exports.getAttendanceSessionsInDateRange = async (req, res) => {
-  const {courses, startTime, endTime} = req.body;
+  const { courses, startTime, endTime } = req.body;
   try {
     let sessions = [], markedDates = [];
     const querySnapshot = await db
@@ -45,7 +42,7 @@ exports.getAttendanceSessionsInDateRange = async (req, res) => {
 
     querySnapshot.forEach(snapshot => {
       let data = snapshot.data();
-      const {courseCode} = data;
+      const { courseCode } = data;
       transformAttendanceSessionData(data, snapshot);
       if (courses.includes(courseCode)) sessions.push(data);
     });
@@ -53,7 +50,7 @@ exports.getAttendanceSessionsInDateRange = async (req, res) => {
     if (sessions.length !== 0) {
       markedDates = markAttendanceSessionsDate(sessions);
     }
-    return res.json({sessions, markedDates});
+    return res.json({ sessions, markedDates });
   }
   catch (errorGetAttendanceSessionByDateWithCourseCode) {
     console.error(
@@ -65,7 +62,7 @@ exports.getAttendanceSessionsInDateRange = async (req, res) => {
 };
 
 exports.getAttendanceSessionsInMonthRange = async (req, res) => {
-  const {courses, startMonth, monthRange} = req.body;
+  const { courses, startMonth, monthRange } = req.body;
   try {
     let sessions = [], markedDates = [];
 
@@ -80,7 +77,7 @@ exports.getAttendanceSessionsInMonthRange = async (req, res) => {
 
     querySnapshot.forEach(snapshot => {
       let data = snapshot.data();
-      const {courseCode} = data;
+      const { courseCode } = data;
       if (courses.includes(courseCode)) {
         transformAttendanceSessionData(data, snapshot);
         sessions.push(data);
@@ -90,7 +87,7 @@ exports.getAttendanceSessionsInMonthRange = async (req, res) => {
     if (sessions.length !== 0) {
       markedDates = markAttendanceSessionsDate(sessions);
     }
-    return res.json({sessions, markedDates});
+    return res.json({ sessions, markedDates });
   }
   catch (errorGetAttendanceSessionsInMonthRange) {
     console.error(
@@ -102,7 +99,7 @@ exports.getAttendanceSessionsInMonthRange = async (req, res) => {
 };
 
 exports.getDailyAttendanceSessions = async (req, res) => {
-  const {courses} = req.body;
+  const { courses } = req.body;
   try {
     let sessions = [], markedDates = [];
 
@@ -119,7 +116,7 @@ exports.getDailyAttendanceSessions = async (req, res) => {
 
     querySnapshot.forEach(snapshot => {
       let data = snapshot.data();
-      const {courseCode} = data;
+      const { courseCode } = data;
       if (courses.includes(courseCode)) {
         transformAttendanceSessionData(data, snapshot);
         sessions.push(data);
@@ -129,7 +126,7 @@ exports.getDailyAttendanceSessions = async (req, res) => {
     if (sessions.length !== 0) {
       markedDates = markAttendanceSessionsDate(sessions);
     }
-    return res.json({sessions, markedDates});
+    return res.json({ sessions, markedDates });
   }
   catch (errorGetDailyAttendanceSessions) {
     console.error(
@@ -141,7 +138,7 @@ exports.getDailyAttendanceSessions = async (req, res) => {
 };
 
 exports.getMonthlyAttendanceSessions = async (req, res) => {
-  const {courses, month} = req.body;
+  const { courses, month } = req.body;
   try {
     let sessions = [], markedDates = [];
 
@@ -156,7 +153,7 @@ exports.getMonthlyAttendanceSessions = async (req, res) => {
 
     querySnapshot.forEach(snapshot => {
       let data = snapshot.data();
-      const {courseCode} = data;
+      const { courseCode } = data;
       if (courses.includes(courseCode)) {
         transformAttendanceSessionData(data, snapshot);
         sessions.push(data);
@@ -171,7 +168,7 @@ exports.getMonthlyAttendanceSessions = async (req, res) => {
     if (sessions.length !== 0) {
       markedDates = markAttendanceSessionsDate(sessions);
     }
-    return res.json({sessions, markedDates});
+    return res.json({ sessions, markedDates });
   }
   catch (errorGetMonthlyAttendanceSessions) {
     console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE}`, errorGetMonthlyAttendanceSessions);
@@ -180,7 +177,7 @@ exports.getMonthlyAttendanceSessions = async (req, res) => {
 };
 
 exports.registerStudentToAttendanceSession = async (req, res) => {
-  const {email, sessionId} = req.body;
+  const { email, sessionId } = req.body;
   try {
     await db
       .collection('attendance-sessions')
@@ -188,7 +185,7 @@ exports.registerStudentToAttendanceSession = async (req, res) => {
       .update({
         attendees: admin.firestore.FieldValue.arrayUnion(email)
       });
-    return res.json({success: 'User registered.'});
+    return res.json({ success: 'User registered.' });
   }
   catch (errorRegisterStudentToAttendanceSession) {
     console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE}`, errorRegisterStudentToAttendanceSession);
@@ -197,7 +194,7 @@ exports.registerStudentToAttendanceSession = async (req, res) => {
 };
 
 const transformAttendanceSessionData = (data, snapshot) => {
-  const {createdAt, expireOn, validOn} = data;
+  const { createdAt, expireOn, validOn } = data;
   data.createdAt = createdAt.toDate();
   data.expireOn = expireOn.toDate();
   data.validOn = validOn.toDate();

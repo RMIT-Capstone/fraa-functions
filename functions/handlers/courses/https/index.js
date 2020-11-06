@@ -1,5 +1,4 @@
-const { getUserDocumentIdWithEmail } = require('../../../helpers/users-helpers');
-const { getCourseDocumentIdWithCode } = require('../../../helpers/courses-helpers');
+const { getStudentDocumentIdWithEmail } = require('../../../helpers/users-helpers');
 const { db, admin } = require('../../../utils/admin');
 const ERROR_MESSAGES = require('../../constants/ErrorMessages');
 const { sendErrorMessage } = require('../../../helpers/express-helpers');
@@ -9,10 +8,11 @@ exports.createCourse = async (req, res) => {
   course.name = course.name.toLowerCase().split(' ');
   course.createdAt = new Date();
   try {
-    await db
+    const docRef = await db
       .collection('courses')
       .add(course);
-    return res.json({ success: 'Course created.' });
+    course.id = docRef.id;
+    return res.json(course);
   }
   catch (errorCreateCourse) {
     console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} createCourse: `, errorCreateCourse);
@@ -68,11 +68,11 @@ exports.getMoreCourses = async (req, res) => {
 };
 
 exports.getCourseByCode = async (req, res) => {
-  const { courseCode } = req.body;
+  const { code } = req.body;
   try {
     const querySnapshot = await db
       .collection('courses')
-      .where('code', '==', courseCode)
+      .where('code', '==', code)
       .limit(1)
       .get();
     let course = querySnapshot.docs[0].data();
@@ -88,11 +88,11 @@ exports.getCourseByCode = async (req, res) => {
 };
 
 exports.getCoursesByName = async (req, res) => {
-  const { courseName } = req.body;
+  const { name } = req.body;
   try {
     const querySnapshot = await db
       .collection('courses')
-      .where('name', 'array-contains', courseName.toLowerCase())
+      .where('name', 'array-contains', name.toLowerCase())
       .orderBy('code')
       .limit(20)
       .get();
@@ -110,11 +110,11 @@ exports.getCoursesByName = async (req, res) => {
 };
 
 exports.getMoreCoursesByName = async (req, res) => {
-  const { courseName, startAfter } = req.body;
+  const { name, startAfter } = req.body;
   try {
     const querySnapshot = await db
       .collection('courses')
-      .where('name', 'array-contains', courseName.toLowerCase())
+      .where('name', 'array-contains', name.toLowerCase())
       .orderBy('code')
       .startAfter(startAfter)
       .limit(20)
@@ -134,13 +134,12 @@ exports.getMoreCoursesByName = async (req, res) => {
 
 exports.updateCourse = async (req, res) => {
   // very important thing to note is that course code cannot be updated
-  const { course, course: { name } } = req.body;
+  const { course, course: { name, id } } = req.body;
+  delete course.id;
   if (name) {
     course.name = course.name.toLowerCase().split(' ');
   }
   try {
-    const { id, error } = await getCourseDocumentIdWithCode(course.code);
-    if (error) sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
     await db
       .collection('courses')
       .doc(id)
@@ -154,10 +153,8 @@ exports.updateCourse = async (req, res) => {
 };
 
 exports.deleteCourse = async (req, res) => {
-  const { courseCode } = req.body;
+  const { id } = req.body;
   try {
-    const { id, error } = await getCourseDocumentIdWithCode(courseCode);
-    if (error) return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
     await db
       .collection('courses')
       .doc(id)
@@ -172,20 +169,20 @@ exports.deleteCourse = async (req, res) => {
 
 exports.subscribeUserToCourses = async (req, res) => {
   const { courses, email } = req.body;
-  const { id: userDocId, error } = await getUserDocumentIdWithEmail(email);
-  if (error) return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}.`);
+  const { studentDocId, studentDocIdError } = await getStudentDocumentIdWithEmail(email);
+  if (studentDocIdError) return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}.`);
   try {
     // https://stackoverflow.com/questions/35612428/call-async-await-functions-in-parallel
     await Promise.all(courses.map(async course => {
       await db
-        .collection('users')
-        .doc(userDocId)
+        .collection('students')
+        .doc(studentDocId)
         .update({
-          subscribedCourses: admin.firestore.FieldValue.arrayUnion(course)
+          subscribedCourses: admin.firestore.FieldValue.arrayUnion(course),
         });
     }));
 
-    return res.json({ success: 'User subscribed to course(s).' });
+    return res.json({ success: 'Student subscribed to course(s).' });
   }
   catch (errorSubscribeUserToCourses) {
     console.error(
@@ -198,20 +195,20 @@ exports.subscribeUserToCourses = async (req, res) => {
 
 exports.unsubscribeStudentFromCourses = async (req, res) => {
   const { courses, email } = req.body;
-  const { id: userDocId, error } = await getUserDocumentIdWithEmail(email);
-  if (error) return res.json({ error: `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}.` });
+  const { studentDocId, studentDocIdError } = await getStudentDocumentIdWithEmail(email);
+  if (studentDocIdError) return res.json({ error: `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}.` });
 
   try {
     await Promise.all(courses.map(async course => {
       await db
-        .collection('users')
-        .doc(userDocId)
+        .collection('students')
+        .doc(studentDocId)
         .update({
-          subscribedCourses: admin.firestore.FieldValue.arrayRemove(course)
+          subscribedCourses: admin.firestore.FieldValue.arrayRemove(course),
         });
 
     }));
-    return res.json({ success: 'User unsubscribed from course(s).' });
+    return res.json({ success: 'Student unsubscribed from course(s).' });
   }
   catch (errorUnsubscribeUserFromCourses) {
     console.error(

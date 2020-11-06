@@ -1,5 +1,5 @@
-const {db, admin, firebase} = require('../../../utils/admin');
-const {sendOTPToUser} = require('../../email');
+const { db, admin, firebase } = require('../../../utils/admin');
+const { sendOTPToUser } = require('../../email');
 const {
   getUserIdInFBAuthWithEmail,
   generateOTPCode,
@@ -7,12 +7,12 @@ const {
   deleteOTPDocumentsByEmail,
 } = require('../../../helpers/users-helpers');
 const ERROR_MESSAGES = require('../../constants/ErrorMessages');
-const {sendErrorMessage} = require('../../../helpers/express-helpers');
+const { sendErrorMessage } = require('../../../helpers/express-helpers');
 
 exports.onCreateUser = async (req, res) => {
-  const {email, password, displayName, school, isLecturer} = req.body;
+  const { email, password, displayName, school, isLecturer } = req.body;
   try {
-    const {idToken, error} = await createUserInAuth(email, password);
+    const { idToken, error } = await createUserInAuth(email, password);
     if (error) {
       if (error === 'Email already in use')
         return sendErrorMessage(res, `${ERROR_MESSAGES.USER_ALREADY_EXISTS} ${email}`);
@@ -23,17 +23,17 @@ exports.onCreateUser = async (req, res) => {
     }
     await createUserInFirestore(email, displayName, school, isLecturer);
 
-    return res.status(200).json({idToken});
+    return res.status(200).json({ idToken });
   }
   catch (errorOnCreateUser) {
     console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} onCreateUser:`, errorOnCreateUser);
-    return res.json({error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE});
+    return res.json({ error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE });
   }
 };
 
 const createUserInFirestore = async (email, displayName, school, isLecturer) => {
   try {
-    const collection = isLecturer ? 'lecturers' : 'users';
+    const collection = isLecturer ? 'lecturers' : 'students';
     await db
       .collection(collection)
       .add({
@@ -57,32 +57,32 @@ const createUserInAuth = async (email, password) => {
   try {
     const createAccount = await firebase.auth().createUserWithEmailAndPassword(email, password);
     const idToken = await createAccount.user.getIdToken();
-    return {idToken, error: null};
+    return { idToken, error: null };
   }
   catch (errorCreateUserInAuth) {
     if (errorCreateUserInAuth.code === 'auth/email-already-in-use') {
-      return {idToken: null, error: 'Email already in use'};
+      return { idToken: null, error: 'Email already in use' };
     }
     else {
       console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} createUserInAuth: `, errorCreateUserInAuth);
-      return {idToken: null, error: errorCreateUserInAuth};
+      return { idToken: null, error: errorCreateUserInAuth };
     }
   }
 };
 
 exports.signIn = async (req, res) => {
-  const {email, password} = req.body;
+  const { email, password } = req.body;
   try {
     const signIn = await firebase.auth().signInWithEmailAndPassword(email, password);
     const idToken = await signIn.user.getIdToken();
-    return res.json({token: idToken});
+    return res.json({ token: idToken });
   }
   catch (errorSignIn) {
     if (errorSignIn.code === 'auth/wrong-password') {
-      return res.json({error: 'Password is incorrect'});
+      return res.json({ error: 'Password is incorrect' });
     }
     else if (errorSignIn.code === 'auth/user-not-found') {
-      return res.json({error: 'User does not exist'});
+      return res.json({ error: 'User does not exist' });
     }
     else {
       console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} signIn: `, errorSignIn);
@@ -92,7 +92,7 @@ exports.signIn = async (req, res) => {
 };
 
 exports.generateOTP = async (req, res) => {
-  const {email} = req.body;
+  const { email } = req.body;
   try {
     const OTP = generateOTPCode();
     const now = new Date();
@@ -104,7 +104,7 @@ exports.generateOTP = async (req, res) => {
       expiryTime: fiveMinutesFromNow,
     });
     await sendOTPToUser(email, OTP);
-    return res.status(200).json({success: 'OTP code created.'});
+    return res.status(200).json({ success: 'OTP code created.' });
   }
   catch (errorGenerateOTP) {
     console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} generateOTP: `, errorGenerateOTP);
@@ -113,22 +113,22 @@ exports.generateOTP = async (req, res) => {
 };
 
 exports.verifyOTP = async (req, res) => {
-  const {email, OTP: userOTP} = req.body;
+  const { email, OTP: userOTP } = req.body;
   try {
-    const {data} = await getLatestOTPDocumentOfUser(email);
-    const {OTP, expiryTime} = data;
+    const { data } = await getLatestOTPDocumentOfUser(email);
+    const { OTP, expiryTime } = data;
     const now = new Date();
 
     if (expiryTime.toDate() < now) {
-      return res.json({error: 'OTP expired.'});
+      return res.json({ error: 'OTP expired.' });
     }
     if (OTP === userOTP) {
-      const {success} = await deleteOTPDocumentsByEmail(email);
-      if (success) return res.json({success: 'Valid OTP.'});
+      const { success } = await deleteOTPDocumentsByEmail(email);
+      if (success) return res.json({ success: 'Valid OTP.' });
       else return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
     }
     else {
-      return res.json({error: 'Invalid OTP.'});
+      return res.json({ error: 'Invalid OTP.' });
     }
   }
   catch (errorVerifyOTP) {
@@ -138,13 +138,13 @@ exports.verifyOTP = async (req, res) => {
 };
 
 exports.changeUserPassword = async (req, res) => {
-  const {email, password} = req.body;
+  const { email, password } = req.body;
   try {
     const recordId = await getUserIdInFBAuthWithEmail(email);
     await admin.auth().updateUser(recordId, {
       password: password
     });
-    return res.json({success: 'Password updated successfully.'});
+    return res.json({ success: 'Password updated successfully.' });
   }
   catch (errorChangeUserPassword) {
     console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} changeUserPassword: `, errorChangeUserPassword);
@@ -153,10 +153,11 @@ exports.changeUserPassword = async (req, res) => {
 };
 
 exports.getUserByEmail = async (req, res) => {
-  const {email} = req.body;
+  const { email, isLecturer } = req.body;
+  const collection = isLecturer ? 'lecturers' : 'students';
   try {
     const querySnapshot = await db
-      .collection('users')
+      .collection(collection)
       .where('email', '==', email)
       .get();
 

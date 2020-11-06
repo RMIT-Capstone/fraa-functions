@@ -4,25 +4,23 @@ const {
   validateCreateAttendanceSessionRequest,
   validateGetAttendanceSessionsInDateRangeRequest,
   validateGetAttendanceSessionsInMonthRangeRequest,
-  validateRegisterStudentToAttendanceSessionRequest,
   validateGetDailyAttendanceSessionsRequest,
   validateGetMonthlyAttendanceSessionsRequest
 } = require('../../../helpers/attendance-session-helpers');
 
-// TODO: check register student to attendance session request
 module.exports = async (req, res, next) => {
   const path = req.path.split('/')[1];
 
   if (path === ATTENDANCE_SESSIONS_ROUTES.CREATE_ATTENDANCE_SESSION) {
-    const { courseCode, courseName, lecturer, validOn, expireOn, location } = req.body.content;
-
+    const { courseId, courseCode, courseName, lecturer, location, validOn, expireOn } = req.body.content;
     const { error, valid } = await validateCreateAttendanceSessionRequest(
+      courseId,
       courseCode,
       courseName,
       lecturer,
+      location,
       validOn,
       expireOn,
-      location
     );
     if (!valid) return sendErrorObject(res, error);
   }
@@ -48,12 +46,6 @@ module.exports = async (req, res, next) => {
   if (path === ATTENDANCE_SESSIONS_ROUTES.GET_MONTHLY_ATTENDANCE_SESSIONS) {
     const { courses, month } = req.body;
     const { error, valid } = validateGetMonthlyAttendanceSessionsRequest(courses, month);
-    if (!valid) return sendErrorObject(res, error);
-  }
-
-  if (path === ATTENDANCE_SESSIONS_ROUTES.REGISTER_STUDENT_TO_ATTENDANCE_SESSION) {
-    const { email, sessionId } = req.body;
-    const { error, valid } = validateRegisterStudentToAttendanceSessionRequest(email, sessionId);
     if (!valid) return sendErrorObject(res, error);
   }
 

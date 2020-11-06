@@ -1,12 +1,12 @@
 const sgMail = require('@sendgrid/mail');
 const SENDGRID_API_KEY = require('../../config/SendGridConfig');
 const ERROR_MESSAGES = require('../constants/ErrorMessages');
-const {sendErrorMessage} = require('../../helpers/express-helpers');
+const { sendErrorMessage } = require('../../helpers/express-helpers');
 
 sgMail.setApiKey(SENDGRID_API_KEY);
 
 exports.sendEmail = async (req, res) => {
-  const {email, message} = req.body;
+  const { email, message } = req.body;
   const msgBody = `
     <h4>${message}</h4>
   `;
@@ -18,7 +18,7 @@ exports.sendEmail = async (req, res) => {
   };
   try {
     await sgMail.send(msg);
-    return res.json({success: 'email sent'});
+    return res.json({ success: 'email sent' });
   }
   catch (errorSendEmail) {
     console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} sendEmail: `, errorSendEmail);

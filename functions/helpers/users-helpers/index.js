@@ -1,25 +1,26 @@
 const { db, admin } = require('../../utils/admin');
 const ERROR_MESSAGES = require('../../handlers/constants/ErrorMessages');
 const USERS_ROUTES = require('../../utils/routes/users');
+const { isEmail, stringIsEmpty } = require('../utilities-helpers');
+const { studentAlreadySubscribedToCourses, getCourseDocumentIdWithCode } = require('../courses-helpers');
 
-const getUserDocumentIdWithEmail = async email => {
+const getStudentDocumentIdWithEmail = async email => {
   try {
     const querySnapshot = await db
-      .collection('users')
+      .collection('students')
       .where('email', '==', email)
       .get();
 
     if (querySnapshot.empty) {
-      return { id: null, error: null };
-    }
-    else {
+      return { studentDocId: null, studentDocIdError: null };
+    } else {
       const documentId = querySnapshot.docs[0].id;
-      return { id: documentId, error: null };
+      return { studentDocId: documentId, studentDocIdError: null };
     }
   }
   catch (errorGetUserDocumentIdWithEmail) {
     console.error('Something went wrong with getUserDocumentIdWithEmail: ', errorGetUserDocumentIdWithEmail);
-    return { id: null, error: errorGetUserDocumentIdWithEmail };
+    return { studentDocId: null, studentDocIdError: errorGetUserDocumentIdWithEmail };
   }
 };
 
@@ -31,31 +32,17 @@ const getLecturerDocumentIdWithEmail = async email => {
       .get();
 
     if (querySnapshot.empty) {
-      return { id: null, error: null };
+      return { lecturerDocId: null, lecturerDocIdError: null };
     }
     else {
       const documentId = querySnapshot.docs[0].id;
-      return { id: documentId, error: null };
+      return { lecturerDocId: documentId, lecturerDocIdError: null };
     }
   }
   catch (errorGetLecturerDocumentIdWithEmail) {
     console.error(
       'Something went wrong with getLecturerDocumentIdWithEmail: ', errorGetLecturerDocumentIdWithEmail);
-    return { id: null, error: errorGetLecturerDocumentIdWithEmail };
-  }
-};
-
-const deleteUserInFirestore = async userDocId => {
-  try {
-    await db
-      .collection('users')
-      .doc(userDocId)
-      .delete();
-    return { success: true, error: null };
-  }
-  catch (errorDeleteUserInFirestore) {
-    console.error('Something went wrong with deleteUserInFirestore: ', errorDeleteUserInFirestore);
-    return { success: false, error: errorDeleteUserInFirestore };
+    return { lecturerDocId: null, lecturerDocIdError: errorGetLecturerDocumentIdWithEmail };
   }
 };
 
@@ -110,80 +97,18 @@ const getUserIdInFBAuthWithEmail = async email => {
   }
 };
 
-function getRandomInt(min, max) {
-  min = Math.ceil(min);
-  max = Math.ceil(max);
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-const generateOTPCode = () => {
-  const OTP_LENGTH = 6;
-  return Array.apply(null, { length: OTP_LENGTH }).map(() => getRandomInt(0, 9)).join('');
-};
-
-const stringIsEmpty = string => {
-  if (!(typeof string === 'string') || !string) return true;
-  return string.trim() === '';
-};
-
-const isEmail = email => {
-  let regEx;
-  // eslint-disable-next-line no-useless-escape,max-len
-  regEx = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-  return Boolean(email.match(regEx));
-};
-
-const validateAccountData = (email, password, displayName, school, isLecturer) => {
-  let error = {};
-  if (!displayName) error.displayName = 'displayName must not be empty.';
-  if (!school) error.school = 'school must not be empty.';
-  if (isLecturer === undefined || !(typeof isLecturer === 'boolean')) {
-    error.isLecturer = 'isLecturer must not be empty/in incorrect format.';
-  }
-  validateEmailData(email, error);
-  validatePasswordData(password, error);
-  return {
-    error,
-    valid: Object.keys(error).length === 0
-  };
-};
-
-const validateEmailData = (email, errorObj) => {
-  if (stringIsEmpty(email)) {
-    return errorObj.email = 'Email must not be empty';
-  }
-  else if (!isEmail(email)) {
-    return errorObj.email = 'Invalid email address';
-  }
-  return null;
-};
-
-const validatePasswordData = (password, errorObj) => {
-  if (stringIsEmpty(password)) errorObj.password = 'Password must not be empty';
-  else if (password.length < 6) errorObj.password = 'Password length must be more than 6 characters';
-};
-
 const validateCreateUserRequest = async (email, password, displayName, school, isLecturer) => {
   let error = {};
   if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email.`;
-  else if (stringIsEmpty(password)) error.password = `${ERROR_MESSAGES.MISSING_FIELD} password.`;
-  else if (stringIsEmpty(displayName)) error.displayName = `${ERROR_MESSAGES.MISSING_FIELD} displayName.`;
-  else if (stringIsEmpty(school)) error.school = `${ERROR_MESSAGES.MISSING_FIELD} school.`;
-  else if (isLecturer === undefined || !(typeof isLecturer === 'boolean')) {
-    error.isLecturer = 'isLecturer must not be empty/in incorrect format.';
+  if (!isEmail(email)) error.email = 'Email is not in correct format';
+  if (stringIsEmpty(password)) error.password = `${ERROR_MESSAGES.MISSING_FIELD} password.`;
+  if (password.length < 6) error.password = 'Password must be longer than 6 characters.';
+  if (stringIsEmpty(displayName)) error.displayName = `${ERROR_MESSAGES.MISSING_FIELD} displayName.`;
+  if (stringIsEmpty(school)) error.school = `${ERROR_MESSAGES.MISSING_FIELD} school.`;
+  if (isLecturer === undefined || !(typeof isLecturer === 'boolean')) {
+    error.isLecturer = 'isLecturer must not be empty and has to be boolean.';
   }
-  else {
-    if (isLecturer) {
-      const { lecturerDocId, errorLecturerDocId } = await getLecturerDocumentIdWithEmail(email);
-      if (errorLecturerDocId) error.lecturer = 'Error retrieving lecturer document id.';
-      if (lecturerDocId) error.lecturer = `${ERROR_MESSAGES.LECTURER_ALREADY_EXISTS} ${email}`;
-    }
-    else {
-      const { studentDocId, errorStudentDocId } = await getUserDocumentIdWithEmail(email);
-      if (errorStudentDocId) error.student = 'Error retrieving student document id.';
-      if (studentDocId) error.student = `${ERROR_MESSAGES.USER_ALREADY_EXISTS} ${email}`;
-    }
-  }
+  // email duplicate is already handled inside create user function in users/https
 
   return { error, valid: Object.keys(error).length === 0 };
 };
@@ -193,16 +118,16 @@ const validateSignInChangePasswordRequest = async (email, password, isLecturer) 
   if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email.`;
   else if (stringIsEmpty(password)) error.password = `${ERROR_MESSAGES.MISSING_FIELD} password`;
   else if (isLecturer === undefined || !(typeof isLecturer === 'boolean')) {
-    error.isLecturer = 'isLecturer must not be empty/in incorrect format.';
+    error.isLecturer = 'isLecturer must not be empty and has to be boolean.';
   }
   else {
     if (isLecturer) {
-      const { lecturerDocId, errorLecturerDocId } = await getLecturerDocumentIdWithEmail(email);
-      if (errorLecturerDocId) error.lecturer = 'Error retrieving lecturer document id.';
-      if (!lecturerDocId) error.lecturer = `${ERROR_MESSAGES.LECTURER_DOES_NOT_EXISTS} ${email}.`;
+      const { lecturerDocId, lecturerDocIdError } = await getLecturerDocumentIdWithEmail(email);
+      if (lecturerDocIdError) error.lecturer = 'Error retrieving lecturer document id.';
+      if (!lecturerDocId) error.lecturer = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}.`;
     }
     else {
-      const { studentDocId, errorStudentDocId } = await getUserDocumentIdWithEmail(email);
+      const { studentDocId, errorStudentDocId } = await getStudentDocumentIdWithEmail(email);
       if (errorStudentDocId) error.student = 'Error retrieving student document id.';
       if (!studentDocId) error.student = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}.`;
     }
@@ -211,14 +136,21 @@ const validateSignInChangePasswordRequest = async (email, password, isLecturer) 
   return { error, valid: Object.keys(error).length === 0 };
 };
 
-const validateGenerateVerifyOTPRequest = async (email, path) => {
+const validateGenerateVerifyOTPRequest = async (email, isLecturer, path) => {
   let error = {};
   if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} ${email}.`;
-  else {
-    const { studentDocId, studentDocIdError } = await getUserDocumentIdWithEmail(email);
-    if (studentDocIdError) error.student = 'Error retrieving student document id.';
-    if (!studentDocId) error.student = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}.`;
-
+  else if (isLecturer === undefined || !(typeof isLecturer === 'boolean')) {
+    error.isLecturer = 'isLecturer must not be empty and has to be boolean.';
+  } else {
+    if (isLecturer) {
+      const { lecturerDocId, lecturerDocIdError } = await getLecturerDocumentIdWithEmail(email);
+      if (lecturerDocIdError) error.lecturer = 'Error retrieving lecturer document id.';
+      if (!lecturerDocId) error.lecturer = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}.`;
+    } else {
+      const { studentDocId, studentDocIdError } = await getStudentDocumentIdWithEmail(email);
+      if (studentDocIdError) error.student = 'Error retrieving student document id.';
+      if (!studentDocId) error.student = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}.`;
+    }
     if (path === USERS_ROUTES.VERIFY_OTP) {
       const { data, OTPDocumentError } = await getLatestOTPDocumentOfUser(email);
       if (OTPDocumentError) error.OTP = 'Error retrieving user OTP documents.';
@@ -229,34 +161,86 @@ const validateGenerateVerifyOTPRequest = async (email, path) => {
   return { error, valid: Object.keys(error).length === 0 };
 };
 
-const validateGetUserRequest = async (email) => {
+const validateGetUserRequest = async (email, isLecturer) => {
   let error = {};
   if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email.`;
-  else {
-    const { userDocId, errorUserDocId } = await getUserDocumentIdWithEmail(email);
-    if (errorUserDocId) error.user = 'Error retrieving user document id.';
-    if (!userDocId) error.user = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}.`;
+  else if (isLecturer === undefined || typeof isLecturer !== 'boolean') {
+    error.isLecturer = 'isLecturer must not be empty and has to be boolean.';
+  } else {
+    if (isLecturer) {
+      const { lecturerDocId, lecturerDocIdError } = await getLecturerDocumentIdWithEmail(email);
+      if (lecturerDocIdError) error.lecturer = 'Error retrieving lecturer document id.';
+      if (!lecturerDocId) error.lecturer = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}.`;
+    } else {
+      const { studentDocId, studentDocIdError } = await getStudentDocumentIdWithEmail(email);
+      if (studentDocIdError) error.student = 'Error retrieving student document id.';
+      if (!studentDocId) error.student = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}.`;
+    }
   }
 
   return { error, valid: Object.keys(error).length === 0 };
 };
 
+const validateUserSubscriptionRequest = async (email, courses, path) => {
+  let error = {};
+  if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email.`;
+  else if (!courses || !Array.isArray(courses)) error.courses = `${ERROR_MESSAGES.MISSING_FIELD} courses.`;
+  else {
+    let invalidCourses = [];
+    let subscribedCourses = [];
+    let notSubscribedCourses = [];
+
+    const { studentDocId, studentDocIdError } = await getStudentDocumentIdWithEmail(email);
+    if (studentDocIdError) error.user = 'Error retrieving user document id.';
+    if (!studentDocId) error.user = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}`;
+
+    // TODO: is this really necessary ?
+    await Promise.all(courses.map(async courseCode => {
+      const { courseDocId, courseDocIdError } = await getCourseDocumentIdWithCode(courseCode);
+      const { subscribed, subscribedError } = await studentAlreadySubscribedToCourses(studentDocId, courseCode);
+
+      if (!courseDocId) invalidCourses.push(courseCode);
+      if (courseDocIdError) error.request = 'Error retrieving course document id.';
+
+      if (path === USERS_ROUTES.SUBSCRIBE_TO_COURSES) {
+        if (subscribed) subscribedCourses.push(courseCode);
+      } else {
+        if (!subscribed) notSubscribedCourses.push(courseCode);
+      }
+
+      if (subscribedError) error.request = 'Error check user subscription.';
+      if (invalidCourses.length > 0) error.courses = `Course(s) do not exists: ${invalidCourses}`;
+
+      if (path === USERS_ROUTES.SUBSCRIBE_TO_COURSES && subscribedCourses.length > 0) {
+        error.user = `User already subscribed to course(s): ${subscribedCourses}.`;
+      }
+      if (path === USERS_ROUTES.UNSUBSCRIBE_FROM_COURSES && notSubscribedCourses.length > 0) {
+        error.user = `User is not subscribed to course(s): ${notSubscribedCourses}.`;
+      }
+    }));
+  }
+
+  return { error, valid: Object.keys(error).length === 0 };
+};
+
+const validateUserAttendanceRegistrationRequest = async (userId, sessionId) => {
+  let error = {};
+  if (!userId) error.userId = `${ERROR_MESSAGES.MISSING_FIELD} userId.`;
+  else if (!sessionId) error.sessionId = `${ERROR_MESSAGES.MISSING_FIELD} sessionId`;
+  // else {
+  //
+  // }
+};
+
 module.exports = {
-  getUserDocumentIdWithEmail,
+  getStudentDocumentIdWithEmail,
   getLecturerDocumentIdWithEmail,
-  deleteUserInFirestore,
   getLatestOTPDocumentOfUser,
   deleteOTPDocumentsByEmail,
   getUserIdInFBAuthWithEmail,
-  getRandomInt,
-  generateOTPCode,
-  stringIsEmpty,
-  isEmail,
-  validateAccountData,
-  validateEmailData,
-  validatePasswordData,
   validateCreateUserRequest,
   validateSignInChangePasswordRequest,
   validateGenerateVerifyOTPRequest,
-  validateGetUserRequest
+  validateGetUserRequest,
+  validateUserSubscriptionRequest,
 };
