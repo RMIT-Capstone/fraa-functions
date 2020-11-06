@@ -1,8 +1,10 @@
 const { db, admin } = require('../../utils/admin');
-const ERROR_MESSAGES = require('../../handlers/constants/ErrorMessages');
-const USERS_ROUTES = require('../../utils/routes/users');
+const { userAlreadyRegisteredToAttendanceSession } = require('../attendance-session-helpers');
 const { isEmail, stringIsEmpty } = require('../utilities-helpers');
 const { studentAlreadySubscribedToCourses, getCourseDocumentIdWithCode } = require('../courses-helpers');
+const ERROR_MESSAGES = require('../../handlers/constants/ErrorMessages');
+const USERS_ROUTES = require('../../utils/routes/users');
+const { attendanceSessionExistsWithDocId } = require('../attendance-session-helpers');
 
 const getStudentDocumentIdWithEmail = async email => {
   try {
@@ -90,10 +92,43 @@ const getUserIdInFBAuthWithEmail = async email => {
       return null;
     }
     return userRecord.uid;
-  }
-  catch (errorGetUserIdInFBAuthWithEmail) {
+  } catch (errorGetUserIdInFBAuthWithEmail) {
     console.error(errorGetUserIdInFBAuthWithEmail.message);
     return null;
+  }
+};
+
+const countMissedEvents = async (req, res) => {
+  const { email, courseCode, semester } = req.body;
+  try {
+    const querySnapshot = await db
+      .collection('attendance-sessions')
+      .where('semester', '==', semester)
+      .where('courseCode', '==', courseCode)
+      .get();
+
+    if (querySnapshot.empty) {
+      return res.send({ missedEventsCount: null, missedEventsError: null });
+    }
+
+    let missedEvents = [];
+    let missedEventsCount = 0;
+    const now = new Date();
+    querySnapshot.forEach(snapshot => {
+      missedEvents.push(snapshot.data());
+    });
+
+    missedEvents.forEach(event => {
+      const { validOn, attendees } = event;
+      if ((validOn.toDate() < now) && !attendees.includes(email)) {
+        missedEventsCount++;
+      }
+    });
+
+    return res.send({ missedEventsCount, missedEventsError: null });
+  } catch (errorCountMissedEvents) {
+    console.error('Something went wrong with countMissedEvents: ', errorCountMissedEvents);
+    return res.send({ missedEventsCount: null, missedEventsError: errorCountMissedEvents });
   }
 };
 
@@ -123,12 +158,12 @@ const validateSignInChangePasswordRequest = async (email, password, isLecturer) 
   else {
     if (isLecturer) {
       const { lecturerDocId, lecturerDocIdError } = await getLecturerDocumentIdWithEmail(email);
-      if (lecturerDocIdError) error.lecturer = 'Error retrieving lecturer document id.';
+      if (lecturerDocIdError) error.lecturer = 'Error retrieving lecturer document id with email.';
       if (!lecturerDocId) error.lecturer = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}.`;
     }
     else {
       const { studentDocId, errorStudentDocId } = await getStudentDocumentIdWithEmail(email);
-      if (errorStudentDocId) error.student = 'Error retrieving student document id.';
+      if (errorStudentDocId) error.student = 'Error retrieving student document id with email.';
       if (!studentDocId) error.student = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}.`;
     }
   }
@@ -144,16 +179,16 @@ const validateGenerateVerifyOTPRequest = async (email, isLecturer, path) => {
   } else {
     if (isLecturer) {
       const { lecturerDocId, lecturerDocIdError } = await getLecturerDocumentIdWithEmail(email);
-      if (lecturerDocIdError) error.lecturer = 'Error retrieving lecturer document id.';
+      if (lecturerDocIdError) error.lecturer = 'Error retrieving lecturer document id with email.';
       if (!lecturerDocId) error.lecturer = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}.`;
     } else {
       const { studentDocId, studentDocIdError } = await getStudentDocumentIdWithEmail(email);
-      if (studentDocIdError) error.student = 'Error retrieving student document id.';
+      if (studentDocIdError) error.student = 'Error retrieving student document id with email.';
       if (!studentDocId) error.student = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}.`;
     }
     if (path === USERS_ROUTES.VERIFY_OTP) {
       const { data, OTPDocumentError } = await getLatestOTPDocumentOfUser(email);
-      if (OTPDocumentError) error.OTP = 'Error retrieving user OTP documents.';
+      if (OTPDocumentError) error.OTP = 'Error retrieving user OTP documents with email.';
       if (!data) error.OTP = `No OTP documents is found with ${email}.`;
     }
   }
@@ -169,11 +204,11 @@ const validateGetUserRequest = async (email, isLecturer) => {
   } else {
     if (isLecturer) {
       const { lecturerDocId, lecturerDocIdError } = await getLecturerDocumentIdWithEmail(email);
-      if (lecturerDocIdError) error.lecturer = 'Error retrieving lecturer document id.';
+      if (lecturerDocIdError) error.lecturer = 'Error retrieving lecturer document id with email.';
       if (!lecturerDocId) error.lecturer = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}.`;
     } else {
       const { studentDocId, studentDocIdError } = await getStudentDocumentIdWithEmail(email);
-      if (studentDocIdError) error.student = 'Error retrieving student document id.';
+      if (studentDocIdError) error.student = 'Error retrieving student document id with email.';
       if (!studentDocId) error.student = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}.`;
     }
   }
@@ -191,7 +226,7 @@ const validateUserSubscriptionRequest = async (email, courses, path) => {
     let notSubscribedCourses = [];
 
     const { studentDocId, studentDocIdError } = await getStudentDocumentIdWithEmail(email);
-    if (studentDocIdError) error.user = 'Error retrieving user document id.';
+    if (studentDocIdError) error.student = 'Error retrieving student id with email.';
     if (!studentDocId) error.user = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}`;
 
     // TODO: is this really necessary ?
@@ -200,7 +235,7 @@ const validateUserSubscriptionRequest = async (email, courses, path) => {
       const { subscribed, subscribedError } = await studentAlreadySubscribedToCourses(studentDocId, courseCode);
 
       if (!courseDocId) invalidCourses.push(courseCode);
-      if (courseDocIdError) error.request = 'Error retrieving course document id.';
+      if (courseDocIdError) error.course = 'Error retrieving course document id with code.';
 
       if (path === USERS_ROUTES.SUBSCRIBE_TO_COURSES) {
         if (subscribed) subscribedCourses.push(courseCode);
@@ -208,7 +243,7 @@ const validateUserSubscriptionRequest = async (email, courses, path) => {
         if (!subscribed) notSubscribedCourses.push(courseCode);
       }
 
-      if (subscribedError) error.request = 'Error check user subscription.';
+      if (subscribedError) error.subscription = 'Error checking user subscription.';
       if (invalidCourses.length > 0) error.courses = `Course(s) do not exists: ${invalidCourses}`;
 
       if (path === USERS_ROUTES.SUBSCRIBE_TO_COURSES && subscribedCourses.length > 0) {
@@ -223,13 +258,45 @@ const validateUserSubscriptionRequest = async (email, courses, path) => {
   return { error, valid: Object.keys(error).length === 0 };
 };
 
-const validateUserAttendanceRegistrationRequest = async (userId, sessionId) => {
+const validateUserAttendanceRegistrationRequest = async (email, sessionId) => {
   let error = {};
-  if (!userId) error.userId = `${ERROR_MESSAGES.MISSING_FIELD} userId.`;
-  else if (!sessionId) error.sessionId = `${ERROR_MESSAGES.MISSING_FIELD} sessionId`;
-  // else {
-  //
-  // }
+  if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email.`;
+  else if (!isEmail(email)) error.email = 'Email is in incorrect format.';
+  else if (!sessionId) error.sessionId = `${ERROR_MESSAGES.MISSING_FIELD} sessionId.`;
+  else {
+    const { attendanceSessionExists, attendanceSessionExistsError } = await attendanceSessionExistsWithDocId(sessionId);
+    if (attendanceSessionExistsError) error.session = 'Error retrieving session id with email.';
+    if (!attendanceSessionExists) error.session = `No attendance session exists with id: ${sessionId}.`;
+    else {
+      const { studentDocId, studentDocIdError } = await getStudentDocumentIdWithEmail(email);
+      if (studentDocIdError) error.student = 'Error retrieving document id with email.';
+      if (!studentDocId) error.student = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}.`;
+
+      const { attended, errorAttended } = await userAlreadyRegisteredToAttendanceSession(email, sessionId);
+      if (errorAttended) error.student = 'Error checking user attendance.';
+      if (attended) error.attended = 'Student have already attended this session.';
+    }
+  }
+
+  return { error, valid: Object.keys(error).length === 0 };
+};
+
+const validateCountMissedEventsRequest = async (email, courseCode, semester) => {
+  let error = {};
+  if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email.`;
+  else if (!isEmail(email)) error.email = 'Email is in incorrect format.';
+  else if (stringIsEmpty(courseCode)) error.courseCode = `${ERROR_MESSAGES.MISSING_FIELD} courseCode.`;
+  else if (stringIsEmpty(semester)) error.semester = `${ERROR_MESSAGES.MISSING_FIELD} semester.`;
+  else {
+    const { studentDocId, studentDocIdError } = await getStudentDocumentIdWithEmail(email);
+    if (studentDocIdError) error.student = 'Error retrieving student document id with email.';
+    if (!studentDocId) error.student = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}.`;
+
+    const { courseDocId, courseDocIdError } = await getCourseDocumentIdWithCode(courseCode);
+    if (courseDocIdError) error.course = 'Error retrieving course document id with email.';
+    if (!courseDocId) error.course = `${ERROR_MESSAGES.COURSE_DOES_NOT_EXISTS_WITH_CODE} ${courseCode}`;
+  }
+  return { error, valid: Object.keys(error).length === 0 };
 };
 
 module.exports = {
@@ -238,9 +305,12 @@ module.exports = {
   getLatestOTPDocumentOfUser,
   deleteOTPDocumentsByEmail,
   getUserIdInFBAuthWithEmail,
+  countMissedEvents,
   validateCreateUserRequest,
   validateSignInChangePasswordRequest,
   validateGenerateVerifyOTPRequest,
   validateGetUserRequest,
   validateUserSubscriptionRequest,
+  validateUserAttendanceRegistrationRequest,
+  validateCountMissedEventsRequest,
 };

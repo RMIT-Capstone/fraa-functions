@@ -4,6 +4,8 @@ const {
   validateGenerateVerifyOTPRequest,
   validateGetUserRequest,
   validateUserSubscriptionRequest,
+  validateUserAttendanceRegistrationRequest,
+  validateCountMissedEventsRequest,
 } = require('../../../helpers/users-helpers');
 const { sendErrorObject } = require('../../../helpers/express-helpers');
 const USERS_ROUTES = require('../../routes/users');
@@ -45,6 +47,14 @@ module.exports = async (req, res, next) => {
 
   if (path === USERS_ROUTES.REGISTER_TO_ATTENDANCE_SESSION) {
     const { email, sessionId } = req.body;
+    const { error, valid } = await validateUserAttendanceRegistrationRequest(email, sessionId);
+    if (!valid) return sendErrorObject(res, error);
+  }
+
+  if (path === USERS_ROUTES.COUNT_MISSED_EVENTS) {
+    const { email, courseCode, semester } = req.body;
+    const { error, valid } = await validateCountMissedEventsRequest(email, courseCode, semester);
+    if (!valid) return sendErrorObject(res, error);
   }
 
   return next();

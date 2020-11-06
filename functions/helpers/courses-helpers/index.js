@@ -1,6 +1,6 @@
-const ERROR_MESSAGES = require('../../handlers/constants/ErrorMessages');
-const { stringIsEmpty } = require('../utilities-helpers');
 const { db } = require('../../utils/admin');
+const { stringIsEmpty } = require('../utilities-helpers');
+const ERROR_MESSAGES = require('../../handlers/constants/ErrorMessages');
 
 const courseExistsWithDocumentId = async id => {
   try {
@@ -8,7 +8,6 @@ const courseExistsWithDocumentId = async id => {
       .collection('courses')
       .doc(id)
       .get();
-
     if (documentSnapshot.exists) {
       return { courseExistsWithDocId: true, courseExistsWithDocIdError: null };
     }
@@ -31,8 +30,7 @@ const getCourseDocumentIdWithCode = async code => {
       const documentId = querySnapshot.docs[0].id;
       return { courseDocId: documentId, courseDocIdError: null };
     }
-  }
-  catch (errorGetCourseDocumentIdWithCode) {
+  } catch (errorGetCourseDocumentIdWithCode) {
     console.error('Something went wrong with getCourseDocumentIdWithCode', errorGetCourseDocumentIdWithCode);
     return { courseDocId: null, courseDocIdError: errorGetCourseDocumentIdWithCode };
   }
@@ -50,8 +48,7 @@ const studentAlreadySubscribedToCourses = async (userDocId, courseCode) => {
       subscribed: subscribedCourses.includes(courseCode),
       subscribedError: null,
     };
-  }
-  catch (errorUserAlreadySubscribedToCourse) {
+  } catch (errorUserAlreadySubscribedToCourse) {
     console.error('Something went wrong with userAlreadySubscribedToCourse: ', errorUserAlreadySubscribedToCourse);
     return { subscribed: null, subscribedError: errorUserAlreadySubscribedToCourse };
   }
@@ -65,7 +62,7 @@ const validateCreateCourseRequest = async course => {
     if (stringIsEmpty(code)) error.code = `${ERROR_MESSAGES.MISSING_FIELD} code.`;
     else {
       const { courseDocId, courseDocIdError } = await getCourseDocumentIdWithCode(code);
-      if (courseDocIdError) error.internalError = 'Internal server error.';
+      if (courseDocIdError) error.course = 'Error retrieving course document id with code.';
       if (courseDocId) error.course = `${ERROR_MESSAGES.COURSE_ALREADY_EXISTS_WITH_CODE} ${code}.`;
     }
     if (stringIsEmpty(lecturer)) error.lecturer = `${ERROR_MESSAGES.MISSING_FIELD} lecturer.`;
@@ -87,7 +84,7 @@ const validateGetCourseByCodeRequest = async code => {
   if (stringIsEmpty(code)) error.code = `${ERROR_MESSAGES.MISSING_FIELD} code.`;
   else {
     const { courseDocId, courseDocIdError } = await getCourseDocumentIdWithCode(code);
-    if (courseDocIdError) error.internalError = 'Internal server error.';
+    if (courseDocIdError) error.course = 'Error retrieving course document id with code.';
     if (!courseDocId) error.course = `${ERROR_MESSAGES.COURSE_DOES_NOT_EXISTS_WITH_CODE} ${code}.`;
   }
 
@@ -118,7 +115,7 @@ const validateUpdateCourseRequest = async (course) => {
     if (stringIsEmpty(id)) error.id = `${ERROR_MESSAGES.MISSING_FIELD} id.`;
     else {
       const { courseExistsWithDocId, courseExistsWithDocIdError } = await courseExistsWithDocumentId(id);
-      if (courseExistsWithDocIdError) error.internalError = 'Internal server error.';
+      if (courseExistsWithDocIdError) error.course = 'Error checking course exists.';
       if (!courseExistsWithDocId) error.course = `${ERROR_MESSAGES.COURSE_DOES_NOT_EXISTS_WITH_ID} ${id}`;
     }
   }
@@ -131,7 +128,7 @@ const validateDeleteCourseRequest = async (id) => {
   if (stringIsEmpty(id)) error.id = `${ERROR_MESSAGES.MISSING_FIELD} id.`;
   else {
     const { courseExistsWithDocId, courseExistsWithDocIdError } = await courseExistsWithDocumentId(id);
-    if (courseExistsWithDocIdError) error.internalError = 'Internal server error.';
+    if (courseExistsWithDocIdError) error.course = 'Error checking course exists.';
     if (!courseExistsWithDocId) error.course = `${ERROR_MESSAGES.COURSE_DOES_NOT_EXISTS_WITH_ID} ${id}`;
   }
 

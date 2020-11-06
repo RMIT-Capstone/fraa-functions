@@ -2,12 +2,13 @@ const { db, admin, firebase } = require('../../../utils/admin');
 const { sendOTPToUser } = require('../../email');
 const {
   getUserIdInFBAuthWithEmail,
-  generateOTPCode,
   getLatestOTPDocumentOfUser,
   deleteOTPDocumentsByEmail,
+  countMissedEvents,
 } = require('../../../helpers/users-helpers');
-const ERROR_MESSAGES = require('../../constants/ErrorMessages');
+const { generateOTPCode } = require('../../../helpers/utilities-helpers');
 const { sendErrorMessage } = require('../../../helpers/express-helpers');
+const ERROR_MESSAGES = require('../../constants/ErrorMessages');
 
 exports.onCreateUser = async (req, res) => {
   const { email, password, displayName, school, isLecturer } = req.body;
@@ -164,9 +165,12 @@ exports.getUserByEmail = async (req, res) => {
     const data = querySnapshot.docs[0].data();
     data.createdAt = data.createdAt.toDate();
     return res.json(data);
-  }
-  catch (errorGetUserByEmail) {
+  } catch (errorGetUserByEmail) {
     console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getUserByEmail: `, errorGetUserByEmail);
     return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
+};
+
+exports.countUserMissedSessions = async (req, res) => {
+  return countMissedEvents(req, res);
 };

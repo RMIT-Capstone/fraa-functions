@@ -19,7 +19,8 @@ const {
   generateOTP,
   signIn,
   changeUserPassword,
-  getUserByEmail
+  getUserByEmail,
+  countUserMissedSessions,
 } = require('./handlers/users/https');
 
 // course handlers
@@ -98,6 +99,7 @@ app.post(`/${USERS_ROUTES.GET_USER_BY_EMAIL}`, usersValidator, getUserByEmail);
 app.post(`/${USERS_ROUTES.SUBSCRIBE_TO_COURSES}`, usersValidator, subscribeUserToCourses);
 app.post(`/${USERS_ROUTES.UNSUBSCRIBE_FROM_COURSES}`, usersValidator, unsubscribeStudentFromCourses);
 app.post(`/${USERS_ROUTES.REGISTER_TO_ATTENDANCE_SESSION}`, usersValidator, registerStudentToAttendanceSession);
+app.post(`/${USERS_ROUTES.COUNT_MISSED_EVENTS}`, usersValidator, countUserMissedSessions);
 
 // user background functions
 exports.onUserDeleteInAuth = functions.region('asia-northeast1').auth.user().onDelete(onUserDeleteInAuth);

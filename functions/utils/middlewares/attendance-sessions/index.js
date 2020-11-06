@@ -1,24 +1,25 @@
-const ATTENDANCE_SESSIONS_ROUTES = require('../../routes/attendance-sessions');
-const { sendErrorObject } = require('../../../helpers/express-helpers');
 const {
   validateCreateAttendanceSessionRequest,
   validateGetAttendanceSessionsInDateRangeRequest,
   validateGetAttendanceSessionsInMonthRangeRequest,
   validateGetDailyAttendanceSessionsRequest,
-  validateGetMonthlyAttendanceSessionsRequest
+  validateGetMonthlyAttendanceSessionsRequest,
 } = require('../../../helpers/attendance-session-helpers');
+const { sendErrorObject } = require('../../../helpers/express-helpers');
+const ATTENDANCE_SESSIONS_ROUTES = require('../../routes/attendance-sessions');
 
 module.exports = async (req, res, next) => {
   const path = req.path.split('/')[1];
 
   if (path === ATTENDANCE_SESSIONS_ROUTES.CREATE_ATTENDANCE_SESSION) {
-    const { courseId, courseCode, courseName, lecturer, location, validOn, expireOn } = req.body.content;
+    const { courseId, courseCode, courseName, lecturer, location, semester, validOn, expireOn } = req.body.content;
     const { error, valid } = await validateCreateAttendanceSessionRequest(
       courseId,
       courseCode,
       courseName,
       lecturer,
       location,
+      semester,
       validOn,
       expireOn,
     );

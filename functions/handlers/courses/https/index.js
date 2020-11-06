@@ -78,6 +78,7 @@ exports.getCourseByCode = async (req, res) => {
     let course = querySnapshot.docs[0].data();
     const { createdAt } = course;
     course.createdAt = createdAt.toDate();
+    course.id = querySnapshot.docs[0].id;
 
     return res.json({ course });
   }

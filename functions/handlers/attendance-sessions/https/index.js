@@ -11,6 +11,7 @@ exports.createAttendanceSession = async (req, res) => {
   content.validOn = new Date(validOn);
   content.expireOn = new Date(expireOn);
   content.attendees = [];
+  delete content.courseId;
   try {
     await db
       .collection('attendance-sessions')
@@ -103,10 +104,8 @@ exports.getDailyAttendanceSessions = async (req, res) => {
   try {
     let sessions = [], markedDates = [];
 
-    const start = new Date();
-    start.setHours(0, 0, 0, 0);
-    const end = new Date();
-    end.setHours(23, 59, 59, 999);
+    const start = new Date().setHours(0, 0, 0, 0);
+    const end = new Date().setHours(23, 59, 59, 999);
     const querySnapshot = await db
       .collection('attendance-sessions')
       .where('validOn', '>=', start)

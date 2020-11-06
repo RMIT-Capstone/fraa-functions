@@ -1,8 +1,7 @@
 const { db } = require('../../utils/admin');
-const ERROR_MESSAGES = require('../../handlers/constants/ErrorMessages');
 const { stringIsEmpty } = require('../utilities-helpers');
 const { courseExistsWithDocumentId } = require('../courses-helpers');
-const { getStudentDocumentIdWithEmail } = require('../users-helpers');
+const ERROR_MESSAGES = require('../../handlers/constants/ErrorMessages');
 
 const getAttendanceSessionDocumentIdByDate = async date => {
   try {
@@ -66,20 +65,22 @@ const userAlreadyRegisteredToAttendanceSession = async (email, sessionId) => {
 
 //validations
 // eslint-disable-next-line max-len
-const validateCreateAttendanceSessionRequest = async (courseId, courseCode, courseName, lecturer, location, validOn, expireOn) => {
+const validateCreateAttendanceSessionRequest = async (courseId, courseCode, courseName, lecturer, location, semester, validOn, expireOn) => {
   let error = {};
   if (stringIsEmpty(courseId)) error.courseId = `${ERROR_MESSAGES.MISSING_FIELD} courseId`;
   else if (stringIsEmpty(courseCode)) error.courseCode = `${ERROR_MESSAGES.MISSING_FIELD} courseCode.`;
   else if (stringIsEmpty(courseName)) error.courseName = `${ERROR_MESSAGES.MISSING_FIELD} courseName.`;
   else if (stringIsEmpty(lecturer)) error.lecturer = `${ERROR_MESSAGES.MISSING_FIELD} lecturer.`;
+  else if (stringIsEmpty(location)) error.location = `${ERROR_MESSAGES.MISSING_FIELD} location.`;
+  else if (stringIsEmpty(semester)) error.semester = `${ERROR_MESSAGES.MISSING_FIELD} semester.`;
   else if (stringIsEmpty(validOn)) error.validOn = `${ERROR_MESSAGES.MISSING_FIELD} validOn.`;
   else {
     const { courseExistsWithDocId, courseExistsWithDocIdError } = await courseExistsWithDocumentId(courseId);
-    if (courseExistsWithDocIdError) error.internalError = 'Internal server error.';
+    if (courseExistsWithDocIdError) error.course = 'Error checking course exists.';
     if (!courseExistsWithDocId) error.course = `${ERROR_MESSAGES.COURSE_DOES_NOT_EXISTS_WITH_ID} ${courseId}.`;
     else {
       let sessions = [];
-      let start = new Date(validOn).setHours(0, 0, 0, 0);
+      const start = new Date(validOn).setHours(0, 0, 0, 0);
       const end = new Date(validOn).setHours(23, 59, 59, 999);
       const querySnapshot = await db
         .collection('attendance-sessions')
@@ -103,15 +104,7 @@ const validateCreateAttendanceSessionRequest = async (courseId, courseCode, cour
     }
   }
   if (stringIsEmpty(expireOn)) error.expireOn = `${ERROR_MESSAGES.MISSING_FIELD} expireOn.`;
-  if (stringIsEmpty(location)) error.location = `${ERROR_MESSAGES.MISSING_FIELD} location.`;
 
-  return { error, valid: Object.keys(error).length === 0 };
-};
-
-const validateGetMoreAttendanceByCourseCodeRequest = (courseCode, startAfter) => {
-  let error = {};
-  if (stringIsEmpty(courseCode)) error.courseCode = `${ERROR_MESSAGES.MISSING_FIELD} course code.`;
-  if (stringIsEmpty(startAfter)) error.startAfter = `${ERROR_MESSAGES.MISSING_FIELD} startAfter.`;
   return { error, valid: Object.keys(error).length === 0 };
 };
 
@@ -132,30 +125,6 @@ const validateGetAttendanceSessionsInMonthRangeRequest = (courses, startMonth, m
   if (monthRange <= 0 || monthRange > 6) {
     error.monthRange = 'monthRange must be at least 1 and maximum 6.';
   }
-  return { error, valid: Object.keys(error).length === 0 };
-};
-
-const validateRegisterStudentToAttendanceSessionRequest = async (email, sessionId) => {
-  let error = {};
-  if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email.`;
-  if (stringIsEmpty(sessionId)) error.sessionId = `${ERROR_MESSAGES.MISSING_FIELD} sessionId.`;
-
-  const { studentDocId, studentDocIdError } = await getStudentDocumentIdWithEmail(email);
-
-  if (studentDocIdError) error.user = 'Error retrieving user document id.';
-  if (!studentDocId) error.usere = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}.`;
-
-  const {
-    attendanceSessionExists,
-    attendanceSessionExistsError,
-  } = await attendanceSessionExistsWithDocId(sessionId);
-  if (attendanceSessionExistsError) error.attendanceSession = `Error check attendance session exists.`;
-  if (!attendanceSessionExists) error.attendanceSession = `No attendance session exists with id: ${sessionId}`;
-
-  const { attended, errorAttended } = await userAlreadyRegisteredToAttendanceSession(email, sessionId);
-  if (errorAttended) error.attended = 'Error check user attendance.';
-  if (attended) error.attended = 'User already registered to attendance session.';
-
   return { error, valid: Object.keys(error).length === 0 };
 };
 
@@ -180,10 +149,8 @@ module.exports = {
   attendanceSessionExistsWithDocId,
   userAlreadyRegisteredToAttendanceSession,
   validateCreateAttendanceSessionRequest,
-  validateGetMoreAttendanceByCourseCodeRequest,
   validateGetAttendanceSessionsInDateRangeRequest,
   validateGetAttendanceSessionsInMonthRangeRequest,
-  validateRegisterStudentToAttendanceSessionRequest,
   validateGetDailyAttendanceSessionsRequest,
   validateGetMonthlyAttendanceSessionsRequest,
 };
