@@ -7,4 +7,4 @@ firebase.initializeApp(config);
 const db = admin.firestore();
 const bucket = admin.storage().bucket('fraa-capstone.appspot.com');
 
-module.exports = {admin, firebase, db, bucket};
+module.exports = { admin, firebase, db, bucket };

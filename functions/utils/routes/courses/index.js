@@ -7,6 +7,4 @@ module.exports = {
   GET_MORE_COURSES_BY_NAME: 'get_more_courses_by_name',
   UPDATE_COURSE: 'update_course',
   DELETE_COURSE: 'delete_course',
-  SUBSCRIBE_COURSES: 'subscribe_courses',
-  UNSUBSCRIBE_COURSES: 'unsubscribed_courses',
 };

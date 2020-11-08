@@ -1,18 +1,18 @@
-const {getUserDocumentIdWithEmail} = require('../../../helpers/users-helpers');
-const {getCourseDocumentIdWithCode} = require('../../../helpers/courses-helpers');
-const {db, admin} = require('../../../utils/admin');
+const { getStudentDocumentIdWithEmail } = require('../../../helpers/users-helpers');
+const { db, admin } = require('../../../utils/admin');
 const ERROR_MESSAGES = require('../../constants/ErrorMessages');
-const {sendErrorMessage} = require('../../../helpers/express-helpers');
+const { sendErrorMessage } = require('../../../helpers/express-helpers');
 
 exports.createCourse = async (req, res) => {
-  const {course} = req.body;
+  const { course } = req.body;
   course.name = course.name.toLowerCase().split(' ');
   course.createdAt = new Date();
   try {
-    await db
+    const docRef = await db
       .collection('courses')
       .add(course);
-    return res.json({success: 'Course created.'});
+    course.id = docRef.id;
+    return res.json(course);
   }
   catch (errorCreateCourse) {
     console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} createCourse: `, errorCreateCourse);
@@ -30,11 +30,11 @@ exports.getCourses = async (req, res) => {
       .get();
     querySnapshot.forEach(snap => {
       let course = snap.data();
-      const {createdAt} = course;
+      const { createdAt } = course;
       course.createdAt = createdAt.toDate();
       courses.push(course);
     });
-    return res.json({courses});
+    return res.json({ courses });
   }
   catch (errorGetCourses) {
     console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getCourses: `, errorGetCourses);
@@ -43,7 +43,7 @@ exports.getCourses = async (req, res) => {
 };
 
 exports.getMoreCourses = async (req, res) => {
-  const {startAfter} = req.body;
+  const { startAfter } = req.body;
   const courses = [];
   try {
     const querySnapshot = await db
@@ -55,11 +55,11 @@ exports.getMoreCourses = async (req, res) => {
 
     querySnapshot.forEach(snap => {
       let course = snap.data();
-      const {createdAt} = course;
+      const { createdAt } = course;
       course.createdAt = createdAt.toDate();
       courses.push(course);
     });
-    return res.json({courses});
+    return res.json({ courses });
   }
   catch (errorGetMoreCourses) {
     console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getMoreCourses: `, errorGetMoreCourses);
@@ -68,7 +68,7 @@ exports.getMoreCourses = async (req, res) => {
 };
 
 exports.getCourseByCode = async (req, res) => {
-  const {code} = req.body;
+  const { code } = req.body;
   try {
     const querySnapshot = await db
       .collection('courses')
@@ -76,10 +76,11 @@ exports.getCourseByCode = async (req, res) => {
       .limit(1)
       .get();
     let course = querySnapshot.docs[0].data();
-    const {createdAt} = course;
+    const { createdAt } = course;
     course.createdAt = createdAt.toDate();
+    course.id = querySnapshot.docs[0].id;
 
-    return res.json({course});
+    return res.json({ course });
   }
   catch (errorGetCourseByCode) {
     console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getCourseByCode: `, errorGetCourseByCode);
@@ -88,7 +89,7 @@ exports.getCourseByCode = async (req, res) => {
 };
 
 exports.getCoursesByName = async (req, res) => {
-  const {name} = req.body;
+  const { name } = req.body;
   try {
     const querySnapshot = await db
       .collection('courses')
@@ -101,7 +102,7 @@ exports.getCoursesByName = async (req, res) => {
     querySnapshot.forEach(snapshot => {
       courses.push(snapshot.data());
     });
-    return res.json({courses});
+    return res.json({ courses });
   }
   catch (errorGetCoursesByName) {
     console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getCoursesByName: `, errorGetCoursesByName);
@@ -110,7 +111,7 @@ exports.getCoursesByName = async (req, res) => {
 };
 
 exports.getMoreCoursesByName = async (req, res) => {
-  const {name, startAfter} = req.body;
+  const { name, startAfter } = req.body;
   try {
     const querySnapshot = await db
       .collection('courses')
@@ -124,7 +125,7 @@ exports.getMoreCoursesByName = async (req, res) => {
     querySnapshot.forEach(snapshot => {
       courses.push(snapshot.data());
     });
-    return res.json({courses});
+    return res.json({ courses });
   }
   catch (errorGetMoreCoursesByName) {
     console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getMoreCoursesByName: `, errorGetMoreCoursesByName);
@@ -134,16 +135,17 @@ exports.getMoreCoursesByName = async (req, res) => {
 
 exports.updateCourse = async (req, res) => {
   // very important thing to note is that course code cannot be updated
-  const {course} = req.body;
-  course.name = course.name.toLowerCase().split(' ');
+  const { course, course: { name, id } } = req.body;
+  delete course.id;
+  if (name) {
+    course.name = course.name.toLowerCase().split(' ');
+  }
   try {
-    const {id, error} = await getCourseDocumentIdWithCode(course.code);
-    if (error) sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
     await db
       .collection('courses')
       .doc(id)
       .update(course);
-    return res.json({success: 'Course updated.'});
+    return res.json({ success: 'Course updated.' });
   }
   catch (errorUpdateCourse) {
     console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} updateCourse: `, errorUpdateCourse);
@@ -152,15 +154,13 @@ exports.updateCourse = async (req, res) => {
 };
 
 exports.deleteCourse = async (req, res) => {
-  const {code} = req.body;
+  const { id } = req.body;
   try {
-    const {id, error} = await getCourseDocumentIdWithCode(code);
-    if (error) return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
     await db
       .collection('courses')
       .doc(id)
       .delete();
-    return res.json({success: 'Course deleted.'});
+    return res.json({ success: 'Course deleted.' });
   }
   catch (errorDeleteCourse) {
     console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} deleteCourse: `, errorDeleteCourse);
@@ -169,21 +169,21 @@ exports.deleteCourse = async (req, res) => {
 };
 
 exports.subscribeUserToCourses = async (req, res) => {
-  const {courses, email} = req.body;
-  const {id: userDocId, error} = await getUserDocumentIdWithEmail(email);
-  if (error) return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}.`);
+  const { courses, email } = req.body;
+  const { studentDocId, studentDocIdError } = await getStudentDocumentIdWithEmail(email);
+  if (studentDocIdError) return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}.`);
   try {
     // https://stackoverflow.com/questions/35612428/call-async-await-functions-in-parallel
     await Promise.all(courses.map(async course => {
       await db
-        .collection('users')
-        .doc(userDocId)
+        .collection('students')
+        .doc(studentDocId)
         .update({
-          subscribedCourses: admin.firestore.FieldValue.arrayUnion(course)
+          subscribedCourses: admin.firestore.FieldValue.arrayUnion(course),
         });
     }));
 
-    return res.json({success: 'User subscribed to course(s).'});
+    return res.json({ success: 'Student subscribed to course(s).' });
   }
   catch (errorSubscribeUserToCourses) {
     console.error(
@@ -195,21 +195,21 @@ exports.subscribeUserToCourses = async (req, res) => {
 };
 
 exports.unsubscribeStudentFromCourses = async (req, res) => {
-  const {courses, email} = req.body;
-  const {id: userDocId, error} = await getUserDocumentIdWithEmail(email);
-  if (error) return res.json({error: `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}.`});
+  const { courses, email } = req.body;
+  const { studentDocId, studentDocIdError } = await getStudentDocumentIdWithEmail(email);
+  if (studentDocIdError) return res.json({ error: `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}.` });
 
   try {
     await Promise.all(courses.map(async course => {
       await db
-        .collection('users')
-        .doc(userDocId)
+        .collection('students')
+        .doc(studentDocId)
         .update({
-          subscribedCourses: admin.firestore.FieldValue.arrayRemove(course)
+          subscribedCourses: admin.firestore.FieldValue.arrayRemove(course),
         });
 
     }));
-    return res.json({success: 'User unsubscribed from course(s).'});
+    return res.json({ success: 'Student unsubscribed from course(s).' });
   }
   catch (errorUnsubscribeUserFromCourses) {
     console.error(

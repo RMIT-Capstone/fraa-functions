@@ -130,6 +130,9 @@
     "max-len": ["error", { "code": 120 }],
 
     // Space around infix operators
-    "space-infix-ops": ["error", { "int32Hint":false }]
+    "space-infix-ops": ["error", { "int32Hint":false }],
+
+    // Space between curly braces
+    "object-curly-spacing": ["error", "always"]
   }
 }
