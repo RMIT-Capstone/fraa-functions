@@ -4,13 +4,12 @@ const {
   getUserIdInFBAuthWithEmail,
   getLatestOTPDocumentOfUser,
   deleteOTPDocumentsByEmail,
-  countMissedEvents,
 } = require('../../../helpers/users-helpers');
 const { generateOTPCode } = require('../../../helpers/utilities-helpers');
 const { sendErrorMessage } = require('../../../helpers/express-helpers');
 const ERROR_MESSAGES = require('../../constants/ErrorMessages');
 
-exports.onCreateUser = async (req, res) => {
+const onCreateUser = async (req, res) => {
   const { email, password, displayName, school, isLecturer } = req.body;
   try {
     const { idToken, error } = await createUserInAuth(email, password);
@@ -71,14 +70,13 @@ const createUserInAuth = async (email, password) => {
   }
 };
 
-exports.signIn = async (req, res) => {
+const signIn = async (req, res) => {
   const { email, password } = req.body;
   try {
     const signIn = await firebase.auth().signInWithEmailAndPassword(email, password);
     const idToken = await signIn.user.getIdToken();
     return res.json({ token: idToken });
-  }
-  catch (errorSignIn) {
+  } catch (errorSignIn) {
     if (errorSignIn.code === 'auth/wrong-password') {
       return res.json({ error: 'Password is incorrect' });
     }
@@ -92,7 +90,7 @@ exports.signIn = async (req, res) => {
   }
 };
 
-exports.generateOTP = async (req, res) => {
+const generateOTP = async (req, res) => {
   const { email } = req.body;
   try {
     const OTP = generateOTPCode();
@@ -113,7 +111,7 @@ exports.generateOTP = async (req, res) => {
   }
 };
 
-exports.verifyOTP = async (req, res) => {
+const verifyOTP = async (req, res) => {
   const { email, OTP: userOTP } = req.body;
   try {
     const { data } = await getLatestOTPDocumentOfUser(email);
@@ -138,22 +136,21 @@ exports.verifyOTP = async (req, res) => {
   }
 };
 
-exports.changeUserPassword = async (req, res) => {
+const changeUserPassword = async (req, res) => {
   const { email, password } = req.body;
   try {
     const recordId = await getUserIdInFBAuthWithEmail(email);
     await admin.auth().updateUser(recordId, {
-      password: password
+      password: password,
     });
     return res.json({ success: 'Password updated successfully.' });
-  }
-  catch (errorChangeUserPassword) {
+  } catch (errorChangeUserPassword) {
     console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} changeUserPassword: `, errorChangeUserPassword);
     return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
 
-exports.getUserByEmail = async (req, res) => {
+const getUserByEmail = async (req, res) => {
   const { email, isLecturer } = req.body;
   const collection = isLecturer ? 'lecturers' : 'students';
   try {
@@ -171,6 +168,46 @@ exports.getUserByEmail = async (req, res) => {
   }
 };
 
-exports.countUserMissedSessions = async (req, res) => {
-  return countMissedEvents(req, res);
+const countUserMissedSessions = async (req, res) => {
+  const { email, courseCode, semester } = req.body;
+  try {
+    const querySnapshot = await db
+      .collection('attendance-sessions')
+      .where('semester', '==', semester)
+      .where('courseCode', '==', courseCode)
+      .get();
+
+    if (querySnapshot.empty) {
+      return res.send({ missedEventsCount: null, missedEventsError: null });
+    }
+
+    let missedEvents = [];
+    let missedEventsCount = 0;
+    const now = new Date();
+    querySnapshot.forEach(snapshot => {
+      missedEvents.push(snapshot.data());
+    });
+
+    missedEvents.forEach(event => {
+      const { validOn, attendees } = event;
+      if ((validOn.toDate() < now) && !attendees.includes(email)) {
+        missedEventsCount++;
+      }
+    });
+
+    return res.send({ missedEventsCount, missedEventsError: null });
+  } catch (errorCountMissedEvents) {
+    console.error('Something went wrong with countMissedEvents: ', errorCountMissedEvents);
+    return res.send({ missedEventsCount: null, missedEventsError: errorCountMissedEvents });
+  }
+};
+
+module.exports = {
+  onCreateUser,
+  signIn,
+  generateOTP,
+  verifyOTP,
+  changeUserPassword,
+  getUserByEmail,
+  countUserMissedSessions,
 };

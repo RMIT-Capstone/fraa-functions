@@ -98,40 +98,6 @@ const getUserIdInFBAuthWithEmail = async email => {
   }
 };
 
-const countMissedEvents = async (req, res) => {
-  const { email, courseCode, semester } = req.body;
-  try {
-    const querySnapshot = await db
-      .collection('attendance-sessions')
-      .where('semester', '==', semester)
-      .where('courseCode', '==', courseCode)
-      .get();
-
-    if (querySnapshot.empty) {
-      return res.send({ missedEventsCount: null, missedEventsError: null });
-    }
-
-    let missedEvents = [];
-    let missedEventsCount = 0;
-    const now = new Date();
-    querySnapshot.forEach(snapshot => {
-      missedEvents.push(snapshot.data());
-    });
-
-    missedEvents.forEach(event => {
-      const { validOn, attendees } = event;
-      if ((validOn.toDate() < now) && !attendees.includes(email)) {
-        missedEventsCount++;
-      }
-    });
-
-    return res.send({ missedEventsCount, missedEventsError: null });
-  } catch (errorCountMissedEvents) {
-    console.error('Something went wrong with countMissedEvents: ', errorCountMissedEvents);
-    return res.send({ missedEventsCount: null, missedEventsError: errorCountMissedEvents });
-  }
-};
-
 const validateCreateUserRequest = async (email, password, displayName, school, isLecturer) => {
   let error = {};
   if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email.`;
@@ -305,7 +271,6 @@ module.exports = {
   getLatestOTPDocumentOfUser,
   deleteOTPDocumentsByEmail,
   getUserIdInFBAuthWithEmail,
-  countMissedEvents,
   validateCreateUserRequest,
   validateSignInChangePasswordRequest,
   validateGenerateVerifyOTPRequest,
