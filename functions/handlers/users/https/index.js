@@ -178,7 +178,7 @@ const countUserMissedSessions = async (req, res) => {
       .get();
 
     if (querySnapshot.empty) {
-      return res.send({ missedEventsCount: null, missedEventsError: null });
+      return res.send({ missedEventsCount: 0 });
     }
 
     let missedEvents = [];
@@ -195,10 +195,10 @@ const countUserMissedSessions = async (req, res) => {
       }
     });
 
-    return res.send({ missedEventsCount, missedEventsError: null });
+    return res.send({ missedEventsCount });
   } catch (errorCountMissedEvents) {
     console.error('Something went wrong with countMissedEvents: ', errorCountMissedEvents);
-    return res.send({ missedEventsCount: null, missedEventsError: errorCountMissedEvents });
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
 
