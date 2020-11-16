@@ -33,7 +33,7 @@ exports.createAttendanceSession = async (req, res) => {
 exports.getAttendanceSessionsInDateRange = async (req, res) => {
   const { courses, startTime, endTime } = req.body;
   try {
-    let sessions = [], markedDates = [];
+    let sessions = [], markedDates = {};
     const querySnapshot = await db
       .collection('attendance-sessions')
       .where('validOn', '>=', new Date(startTime))
@@ -65,7 +65,7 @@ exports.getAttendanceSessionsInDateRange = async (req, res) => {
 exports.getAttendanceSessionsInMonthRange = async (req, res) => {
   const { courses, startMonth, monthRange } = req.body;
   try {
-    let sessions = [], markedDates = [];
+    let sessions = [], markedDates = {};
 
     const firstDayOfStartMonth = new Date(today.getFullYear(), startMonth, 1, 0, 0, 0, 0);
     const lastDayOfEndMonth = new Date(today.getFullYear(), startMonth + monthRange - 1, 23, 59, 59, 59, 999);
@@ -102,7 +102,7 @@ exports.getAttendanceSessionsInMonthRange = async (req, res) => {
 exports.getDailyAttendanceSessions = async (req, res) => {
   const { courses } = req.body;
   try {
-    let sessions = [], markedDates = [];
+    let sessions = [], markedDates = {};
 
     const start = new Date().setHours(0, 0, 0, 0);
     const end = new Date().setHours(23, 59, 59, 999);
@@ -139,7 +139,7 @@ exports.getDailyAttendanceSessions = async (req, res) => {
 exports.getMonthlyAttendanceSessions = async (req, res) => {
   const { courses, month } = req.body;
   try {
-    let sessions = [], markedDates = [];
+    let sessions = [], markedDates = {};
 
     const firstDayOfMonth = new Date(today.getFullYear(), month, 1, 0, 0, 0, 0);
     const lastDayOfMonth = new Date(today.getFullYear(), month + 1, 0, 23, 59, 59, 999);
