@@ -30,8 +30,10 @@ exports.getCourses = async (req, res) => {
       .get();
     querySnapshot.forEach(snap => {
       let course = snap.data();
+      const id = snap.id;
       const { createdAt } = course;
       course.createdAt = createdAt.toDate();
+      course.id = id;
       courses.push(course);
     });
     return res.json({ courses });
@@ -55,8 +57,10 @@ exports.getMoreCourses = async (req, res) => {
 
     querySnapshot.forEach(snap => {
       let course = snap.data();
+      const id = snap.id;
       const { createdAt } = course;
       course.createdAt = createdAt.toDate();
+      course.id = id;
       courses.push(course);
     });
     return res.json({ courses });
