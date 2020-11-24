@@ -125,12 +125,12 @@ const validateSignInChangePasswordRequest = async (email, password, isLecturer) 
     if (isLecturer) {
       const { lecturerDocId, lecturerDocIdError } = await getLecturerDocumentIdWithEmail(email);
       if (lecturerDocIdError) error.lecturer = 'Error retrieving lecturer document id with email.';
-      if (!lecturerDocId) error.lecturer = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}.`;
+      if (!lecturerDocId) error.lecturer = `No lecturer exists with email: ${email}`;
     }
     else {
       const { studentDocId, errorStudentDocId } = await getStudentDocumentIdWithEmail(email);
       if (errorStudentDocId) error.student = 'Error retrieving student document id with email.';
-      if (!studentDocId) error.student = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}.`;
+      if (!studentDocId) error.student = `No student exists with email: ${email}`;
     }
   }
 
