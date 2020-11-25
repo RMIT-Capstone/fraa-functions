@@ -9,4 +9,5 @@ module.exports = {
   UNSUBSCRIBE_FROM_COURSES: 'unsubscribe_from_courses',
   REGISTER_TO_ATTENDANCE_SESSION: 'register_to_attendance_session',
   COUNT_MISSED_EVENTS: 'count_missed_events',
+  COUNT_TOTAL_EVENTS: 'count_total_events',
 };

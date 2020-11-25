@@ -41,6 +41,7 @@ const createUserInFirestore = async (email, displayName, school, isLecturer) => 
         displayName,
         school,
         subscribedCourses: [],
+        totalAttendedEventsCount: 0,
         createdAt: new Date(),
         firstTimePassword: true,
       });
@@ -161,6 +162,7 @@ const getUserByEmail = async (req, res) => {
 
     const data = querySnapshot.docs[0].data();
     data.createdAt = data.createdAt.toDate();
+
     return res.json(data);
   } catch (errorGetUserByEmail) {
     console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getUserByEmail: `, errorGetUserByEmail);
@@ -168,29 +170,24 @@ const getUserByEmail = async (req, res) => {
   }
 };
 
-const countUserMissedSessions = async (req, res) => {
-  const { email, courseCode, semester } = req.body;
+const countUserMissedAttendanceSessionsByCoursesAndSemester = async (req, res) => {
+  const { email, courses, semester } = req.body;
   try {
     const querySnapshot = await db
       .collection('attendance-sessions')
       .where('semester', '==', semester)
-      .where('courseCode', '==', courseCode)
       .get();
 
-    if (querySnapshot.empty) {
-      return res.send({ missedEventsCount: 0 });
-    }
-
-    let missedEvents = [];
     let missedEventsCount = 0;
     const now = new Date();
-    querySnapshot.forEach(snapshot => {
-      missedEvents.push(snapshot.data());
-    });
 
-    missedEvents.forEach(event => {
-      const { validOn, attendees } = event;
-      if ((validOn.toDate() < now) && !attendees.includes(email)) {
+    if (querySnapshot.empty) {
+      return res.send({ missedEventsCount });
+    }
+
+    querySnapshot.forEach(snapshot => {
+      const { attendees, validOn, courseCode } = snapshot.data();
+      if (validOn.toDate() < now && !attendees.includes(email) && courses.includes(courseCode)) {
         missedEventsCount++;
       }
     });
@@ -202,6 +199,34 @@ const countUserMissedSessions = async (req, res) => {
   }
 };
 
+const countUserTotalAttendanceSessionsByCoursesAndSemester = async (req, res) => {
+  const { courses, semester } = req.body;
+  try {
+    const querySnapshot = await db
+      .collection('attendance-sessions')
+      .where('semester', '==', semester)
+      .get();
+
+    let totalAttendanceSessionsCount = 0;
+
+    if (querySnapshot.empty) {
+      return res.send({ totalAttendanceSessionsCount });
+    }
+
+    querySnapshot.forEach(snapshot => {
+      const { courseCode } = snapshot.data();
+      if (courses.includes(courseCode)) {
+        totalAttendanceSessionsCount++;
+      }
+    });
+
+    return res.send({ totalAttendanceSessionsCount });
+  } catch (errorCountUserTotalAttendance) {
+    console.error('Something went wrong with countMissedEvents: ', errorCountUserTotalAttendance);
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
+  }
+};
+
 module.exports = {
   onCreateUser,
   signIn,
@@ -209,5 +234,6 @@ module.exports = {
   verifyOTP,
   changeUserPassword,
   getUserByEmail,
-  countUserMissedSessions,
+  countUserMissedAttendanceSessionsByCoursesAndSemester,
+  countUserTotalAttendanceSessionsByCoursesAndSemester,
 };

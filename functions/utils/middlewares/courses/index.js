@@ -1,14 +1,14 @@
 const { sendErrorObject } = require('../../../helpers/express-helpers');
-const {
-  validateCreateCourseRequest,
-  validateGetMoreCoursesRequest,
-  validateGetCourseByCodeRequest,
-  validateUpdateCourseRequest,
-  validateDeleteCourseRequest,
-  validateGetCoursesByNameRequest,
-  validateGetMoreCoursesByNameRequest,
-} = require('../../../helpers/courses-helpers');
 const COURSE_ROUTES = require('../../routes/courses');
+const {
+  validateDeleteCourseRequest,
+  validateUpdateCourseRequest,
+  validateGetMoreCoursesByNameRequest,
+  validateGetCoursesByNameRequest,
+  validateGetCourseByCodeRequest,
+  validateGetMoreCoursesRequest,
+  validateCreateCourseRequest,
+} = require('../../../validators/courses-validators');
 
 module.exports = async (req, res, next) => {
   const path = req.path.split('/')[1];
