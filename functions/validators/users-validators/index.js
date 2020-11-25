@@ -177,7 +177,7 @@ const validateUserAttendanceRegistrationRequest = async (email, sessionId) => {
   return { error, valid: Object.keys(error).length === 0 };
 };
 
-const validateCountMissedEventsRequest = async (email, courses, semester) => {
+const validateCountMissedTotalAttendanceSessionsRequest = async (email, courses, semester) => {
   let error = {};
   if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email.`;
   else if (!isEmail(email)) error.email = 'Email is in incorrect format.';
@@ -187,15 +187,6 @@ const validateCountMissedEventsRequest = async (email, courses, semester) => {
   return { error, valid: Object.keys(error).length === 0 };
 };
 
-const validateCountTotalEventsRequest = async (email, courses, semester) => {
-  let error = {};
-  if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email.`;
-  else if (!isEmail(email)) error.email = 'Email is in incorrect format.';
-  if (!courses || !Array.isArray(courses)) error.courses = `${ERROR_MESSAGES.MISSING_FIELD} courses.`;
-  if (stringIsEmpty(semester)) error.semester = `${ERROR_MESSAGES.MISSING_FIELD} semester.`;
-  // TODO: validate user subscription
-  return { error, valid: Object.keys(error).length === 0 };
-};
 
 module.exports = {
   validateCreateUserRequest,
@@ -204,6 +195,5 @@ module.exports = {
   validateGetUserRequest,
   validateUserSubscriptionRequest,
   validateUserAttendanceRegistrationRequest,
-  validateCountMissedEventsRequest,
-  validateCountTotalEventsRequest,
+  validateCountMissedTotalAttendanceSessionsRequest,
 };

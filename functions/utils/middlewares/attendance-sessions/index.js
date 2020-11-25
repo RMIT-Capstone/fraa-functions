@@ -1,5 +1,4 @@
 const { sendErrorObject } = require('../../../helpers/express-helpers');
-const ATTENDANCE_SESSIONS_ROUTES = require('../../routes/attendance-sessions');
 const {
   validateGetMonthlyAttendanceSessionsRequest,
   validateGetDailyAttendanceSessionsRequest,
@@ -7,6 +6,7 @@ const {
   validateGetAttendanceSessionsInDateRangeRequest,
   validateCreateAttendanceSessionRequest,
 } = require('../../../validators/attendance-sessions-validators');
+const ATTENDANCE_SESSIONS_ROUTES = require('../../routes/attendance-sessions');
 
 module.exports = async (req, res, next) => {
   const path = req.path.split('/')[1];

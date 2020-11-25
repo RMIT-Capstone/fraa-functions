@@ -1,7 +1,7 @@
-const { getStudentDocumentIdWithEmail } = require('../../../helpers/users-helpers');
 const { db, admin } = require('../../../utils/admin');
-const ERROR_MESSAGES = require('../../constants/ErrorMessages');
+const { getStudentDocumentIdWithEmail } = require('../../../helpers/users-helpers');
 const { sendErrorMessage } = require('../../../helpers/express-helpers');
+const ERROR_MESSAGES = require('../../constants/ErrorMessages');
 
 exports.createCourse = async (req, res) => {
   const { course } = req.body;

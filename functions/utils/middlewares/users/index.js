@@ -1,12 +1,11 @@
 const {
-  validateCountMissedEventsRequest,
   validateUserAttendanceRegistrationRequest,
   validateUserSubscriptionRequest,
   validateGetUserRequest,
   validateGenerateVerifyOTPRequest,
   validateSignInChangePasswordRequest,
   validateCreateUserRequest,
-  validateCountTotalEventsRequest,
+  validateCountMissedTotalAttendanceSessionsRequest,
 } = require('../../../validators/users-validators');
 const { sendErrorObject } = require('../../../helpers/express-helpers');
 const USERS_ROUTES = require('../../routes/users');
@@ -53,15 +52,9 @@ module.exports = async (req, res, next) => {
     if (!valid) return sendErrorObject(res, error);
   }
 
-  if (path === USERS_ROUTES.COUNT_MISSED_EVENTS) {
+  if (path === USERS_ROUTES.COUNT_MISSED_TOTAL_ATTENDANCE_SESSION) {
     const { email, courses, semester } = req.body;
-    const { error, valid } = await validateCountMissedEventsRequest(email, courses, semester);
-    if (!valid) return sendErrorObject(res, error);
-  }
-
-  if (path === USERS_ROUTES.COUNT_TOTAL_EVENTS) {
-    const { email, courses, semester } = req.body;
-    const { error, valid } = await validateCountTotalEventsRequest(email, courses, semester);
+    const { error, valid } = await validateCountMissedTotalAttendanceSessionsRequest(email, courses, semester);
     if (!valid) return sendErrorObject(res, error);
   }
 

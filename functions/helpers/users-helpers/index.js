@@ -92,36 +92,10 @@ const getUserIdInFBAuthWithEmail = async email => {
   }
 };
 
-const countUserMissedEventsByCoursesAndSemester = async (email, semester, courses) => {
-  try {
-    const querySnapshot = await db
-      .collection('attendance-sessions')
-      .where('semester', '==', semester)
-      .get();
-
-    let missedEventsCount = 0;
-    if (querySnapshot.empty) {
-      return { missedEventsCount, errorCountMissedEvents: null };
-    }
-    const now = new Date();
-    querySnapshot.forEach(snapshot => {
-      const { attendees, validOn, courseCode } = snapshot;
-      if (validOn.toDate() < now && !attendees.includes(email) && courses.includes(courseCode)) {
-        missedEventsCount++;
-      }
-    });
-    return { missedEventsCount, errorCountMissedEvents: null };
-  } catch (errorCountMissedEvents) {
-    console.error('Something went wrong with countUserMissedEventsByCourseCodeAndSemester: ', errorCountMissedEvents);
-    return { missedEventsCount: null, errorCountMissedEvents: errorCountMissedEvents };
-  }
-};
-
 module.exports = {
   getStudentDocumentIdWithEmail,
   getLecturerDocumentIdWithEmail,
   getLatestOTPDocumentOfUser,
   deleteOTPDocumentsByEmail,
   getUserIdInFBAuthWithEmail,
-  countUserMissedEventsByCoursesAndSemester,
 };

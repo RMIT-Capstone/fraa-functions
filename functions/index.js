@@ -20,8 +20,7 @@ const {
   signIn,
   changeUserPassword,
   getUserByEmail,
-  countUserMissedAttendanceSessionsByCoursesAndSemester,
-  countUserTotalAttendanceSessionsByCoursesAndSemester,
+  countUserMissedAndTotalAttendanceSessionsByCoursesAndSemester,
 } = require('./handlers/users/https');
 
 // course handlers
@@ -100,8 +99,10 @@ app.post(`/${USERS_ROUTES.GET_USER_BY_EMAIL}`, usersValidator, getUserByEmail);
 app.post(`/${USERS_ROUTES.SUBSCRIBE_TO_COURSES}`, usersValidator, subscribeUserToCourses);
 app.post(`/${USERS_ROUTES.UNSUBSCRIBE_FROM_COURSES}`, usersValidator, unsubscribeStudentFromCourses);
 app.post(`/${USERS_ROUTES.REGISTER_TO_ATTENDANCE_SESSION}`, usersValidator, registerStudentToAttendanceSession);
-app.post(`/${USERS_ROUTES.COUNT_MISSED_EVENTS}`, usersValidator, countUserMissedAttendanceSessionsByCoursesAndSemester);
-app.post(`/${USERS_ROUTES.COUNT_TOTAL_EVENTS}`, usersValidator, countUserTotalAttendanceSessionsByCoursesAndSemester);
+app.post(`/${USERS_ROUTES.COUNT_MISSED_TOTAL_ATTENDANCE_SESSION}`,
+  usersValidator,
+  countUserMissedAndTotalAttendanceSessionsByCoursesAndSemester,
+);
 
 // user background functions
 exports.onUserDeleteInAuth = functions.region('asia-northeast1').auth.user().onDelete(onUserDeleteInAuth);
