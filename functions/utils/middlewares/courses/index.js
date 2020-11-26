@@ -1,13 +1,13 @@
 const { sendErrorObject } = require('../../../helpers/express-helpers');
 const {
-  validateCreateCourseRequest,
-  validateGetMoreCoursesRequest,
-  validateGetCourseByCodeRequest,
-  validateUpdateCourseRequest,
   validateDeleteCourseRequest,
-  validateGetCoursesByNameRequest,
+  validateUpdateCourseRequest,
   validateGetMoreCoursesByNameRequest,
-} = require('../../../helpers/courses-helpers');
+  validateGetCoursesByNameRequest,
+  validateGetCourseByCodeRequest,
+  validateGetMoreCoursesRequest,
+  validateCreateCourseRequest,
+} = require('../../../validators/courses-validators');
 const COURSE_ROUTES = require('../../routes/courses');
 
 module.exports = async (req, res, next) => {

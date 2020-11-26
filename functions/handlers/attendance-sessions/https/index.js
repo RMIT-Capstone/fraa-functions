@@ -1,6 +1,7 @@
 const { db, admin } = require('../../../utils/admin');
-const ERROR_MESSAGES = require('../../constants/ErrorMessages');
 const { sendErrorMessage } = require('../../../helpers/express-helpers');
+const { getStudentDocumentIdWithEmail } = require('../../../helpers/users-helpers');
+const ERROR_MESSAGES = require('../../constants/ErrorMessages');
 
 const today = new Date();
 
@@ -182,7 +183,16 @@ exports.registerStudentToAttendanceSession = async (req, res) => {
       .collection('attendance-sessions')
       .doc(sessionId)
       .update({
-        attendees: admin.firestore.FieldValue.arrayUnion(email)
+        attendees: admin.firestore.FieldValue.arrayUnion(email),
+      });
+
+    const { studentDocId } = await getStudentDocumentIdWithEmail(email);
+
+    await db
+      .collection('students')
+      .doc(studentDocId)
+      .update({
+        totalAttendedEventsCount: admin.firestore.FieldValue.increment(1),
       });
     return res.json({ success: 'User registered.' });
   }

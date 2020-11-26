@@ -41,6 +41,7 @@ const createUserInFirestore = async (email, displayName, school, isLecturer) => 
         displayName,
         school,
         subscribedCourses: [],
+        totalAttendedEventsCount: 0,
         createdAt: new Date(),
         firstTimePassword: true,
       });
@@ -161,6 +162,7 @@ const getUserByEmail = async (req, res) => {
 
     const data = querySnapshot.docs[0].data();
     data.createdAt = data.createdAt.toDate();
+
     return res.json(data);
   } catch (errorGetUserByEmail) {
     console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getUserByEmail: `, errorGetUserByEmail);
@@ -168,34 +170,33 @@ const getUserByEmail = async (req, res) => {
   }
 };
 
-const countUserMissedSessions = async (req, res) => {
-  const { email, courseCode, semester } = req.body;
+const countUserMissedAndTotalAttendanceSessionsByCoursesAndSemester = async (req, res) => {
+  const { email, courses, semester } = req.body;
   try {
     const querySnapshot = await db
       .collection('attendance-sessions')
       .where('semester', '==', semester)
-      .where('courseCode', '==', courseCode)
       .get();
 
+    let missedEventsCount = 0;
+    let totalEventsCount = 0;
+    const now = new Date();
+
     if (querySnapshot.empty) {
-      return res.send({ missedEventsCount: 0 });
+      return res.send({ missedEventsCount, totalEventsCount });
     }
 
-    let missedEvents = [];
-    let missedEventsCount = 0;
-    const now = new Date();
     querySnapshot.forEach(snapshot => {
-      missedEvents.push(snapshot.data());
-    });
-
-    missedEvents.forEach(event => {
-      const { validOn, attendees } = event;
-      if ((validOn.toDate() < now) && !attendees.includes(email)) {
+      const { attendees, validOn, courseCode } = snapshot.data();
+      if (validOn.toDate() < now && !attendees.includes(email) && courses.includes(courseCode)) {
         missedEventsCount++;
+      }
+      if (courses.includes(courseCode)) {
+        totalEventsCount++;
       }
     });
 
-    return res.send({ missedEventsCount });
+    return res.send({ missedEventsCount, totalEventsCount });
   } catch (errorCountMissedEvents) {
     console.error('Something went wrong with countMissedEvents: ', errorCountMissedEvents);
     return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
@@ -209,5 +210,5 @@ module.exports = {
   verifyOTP,
   changeUserPassword,
   getUserByEmail,
-  countUserMissedSessions,
+  countUserMissedAndTotalAttendanceSessionsByCoursesAndSemester,
 };
