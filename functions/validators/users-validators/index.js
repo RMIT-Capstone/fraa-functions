@@ -8,6 +8,7 @@ const {
   getStudentDocumentIdWithEmail,
   getLecturerDocumentIdWithEmail,
   getLatestOTPDocumentOfUser,
+  getUserIdInFBAuthWithEmail
 } = require('../../helpers/users-helpers');
 const ERROR_MESSAGES = require('../../handlers/constants/ErrorMessages');
 const USERS_ROUTES = require('../../utils/routes/users');
@@ -31,7 +32,7 @@ const validateCreateUserRequest = async (email, password, displayName, school, i
 const validateSignInChangePasswordRequest = async (email, password, isLecturer) => {
   let error = {};
   if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email.`;
-  else if (!isEmail(email)) error.email = 'Email is not in correct format';
+  else if (!isEmail(email)) error.email = 'Email is not in correct format.';
   if (isLecturer === undefined || !(typeof isLecturer === 'boolean')) {
     error.isLecturer = 'isLecturer must not be empty and has to be boolean.';
   } else {
@@ -53,30 +54,35 @@ const validateSignInChangePasswordRequest = async (email, password, isLecturer) 
   return { error, valid: Object.keys(error).length === 0 };
 };
 
-const validateGenerateVerifyOTPRequest = async (email, isLecturer, OTP, path) => {
+const validateGenerateOTPRequest = async (email) => {
   let error = {};
 
-  if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} ${email}.`;
+  if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email.`;
+  else if (!isEmail(email)) error.email = 'Email is not in correct format';
+  else {
+    const userId = await getUserIdInFBAuthWithEmail(email);
+    if (!userId) error.user = `No user exists with email: ${email}`;
+  }
+
+  return { error, valid: Object.keys(error).length === 0 };
+};
+
+const validateVerifyOTPRequest = async (email, isLecturer, OTP) => {
+  let error = {};
+
+  if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email.`;
   else if (!isEmail(email)) error.email = 'Email is not in correct format';
   if (isLecturer === undefined || !(typeof isLecturer === 'boolean')) {
     error.isLecturer = 'isLecturer must not be empty and has to be boolean.';
   } else {
     if (!stringIsEmpty(email) && isEmail(email)) {
-      if (isLecturer) {
-        const { lecturerDocId, lecturerDocIdError } = await getLecturerDocumentIdWithEmail(email);
-        if (lecturerDocIdError) error.lecturer = 'Error retrieving lecturer document id with email.';
-        if (!lecturerDocId) error.lecturer = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}.`;
-      } else {
-        const { studentDocId, studentDocIdError } = await getStudentDocumentIdWithEmail(email);
-        if (studentDocIdError) error.student = 'Error retrieving student document id with email.';
-        if (!studentDocId) error.student = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}.`;
-      }
-      if (path === USERS_ROUTES.VERIFY_OTP) {
-        const { data, OTPDocumentError } = await getLatestOTPDocumentOfUser(email);
-        if (stringIsEmpty(OTP)) error.OTP = `Must include OTP`;
-        if (OTPDocumentError) error.OTP = 'Error retrieving user OTP documents with email.';
-        if (!data) error.OTP = `No OTP documents is found with ${email}.`;
-      }
+      const { data, OTPDocumentError } = await getLatestOTPDocumentOfUser(email);
+      if (stringIsEmpty(OTP)) error.OTP = `Must include OTP`;
+      if (OTPDocumentError) error.OTP = 'Error retrieving user OTP documents with email.';
+      if (!data) error.OTP = `No OTP documents is found with ${email}.`;
+
+      const userId = await getUserIdInFBAuthWithEmail(email);
+      if (!userId) error.user = `No user exists with email: ${email}`;
     }
   }
 
@@ -191,7 +197,8 @@ const validateCountMissedTotalAttendanceSessionsRequest = async (email, courses,
 module.exports = {
   validateCreateUserRequest,
   validateSignInChangePasswordRequest,
-  validateGenerateVerifyOTPRequest,
+  validateGenerateOTPRequest,
+  validateVerifyOTPRequest,
   validateGetUserRequest,
   validateUserSubscriptionRequest,
   validateUserAttendanceRegistrationRequest,

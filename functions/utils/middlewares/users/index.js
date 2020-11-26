@@ -2,7 +2,8 @@ const {
   validateUserAttendanceRegistrationRequest,
   validateUserSubscriptionRequest,
   validateGetUserRequest,
-  validateGenerateVerifyOTPRequest,
+  validateGenerateOTPRequest,
+  validateVerifyOTPRequest,
   validateSignInChangePasswordRequest,
   validateCreateUserRequest,
   validateCountMissedTotalAttendanceSessionsRequest,
@@ -15,22 +16,25 @@ module.exports = async (req, res, next) => {
 
   if (path === USERS_ROUTES.CREATE_USER) {
     const { email, password, displayName, school, isLecturer } = req.body;
-
     const { error, valid } = await validateCreateUserRequest(email, password, displayName, school, isLecturer);
     if (!valid) return sendErrorObject(res, error);
   }
 
   if (path === USERS_ROUTES.SIGN_IN || path === USERS_ROUTES.CHANGE_PASSWORD) {
     const { email, password, isLecturer } = req.body;
-
     const { error, valid } = await validateSignInChangePasswordRequest(email, password, isLecturer);
     if (!valid) return sendErrorObject(res, error);
   }
 
-  if (path === USERS_ROUTES.GENERATE_OTP || path === USERS_ROUTES.VERIFY_OTP) {
-    const { email, isLecturer, OTP } = req.body;
+  if (path === USERS_ROUTES.GENERATE_OTP) {
+    const { email } = req.body;
+    const { error, valid } = await validateGenerateOTPRequest(email);
+    if (!valid) return sendErrorObject(res, error);
+  }
 
-    const { error, valid } = await validateGenerateVerifyOTPRequest(email, isLecturer, OTP, path);
+  if (path === USERS_ROUTES.VERIFY_OTP) {
+    const { email, isLecturer, OTP } = req.body;
+    const { error, valid } = await validateVerifyOTPRequest(email, isLecturer, OTP);
     if (!valid) return sendErrorObject(res, error);
   }
 
