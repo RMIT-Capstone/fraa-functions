@@ -4,7 +4,8 @@ const {
   validateGetUserRequest,
   validateGenerateOTPRequest,
   validateVerifyOTPRequest,
-  validateSignInChangePasswordRequest,
+  validateSignInRequest,
+  validateChangePasswordRequest,
   validateCreateUserRequest,
   validateCountMissedTotalAttendanceSessionsRequest,
 } = require('../../../validators/users-validators');
@@ -20,9 +21,15 @@ module.exports = async (req, res, next) => {
     if (!valid) return sendErrorObject(res, error);
   }
 
-  if (path === USERS_ROUTES.SIGN_IN || path === USERS_ROUTES.CHANGE_PASSWORD) {
+  if (path === USERS_ROUTES.SIGN_IN) {
     const { email, password, isLecturer } = req.body;
-    const { error, valid } = await validateSignInChangePasswordRequest(email, password, isLecturer);
+    const { error, valid } = await validateSignInRequest(email, password, isLecturer);
+    if (!valid) return sendErrorObject(res, error);
+  }
+
+  if (path === USERS_ROUTES.CHANGE_PASSWORD) {
+    const { email, password } = req.body;
+    const { error, valid } = await validateChangePasswordRequest(email, password);
     if (!valid) return sendErrorObject(res, error);
   }
 

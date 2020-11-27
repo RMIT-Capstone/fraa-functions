@@ -29,7 +29,7 @@ const validateCreateUserRequest = async (email, password, displayName, school, i
   return { error, valid: Object.keys(error).length === 0 };
 };
 
-const validateSignInChangePasswordRequest = async (email, password, isLecturer) => {
+const validateSignInRequest = async (email, password, isLecturer) => {
   let error = {};
   if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email.`;
   else if (!isEmail(email)) error.email = 'Email is not in correct format.';
@@ -47,6 +47,20 @@ const validateSignInChangePasswordRequest = async (email, password, isLecturer) 
         if (!studentDocId) error.student = `No student exists with email: ${email}`;
       }
     }
+  }
+  if (stringIsEmpty(password)) error.password = `${ERROR_MESSAGES.MISSING_FIELD} password`;
+  else if (password.length < 6) error.password = 'Password must be longer than 6 characters.';
+
+  return { error, valid: Object.keys(error).length === 0 };
+};
+
+const validateChangePasswordRequest = async (email, password) => {
+  let error = {};
+  if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email.`;
+  else if (!isEmail(email)) error.email = 'Email is not in correct format.';
+  else {
+    const userId = await getUserIdInFBAuthWithEmail(email);
+    if (!userId) error.user = `No user exists with email: ${email}`;
   }
   if (stringIsEmpty(password)) error.password = `${ERROR_MESSAGES.MISSING_FIELD} password`;
   else if (password.length < 6) error.password = 'Password must be longer than 6 characters.';
@@ -193,7 +207,8 @@ const validateCountMissedTotalAttendanceSessionsRequest = async (email, courses,
 
 module.exports = {
   validateCreateUserRequest,
-  validateSignInChangePasswordRequest,
+  validateSignInRequest,
+  validateChangePasswordRequest,
   validateGenerateOTPRequest,
   validateVerifyOTPRequest,
   validateGetUserRequest,
