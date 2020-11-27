@@ -67,23 +67,20 @@ const validateGenerateOTPRequest = async (email) => {
   return { error, valid: Object.keys(error).length === 0 };
 };
 
-const validateVerifyOTPRequest = async (email, isLecturer, OTP) => {
+const validateVerifyOTPRequest = async (email, OTP) => {
   let error = {};
 
   if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email.`;
   else if (!isEmail(email)) error.email = 'Email is not in correct format';
-  if (isLecturer === undefined || !(typeof isLecturer === 'boolean')) {
-    error.isLecturer = 'isLecturer must not be empty and has to be boolean.';
-  } else {
-    if (!stringIsEmpty(email) && isEmail(email)) {
-      const { data, OTPDocumentError } = await getLatestOTPDocumentOfUser(email);
-      if (stringIsEmpty(OTP)) error.OTP = `Must include OTP`;
-      if (OTPDocumentError) error.OTP = 'Error retrieving user OTP documents with email.';
-      if (!data) error.OTP = `No OTP documents is found with ${email}.`;
-
-      const userId = await getUserIdInFBAuthWithEmail(email);
-      if (!userId) error.user = `No user exists with email: ${email}`;
-    }
+  else {
+    const userId = await getUserIdInFBAuthWithEmail(email);
+    if (!userId) error.user = `No user exists with email: ${email}`;
+  }
+  if (stringIsEmpty(OTP)) error.OTP = `${ERROR_MESSAGES.MISSING_FIELD} OTP.`;
+  else {
+    const { data, OTPDocumentError } = await getLatestOTPDocumentOfUser(email);
+    if (OTPDocumentError) error.OTP = 'Error retrieving user OTP documents with email.';
+    if (!data) error.OTP = `No OTP documents is found with ${email}.`;
   }
 
   return { error, valid: Object.keys(error).length === 0 };

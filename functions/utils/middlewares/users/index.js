@@ -33,8 +33,8 @@ module.exports = async (req, res, next) => {
   }
 
   if (path === USERS_ROUTES.VERIFY_OTP) {
-    const { email, isLecturer, OTP } = req.body;
-    const { error, valid } = await validateVerifyOTPRequest(email, isLecturer, OTP);
+    const { email, OTP } = req.body;
+    const { error, valid } = await validateVerifyOTPRequest(email, OTP);
     if (!valid) return sendErrorObject(res, error);
   }
 
