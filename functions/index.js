@@ -50,12 +50,12 @@ const {
 // background functions
 const { onUserDeleteInAuth } = require('./handlers/users/background');
 
-//middlewares
+// middlewares
 const coursesValidator = require('./utils/middlewares/courses');
 const attendanceSessionsValidator = require('./utils/middlewares/attendance-sessions');
 const usersValidator = require('./utils/middlewares/users');
 
-//TODO: check auth headers when doing CRUD operations
+// TODO: check auth headers when doing CRUD operations
 
 // attendance session handlers
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.CREATE_ATTENDANCE_SESSION}`,
