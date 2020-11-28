@@ -12,18 +12,25 @@ for i in range(10):
     print(fake.name())
 """
 
-import factories
+import factory
+import Utils
 
 
-def s_client():
-    student_factory = factories.StudentFactory()
-    # num = input("Enter the s num: ")
+def s_client(student_num, dest_path):
+    # Generate student list
+    student_factory = factory.StudentFactory()
+    data = student_factory.generate_student_data(student_num)
 
-    shapes = student_factory.generate_student_data(3)
-    print(len(shapes))
+    # Create a json file
+    f = open(dest_path, "w")
+    f.write(Utils.to_json(data))
+    f.close()
+    print('Data have been saved at:', dest_path)
 
-    for shape in shapes:
-        print(f"The type of object created: {type(shape)}")
-        print(shape.get_detail())
+    # # Print students
+    # for s in data['students']:
+    #     print(f"The type of object created: {type(s)}")
+    #     print(s.get_detail())
 
-s_client()
+
+s_client(3, "../data/data.json")

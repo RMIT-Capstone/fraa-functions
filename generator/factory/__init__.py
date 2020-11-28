@@ -11,11 +11,11 @@ class StudentFactory:
         last_name = fake.name()
         email = '{}.{}@example.com'.format(first_name, last_name).lower()
         school = 'sst'
-        date_joined = datetime.datetime.now()
+        date_joined = datetime.datetime.now().isoformat()
         return Student(first_name, last_name, email, school, date_joined)
 
     def generate_student_data(self, student_num):
-        student_list = []
+        data = {'students': []}
         for i in range(student_num):
-            student_list.append(self.create_student())
-        return student_list
+            data['students'].append(self.create_student())
+        return data
