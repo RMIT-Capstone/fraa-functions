@@ -20,7 +20,9 @@ const {
   signIn,
   changeUserPassword,
   getUserByEmail,
-  countUserMissedAndTotalAttendanceSessionsByCoursesAndSemester,
+  getAllUsers,
+  countMissedAndTotalAttendanceSessions,
+  countMissedTotalAttendanceSessionsByCourse,
 } = require('./handlers/users/https');
 
 // course handlers
@@ -96,12 +98,17 @@ app.post(`/${USERS_ROUTES.CHANGE_PASSWORD}`, usersValidator, changeUserPassword)
 app.post(`/${USERS_ROUTES.GENERATE_OTP}`, usersValidator, generateOTP);
 app.post(`/${USERS_ROUTES.VERIFY_OTP}`, usersValidator, verifyOTP);
 app.post(`/${USERS_ROUTES.GET_USER_BY_EMAIL}`, usersValidator, getUserByEmail);
+app.post(`/${USERS_ROUTES.GET_ALL_USERS}`, usersValidator, getAllUsers);
 app.post(`/${USERS_ROUTES.SUBSCRIBE_TO_COURSES}`, usersValidator, subscribeUserToCourses);
 app.post(`/${USERS_ROUTES.UNSUBSCRIBE_FROM_COURSES}`, usersValidator, unsubscribeStudentFromCourses);
 app.post(`/${USERS_ROUTES.REGISTER_TO_ATTENDANCE_SESSION}`, usersValidator, registerStudentToAttendanceSession);
-app.post(`/${USERS_ROUTES.COUNT_MISSED_TOTAL_ATTENDANCE_SESSION}`,
+app.post(`/${USERS_ROUTES.COUNT_MISSED_TOTAL_ATTENDANCE_SESSIONS}`,
   usersValidator,
-  countUserMissedAndTotalAttendanceSessionsByCoursesAndSemester,
+  countMissedAndTotalAttendanceSessions,
+);
+app.post(`/${USERS_ROUTES.COUNT_MISSED_TOTAL_ATTENDANCE_SESSIONS_BY_COURSES}`,
+  usersValidator,
+  countMissedTotalAttendanceSessionsByCourse,
 );
 
 // user background functions
