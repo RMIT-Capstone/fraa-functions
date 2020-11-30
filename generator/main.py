@@ -5,7 +5,7 @@ import utils
 def s_client(student_num, dest_path):
     # Generate student list
     student_factory = factory.StudentFactory()
-    data = student_factory.generate_student_data(student_num)
+    data = student_factory.generate_student_data(student_num, dest_path)
     print(data)
 
 
