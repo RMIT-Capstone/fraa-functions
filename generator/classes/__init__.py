@@ -1,17 +1,37 @@
 class Student:
-    def __init__(self, first_name, last_name, email, school, date_created):
-        self.first_name = first_name
-        self.last_name = last_name
+    def __init__(self, full_name, email, school, date_created, subscribed_courses, first_time_pass, attendance_count):
+        self.full_name = full_name
         self.email = email
         self.school = school
         self.date_created = date_created
+        self.subscribed_courses = subscribed_courses
+        self.first_time_pass = first_time_pass
+        self.attendance_count = attendance_count
 
-    def get_detail(self):
-        return {"first_name": self.first_name, "last_name": self.last_name, "email": self.email,
-                "school": self.school, "date_created": self.date_created}
+    def subscribe_course(self, courses):
+        self.subscribed_courses = courses
+
+    def check_attendance(self, total_attendance):
+        self.attendance_count = total_attendance
 
 
 class Course:
-    def __init__(self, code, lecturer, name, school, semester, session_count):
+    def __init__(self, code, lecturer, name, school, semester, session_count, date_created):
         self.code = code
+        self.name = name
         self.lecturer = lecturer
+        self.school = school
+        self.semester = semester
+        self.session_count = session_count
+        self.date_created = date_created
+
+    def add_lecturer(self, lecturer):
+        self.lecturer = lecturer
+
+
+class Session:
+    def __init__(self,attendees):
+        self.attendees = attendees
+
+    def add_attendees(self, attendees):
+        self.attendees = attendees
