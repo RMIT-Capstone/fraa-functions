@@ -1,5 +1,5 @@
 from faker import Faker
-from classes import Student, Course, Lecturer, Session
+import classes
 import datetime
 import utils
 import random
@@ -9,16 +9,17 @@ class StudentFactory:
     @staticmethod
     def create_student():
         fake = Faker()
-        full_name = fake.name()
+        fullName = fake.name()
         sid = str(random.randint(3000000, 4000000))
         email = 's{}@rmit.edu.vn'.format(sid)
         school = utils.get_random_school()
-        first_time_pass = True
-        date_joined = datetime.datetime.now().isoformat()
+        firstTimePassword = True
+        createAt = datetime.datetime.now().isoformat()
         # date_joined = datetime.datetime.now().strftime("%B %d,%Y at %I:%M:%S %p %z")
-        subscribed_courses = []
+        subscribedCourses = []
         attendance_count = 0
-        return Student(full_name, email, school, date_joined, subscribed_courses, first_time_pass, attendance_count)
+        return classes.Student(fullName, email, school, createAt, subscribedCourses, firstTimePassword,
+                               attendance_count)
 
     def generate_student_data(self, number, export_path=None):
         data = {'students': [], 'count': number}
@@ -42,11 +43,11 @@ class CourseFactory:
         lecturer = ''
         school = utils.get_random_school()
         semester = utils.get_random_semester()
-        session_count = 0
-        date_created = datetime.datetime.now().isoformat()
-        return Course(code, lecturer, name, school, semester, session_count, date_created)
+        sessionCount = 0
+        createAt = datetime.datetime.now().isoformat()
+        return classes.Course(code, lecturer, name, school, semester, sessionCount, createAt)
 
-    def generate_course_data(self, number, export_to=None):
+    def generate_course_data(self, number, export_path=None):
         data = {'courses': [], 'count': number}
         titles = utils.get_all_course_title()
         for i in range(number):
@@ -55,12 +56,8 @@ class CourseFactory:
             data['courses'].append(course)
         # convert to data to json
         data = utils.to_json(data)
-        if export_to is not None:
-            # Create a json file
-            f = open(export_to, "w")
-            f.write(data)
-            f.close()
-            print('Data have been saved at:', export_to)
+        if export_path is not None:
+            utils.export_data(data, export_path)
         return data
 
 
@@ -68,14 +65,14 @@ class LecturerFactory:
     @staticmethod
     def create_lecturer():
         fake = Faker()
-        full_name = fake.name()
+        fullName = fake.name()
         sid = str(random.randint(3000000, 4000000))
         email = 'v{}@rmit.edu.vn'.format(sid)
         school = utils.get_random_school()
-        date_joined = datetime.datetime.now().isoformat()
-        subscribed_courses = []
-        first_time_pass = True
-        return Lecturer(full_name, email, school, date_joined, subscribed_courses, first_time_pass)
+        createAt = datetime.datetime.now().isoformat()
+        subscribedCourses = []
+        firstTimePassword = True
+        return classes.Lecturer(fullName, email, school, createAt, subscribedCourses, firstTimePassword)
 
     def generate_lecturer_data(self, number, export_path=None):
         data = {'lecturers': [], 'count': number}
@@ -83,12 +80,32 @@ class LecturerFactory:
             data['lecturers'].append(self.create_lecturer())
         data = utils.to_json(data)
         if export_path is not None:
-            f = open(export_path, "w")
-            f.write(data)
-            f.close()
-            print('Data have been saved at:', export_path)
+            utils.export_data(data, export_path)
         return data
 
 
 class SessionFactory:
-    pass
+    @staticmethod
+    def create_session(course):
+        course = course.get_detail()
+        courseCode = course['code']
+        courseName = course['name']
+        lecturer = course['lecturer']
+        semester = course['semester']
+        validOn = datetime.datetime.now().isoformat()
+        expireOn = datetime.datetime.now() + datetime.timedelta(minutes=15)
+        expireOn = expireOn.isoformat()
+        createAt = datetime.datetime.now().isoformat()
+        location = utils.get_random_location()
+        attendees = []
+        return classes.Session(courseCode, courseName, createAt, expireOn, lecturer,
+                               location, semester, validOn, attendees)
+
+    def generate_session_data(self, number, export_path=None):
+        data = {'sessions': [], 'count': number}
+        for i in range(number):
+            data['sessions'].append(self.create_session(CourseFactory.create_course()))
+        data = utils.to_json(data)
+        if export_path is not None:
+            utils.export_data(data, export_path)
+        return data

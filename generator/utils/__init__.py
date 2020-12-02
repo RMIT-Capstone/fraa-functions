@@ -32,10 +32,17 @@ def get_random_semester():
 
 
 def get_all_course_title():
-    with open('../data/input/course_title.csv', newline='') as file:
+    with open('../data/course_title.csv', newline='') as file:
         data = list(csv.reader(file))
         return data
 
 
 def get_random_school():
     return random.sample(['SST', 'SBM', 'EET'], 1)[0]
+
+
+def export_data(data, export_path):
+    f = open(export_path, "w")
+    f.write(data)
+    f.close()
+    print('Data have been saved at:', export_path)
