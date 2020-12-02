@@ -3,17 +3,6 @@ import random
 import csv
 
 
-def to_json(self) -> json:
-    return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
-
-
-def split_name(self):
-    full_name = self.split(" ", 1)
-    first = full_name[0]
-    last = full_name[1] if len(full_name) > 1 else ""  # In case there's name only 1 word
-    return [first, last]
-
-
 def get_random_course():
     prefix = random.sample(['COSC', 'ISYS', 'OENG', 'EEET', ], 1)[0]
     return prefix + str(random.randint(1000, 9999))
@@ -42,6 +31,8 @@ def get_random_school():
 
 
 def export_data(data, export_path):
+    # Convert to json
+    data = json.dumps(data, default=lambda o: o.__dict__, sort_keys=True, indent=4)
     f = open(export_path, "w")
     f.write(data)
     f.close()

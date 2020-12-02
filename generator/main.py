@@ -24,7 +24,7 @@ def session_client(session_num, dest_path=None):
     return data
 
 
-session_client(4, '../data/output/sessions.json')
 course_client(3, '../data/output/courses.json')
 student_client(4, '../data/output/students.json')
 lecturer_client(4, '../data/output/lecturers.json')
+session_client(4, '../data/output/sessions.json')
