@@ -41,6 +41,9 @@ class Course:
     def get_course_code(self):
         return self.code
 
+    def get_lecturer(self):
+        return self.lecturer
+
 
 class Lecturer:
     def __init__(self, fullName, email, school, createAt, subscribedCourses, firstTimePassword):

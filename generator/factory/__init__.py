@@ -20,12 +20,10 @@ class StudentFactory:
         return classes.Student(fullName, email, school, createAt, subscribedCourses,
                                firstTimePassword, attendance_count)
 
-    def generate_student_data(self, number, export_path=None):
+    def generate_student_data(self, number):
         data = {'students': [], 'count': number}
         for i in range(number):
             data['students'].append(self.create_student())
-        if export_path is not None:
-            utils.export_data(data, export_path)
         return data
 
     @staticmethod
@@ -48,21 +46,18 @@ class CourseFactory:
         lecturer = ''
         school = utils.get_random_school()
         semester = utils.get_random_semester()
-        sessionCount = utils.get_random_number_under_5()
+        sessionCount = random.randint(1, 5)
         createAt = datetime.datetime.now().isoformat()
         return classes.Course(code, lecturer, name, school, semester, sessionCount, createAt)
 
-    def generate_course_data(self, number, export_path=None):
+    def generate_course_data(self, number):
         data = {'courses': [], 'count': number}
         titles = utils.get_all_course_title()
         for i in range(number):
             course = self.create_course()
             course.add_name(titles[i][0].split())
             data['courses'].append(course)
-        if export_path is not None:
-            utils.export_data(data, export_path)
         return data
-
 
 class LecturerFactory:
     @staticmethod
@@ -77,22 +72,21 @@ class LecturerFactory:
         firstTimePassword = True
         return classes.Lecturer(fullName, email, school, createAt, subscribedCourses, firstTimePassword)
 
-    def generate_lecturer_data(self, number, export_path=None):
+    def generate_lecturer_data(self, number):
         data = {'lecturers': [], 'count': number}
         for i in range(number):
             data['lecturers'].append(self.create_lecturer())
-        if export_path is not None:
-            utils.export_data(data, export_path)
         return data
 
     @staticmethod
     def connect_to_courses(courses, lecturers):
         for course in courses['courses']:
-            lecturer = utils.get_random(lecturers['lecturers'])
-            course.add_lecturer(lecturer.get_name())
-            subscribed_courses = lecturer.get_subscribed_course()
-            subscribed_courses.append(course.get_course_code())
-            lecturer.subscribe_course(subscribed_courses)
+            if course.get_lecturer() == "":
+                lecturer = utils.get_random(lecturers['lecturers'])
+                course.add_lecturer(lecturer.get_name())
+                subscribed_courses = lecturer.get_subscribed_course()
+                subscribed_courses.append(course.get_course_code())
+                lecturer.subscribe_course(subscribed_courses)
         return lecturers, courses
 
 
@@ -104,7 +98,7 @@ class SessionFactory:
         else:
             course = course.get_detail()
             courseCode = course['code']
-            courseName = course['name']
+            courseName = ' '.join(map(str, course['name']))
             lecturer = course['lecturer']
             semester = course['semester']
         validOn = datetime.datetime.now().isoformat()
@@ -123,3 +117,6 @@ class SessionFactory:
                 data["sessions"].append(session)
                 data["count"] += 1
         return data
+
+    def check_student_attendance(self, students):
+        pass
