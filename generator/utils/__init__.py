@@ -4,7 +4,7 @@ import csv
 
 
 def get_random_course():
-    prefix = random.sample(['COSC', 'ISYS', 'OENG', 'EEET', ], 1)[0]
+    prefix = random.sample(['COSC', 'ISYS', 'OENG', 'EEET'], 1)[0]
     return prefix + str(random.randint(1000, 9999))
 
 
@@ -22,18 +22,16 @@ def get_random_semester():
 
 def get_all_course_title():
     with open('../data/course_title.csv', newline='') as file:
-        data = list(csv.reader(file))
-        return data
+        title = list(csv.reader(file))
+        return title
 
 
 def get_random_school():
-    return random.sample(['SST', 'SBM', 'SDM', 'SSC'], 1)[0]
+    return random.sample(['SST', 'SBM', 'SDM', 'SSC', 'SIB'], 1)[0]
 
 
 def export_data(data, export_path):
-    # convert to json
     data = json.dumps(data, default=lambda o: o.__dict__, sort_keys=True, indent=4)
-    # export to json file
     f = open(export_path, "w")
     f.write(data)
     f.close()
@@ -42,7 +40,3 @@ def export_data(data, export_path):
 
 def get_random(array):
     return random.sample(array, 1)[0]
-
-
-def get_random_number_under_5():
-    return random.randint(1, 5)
