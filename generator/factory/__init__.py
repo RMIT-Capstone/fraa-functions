@@ -17,15 +17,13 @@ class StudentFactory:
         createAt = datetime.datetime.now().isoformat()
         subscribedCourses = []
         attendance_count = 0
-        return classes.Student(fullName, email, school, createAt, subscribedCourses, firstTimePassword,
-                               attendance_count)
+        return classes.Student(fullName, email, school, createAt, subscribedCourses,
+                               firstTimePassword, attendance_count)
 
     def generate_student_data(self, number, export_path=None):
         data = {'students': [], 'count': number}
         for i in range(number):
             data['students'].append(self.create_student())
-        # convert to data to json
-        # data = utils.to_json(data)
         if export_path is not None:
             utils.export_data(data, export_path)
         return data
@@ -61,8 +59,6 @@ class CourseFactory:
             course = self.create_course()
             course.add_name(titles[i][0].split())
             data['courses'].append(course)
-        # convert to data to json
-        # data = utils.to_json(data)
         if export_path is not None:
             utils.export_data(data, export_path)
         return data
@@ -85,7 +81,6 @@ class LecturerFactory:
         data = {'lecturers': [], 'count': number}
         for i in range(number):
             data['lecturers'].append(self.create_lecturer())
-        # data = utils.to_json(data)
         if export_path is not None:
             utils.export_data(data, export_path)
         return data
