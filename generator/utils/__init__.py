@@ -44,5 +44,5 @@ def get_random(array):
     return random.sample(array, 1)[0]
 
 
-def get_random_session_count():
-    return random.randint(2, 5)
+def get_random_number_under_5():
+    return random.randint(1, 5)

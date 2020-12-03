@@ -30,6 +30,17 @@ class StudentFactory:
             utils.export_data(data, export_path)
         return data
 
+    @staticmethod
+    def connect_to_courses(courses, students):
+        for student in students['students']:
+            num = random.randint(1, 4)  # num must < len(courses['courses'])
+            selected_courses = random.sample(courses['courses'], num)
+            subscribed_courses = []
+            for course in selected_courses:
+                subscribed_courses.append(course.get_course_code())
+            student.subscribe_course(subscribed_courses)
+        return students
+
 
 class CourseFactory:
     @staticmethod
@@ -39,7 +50,7 @@ class CourseFactory:
         lecturer = ''
         school = utils.get_random_school()
         semester = utils.get_random_semester()
-        sessionCount = utils.get_random_session_count()
+        sessionCount = utils.get_random_number_under_5()
         createAt = datetime.datetime.now().isoformat()
         return classes.Course(code, lecturer, name, school, semester, sessionCount, createAt)
 
@@ -79,6 +90,16 @@ class LecturerFactory:
             utils.export_data(data, export_path)
         return data
 
+    @staticmethod
+    def connect_to_courses(courses, lecturers):
+        for course in courses['courses']:
+            lecturer = utils.get_random(lecturers['lecturers'])
+            course.add_lecturer(lecturer.get_name())
+            subscribed_courses = lecturer.get_subscribed_course()
+            subscribed_courses.append(course.get_course_code())
+            lecturer.subscribe_course(subscribed_courses)
+        return lecturers, courses
+
 
 class SessionFactory:
     @staticmethod
@@ -102,7 +123,7 @@ class SessionFactory:
     def generate_session_data(self, courses):
         data = {"sessions": [], "count": 0}
         for course in courses['courses']:
-            for i in range(0, course.get_session_count()):
+            for i in range(course.get_session_count()):
                 session = self.create_session(course)
                 data["sessions"].append(session)
                 data["count"] += 1

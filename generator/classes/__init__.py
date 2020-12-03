@@ -38,6 +38,9 @@ class Course:
     def get_session_count(self):
         return int(self.sessionCount)
 
+    def get_course_code(self):
+        return self.code
+
 
 class Lecturer:
     def __init__(self, fullName, email, school, createAt, subscribedCourses, firstTimePassword):
@@ -50,6 +53,12 @@ class Lecturer:
 
     def subscribe_course(self, courses):
         self.subscribedCourses = courses
+
+    def get_name(self):
+        return self.fullName
+
+    def get_subscribed_course(self):
+        return self.subscribedCourses
 
 
 class Session:
