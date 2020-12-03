@@ -4,6 +4,5 @@ __pycache__/
 *.pyc
 *.pyo
 data/output/*.json
-settings/
-generator/test.py
 publisher/settings/
+generator/test.py
