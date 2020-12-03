@@ -27,12 +27,13 @@ def get_all_course_title():
 
 
 def get_random_school():
-    return random.sample(['SST', 'SBM', 'EET'], 1)[0]
+    return random.sample(['SST', 'SBM', 'SDM', 'SSC'], 1)[0]
 
 
 def export_data(data, export_path):
-    # Convert to json
+    # convert to json
     data = json.dumps(data, default=lambda o: o.__dict__, sort_keys=True, indent=4)
+    # export to json file
     f = open(export_path, "w")
     f.write(data)
     f.close()
