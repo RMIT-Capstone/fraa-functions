@@ -35,6 +35,9 @@ class Course:
         return {"code": self.code, "lecturer": self.lecturer, "name": self.name, "school": self.school,
                 "semester": self.semester, "sessionCount": self.sessionCount, "createAt": self.createAt}
 
+    def get_session_count(self):
+        return int(self.sessionCount)
+
 
 class Lecturer:
     def __init__(self, fullName, email, school, createAt, subscribedCourses, firstTimePassword):

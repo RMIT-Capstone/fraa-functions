@@ -38,3 +38,11 @@ def export_data(data, export_path):
     f.write(data)
     f.close()
     print('Data have been saved at:', export_path)
+
+
+def get_random(array):
+    return random.sample(array, 1)[0]
+
+
+def get_random_session_count():
+    return random.randint(2, 5)

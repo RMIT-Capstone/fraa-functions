@@ -15,7 +15,6 @@ class StudentFactory:
         school = utils.get_random_school()
         firstTimePassword = True
         createAt = datetime.datetime.now().isoformat()
-        # date_joined = datetime.datetime.now().strftime("%B %d,%Y at %I:%M:%S %p %z")
         subscribedCourses = []
         attendance_count = 0
         return classes.Student(fullName, email, school, createAt, subscribedCourses, firstTimePassword,
@@ -40,7 +39,7 @@ class CourseFactory:
         lecturer = ''
         school = utils.get_random_school()
         semester = utils.get_random_semester()
-        sessionCount = 0
+        sessionCount = utils.get_random_session_count()
         createAt = datetime.datetime.now().isoformat()
         return classes.Course(code, lecturer, name, school, semester, sessionCount, createAt)
 
@@ -83,26 +82,28 @@ class LecturerFactory:
 
 class SessionFactory:
     @staticmethod
-    def create_session(course):
-        course = course.get_detail()
-        courseCode = course['code']
-        courseName = course['name']
-        lecturer = course['lecturer']
-        semester = course['semester']
+    def create_session(course=None):
+        if course is None:
+            courseCode = courseName = lecturer = semester = None
+        else:
+            course = course.get_detail()
+            courseCode = course['code']
+            courseName = course['name']
+            lecturer = course['lecturer']
+            semester = course['semester']
         validOn = datetime.datetime.now().isoformat()
-        expireOn = datetime.datetime.now() + datetime.timedelta(minutes=15)
-        expireOn = expireOn.isoformat()
+        expireOn = (datetime.datetime.now() + datetime.timedelta(minutes=15)).isoformat()
         createAt = datetime.datetime.now().isoformat()
         location = utils.get_random_location()
         attendees = []
         return classes.Session(courseCode, courseName, createAt, expireOn, lecturer,
                                location, semester, validOn, attendees)
 
-    def generate_session_data(self, number, export_path=None):
-        data = {'sessions': [], 'count': number}
-        for i in range(number):
-            data['sessions'].append(self.create_session(CourseFactory.create_course()))
-        # data = utils.to_json(data)
-        if export_path is not None:
-            utils.export_data(data, export_path)
+    def generate_session_data(self, courses):
+        data = {"sessions": [], "count": 0}
+        for course in courses['courses']:
+            for i in range(0, course.get_session_count()):
+                session = self.create_session(course)
+                data["sessions"].append(session)
+                data["count"] += 1
         return data
