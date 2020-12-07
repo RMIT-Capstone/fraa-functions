@@ -14,6 +14,17 @@ class Student:
     def check_attendance(self, total_attendance):
         self.attendance_count = total_attendance
 
+    def get_detail(self):
+        return {"fullName": self.fullName, "school": self.school, "email": self.email, "createAt": self.createAt,
+                "subscribedCourses": self.subscribedCourses, "firstTimePassword": self.firstTimePassword,
+                "attendance_count": self.attendance_count}
+
+    def get_subscribe_courses(self):
+        return self.subscribedCourses
+
+    def get_email(self):
+        return self.email
+
 
 class Course:
     def __init__(self, code, lecturer, name, school, semester, sessionCount, createAt):
@@ -63,6 +74,10 @@ class Lecturer:
     def get_subscribed_course(self):
         return self.subscribedCourses
 
+    def get_detail(self):
+        return {"fullName": self.fullName, "school": self.school, "email": self.email, "createAt": self.createAt,
+                "subscribedCourses": self.subscribedCourses, "firstTimePassword": self.firstTimePassword}
+
 
 class Session:
     def __init__(self, courseCode, courseName, createAt, expireOn, lecturer, location, semester, validOn, attendees):
@@ -78,4 +93,9 @@ class Session:
 
     def add_attendees(self, attendees):
         self.attendees = attendees
+
+    def get_detail(self):
+        return {"courseCode": self.courseCode, "courseName": self.courseName, "createAt": self.createAt,
+                "expireOn": self.expireOn, "lecturer": self.lecturer, "location": self.location,
+                "validOn": self.validOn, "semester": self.semester, "attendees": self.attendees}
 

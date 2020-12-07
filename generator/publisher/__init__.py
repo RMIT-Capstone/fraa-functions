@@ -1,41 +1,28 @@
 import firebase_admin
 from firebase_admin import credentials, firestore
-import json
-import time
 
-
-def publish_collection(PATH):
-    with open(PATH) as file:
-        data = json.load(file)
-    doc_ref = store.collection('[test]' + collection)
-    for data in data[collection]:
-        doc_ref.add(data)
-
-
-def delete_collection(coll_ref):
-    docs = store.collection(coll_ref).stream()
-    deleted = 0
-    for doc in docs:
-        print(f'Deleting doc {doc.id} => {doc.to_dict()}')
-        doc.reference.delete()
-        deleted = deleted + 1
-    print('{} collection is deleted: {} document'.format(coll_ref, deleted))
-
-
-timer = time.time()
-cred = credentials.Certificate("./settings/credentials.json")
+cred = credentials.Certificate("./publisher/settings/credentials.json")
 app = firebase_admin.initialize_app(cred)
 store = firestore.client()
 
-DEST_PATH = '../../data/output/'
-COLLECTION = ['students', 'lecturers', 'sessions', 'courses']
+
+def publish_collection(data, collection):
+    doc_ref = store.collection(collection)
+    for record in data[collection.split(']')[-1]]:
+        doc_ref.add(record.get_detail())
+    print('Finished publish the data')
 
 
-for collection in COLLECTION:
-    path = DEST_PATH + '{}.json'.format(collection)
-    publish_collection(path)
-print('Finished publish data in: ', time.time() - timer)
+def delete_collection(collection):
+    docs = store.collection(collection).stream()
+    deleted = 0
+    for doc in docs:
+        doc.reference.delete()
+        deleted = deleted + 1
+    print('{} collection is deleted: {} documents'.format(collection, deleted))
 
 
-# for collection in COLLECTION:
-#     delete_collection('[test]' + collection)
+def shown_data(data, collection):
+    print('Collection: ', collection)
+    for record in data[collection.split(']')[-1]]:
+        print(record.get_detail())
