@@ -161,7 +161,6 @@ const getUserByEmail = async (req, res) => {
       .get();
 
     const data = querySnapshot.docs[0].data();
-    data.id = querySnapshot.docs[0].id;
     data.createdAt = data.createdAt.toDate();
 
     return res.json(data);
