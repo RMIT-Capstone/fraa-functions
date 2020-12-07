@@ -201,27 +201,27 @@ const countMissedAndTotalAttendanceSessions = async (req, res) => {
       .where('semester', '==', semester)
       .get();
 
-    let missedEventsCount = 0;
-    let totalEventsCount = 0;
+    let missed = 0;
+    let total = 0;
     const now = new Date();
 
     if (querySnapshot.empty) {
-      return res.send({ missedEventsCount, totalEventsCount });
+      return res.send({ missed, total });
     }
 
     querySnapshot.forEach(snapshot => {
       const { attendees, validOn, courseCode } = snapshot.data();
       if (validOn.toDate() < now && !attendees.includes(email) && courses.includes(courseCode)) {
-        missedEventsCount++;
+        missed++;
       }
       if (courses.includes(courseCode)) {
-        totalEventsCount++;
+        total++;
       }
     });
 
-    return res.send({ missedEventsCount, totalEventsCount });
+    return res.send({ missed, total });
   } catch (errorCountMissedEvents) {
-    console.error('Something went wrong with countMissedEvents: ', errorCountMissedEvents);
+    console.error('Something went wrong with countMissedAndTotalAttendanceSessions: ', errorCountMissedEvents);
     return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
