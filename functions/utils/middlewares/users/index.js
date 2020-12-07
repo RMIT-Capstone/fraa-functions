@@ -2,6 +2,7 @@ const {
   validateUserAttendanceRegistrationRequest,
   validateUserSubscriptionRequest,
   validateGetUserRequest,
+  validateGetAllUsersRequest,
   validateGenerateOTPRequest,
   validateVerifyOTPRequest,
   validateSignInRequest,
@@ -51,6 +52,12 @@ module.exports = async (req, res, next) => {
     if (!valid) return sendErrorObject(res, error);
   }
 
+  if (path === USERS_ROUTES.GET_ALL_USERS) {
+    const { isLecturer } = req.body;
+    const { valid, error } = await validateGetAllUsersRequest(isLecturer);
+    if (!valid) return sendErrorObject(res, error);
+  }
+
   if (path === USERS_ROUTES.SUBSCRIBE_TO_COURSES || path === USERS_ROUTES.UNSUBSCRIBE_FROM_COURSES) {
     const { email, courses } = req.body;
     const { error, valid } = await validateUserSubscriptionRequest(email, courses, path);
@@ -63,7 +70,8 @@ module.exports = async (req, res, next) => {
     if (!valid) return sendErrorObject(res, error);
   }
 
-  if (path === USERS_ROUTES.COUNT_MISSED_TOTAL_ATTENDANCE_SESSION) {
+  if (path === USERS_ROUTES.COUNT_MISSED_TOTAL_ATTENDANCE_SESSIONS ||
+    path === USERS_ROUTES.COUNT_MISSED_TOTAL_ATTENDANCE_SESSIONS_GROUP) {
     const { email, courses, semester } = req.body;
     const { error, valid } = await validateCountMissedTotalAttendanceSessionsRequest(email, courses, semester);
     if (!valid) return sendErrorObject(res, error);

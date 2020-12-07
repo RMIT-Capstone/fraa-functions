@@ -123,6 +123,15 @@ const validateGetUserRequest = async (email, isLecturer) => {
   return { error, valid: Object.keys(error).length === 0 };
 };
 
+const validateGetAllUsersRequest = (isLecturer) => {
+  let error = {};
+  if (isLecturer === undefined || !(typeof isLecturer === 'boolean')) {
+    error.isLecturer = 'isLecturer must not be empty and has to be boolean.';
+  }
+
+  return { error, valid: Object.keys(error).length === 0 };
+};
+
 const validateUserSubscriptionRequest = async (email, courses, path) => {
   let error = {};
   if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email.`;
@@ -201,6 +210,7 @@ const validateCountMissedTotalAttendanceSessionsRequest = async (email, courses,
   if (!courses || !Array.isArray(courses)) error.courses = `${ERROR_MESSAGES.MISSING_FIELD} courses.`;
   if (stringIsEmpty(semester)) error.semester = `${ERROR_MESSAGES.MISSING_FIELD} semester.`;
   // TODO: validate user subscription
+  // TODO: validate courses in courses array
   return { error, valid: Object.keys(error).length === 0 };
 };
 
@@ -212,6 +222,7 @@ module.exports = {
   validateGenerateOTPRequest,
   validateVerifyOTPRequest,
   validateGetUserRequest,
+  validateGetAllUsersRequest,
   validateUserSubscriptionRequest,
   validateUserAttendanceRegistrationRequest,
   validateCountMissedTotalAttendanceSessionsRequest,
