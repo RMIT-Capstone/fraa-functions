@@ -11,5 +11,4 @@ module.exports = {
   REGISTER_TO_ATTENDANCE_SESSION: 'register_to_attendance_session',
   COUNT_MISSED_TOTAL_ATTENDANCE_SESSIONS: 'count_missed_total_attendance_session',
   COUNT_MISSED_TOTAL_ATTENDANCE_SESSIONS_BY_COURSES: 'count_missed_total_attendance_sessions_by_courses',
-  COUNT_SOMETHING: 'count',
 };
