@@ -2,9 +2,9 @@ import factory
 import utils
 
 # Create raw data
-students = factory.StudentFactory().generate_student_data(number=10)
-lecturers = factory.LecturerFactory().generate_lecturer_data(number=5)
-courses = factory.CourseFactory().generate_course_data(number=10)
+students = factory.StudentFactory().generate_student_data(number=2)
+lecturers = factory.LecturerFactory().generate_lecturer_data(number=2)
+courses = factory.CourseFactory().generate_course_data(number=2)
 
 # linking courses data with lecturers/students
 lecturers, courses = factory.LecturerFactory().connect_to_courses(lecturers=lecturers, courses=courses)
