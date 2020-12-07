@@ -1,16 +1,17 @@
 import firebase_admin
-import google.cloud
 from firebase_admin import credentials, firestore
+import json
 
-cred = credentials.Certificate("./settings/fraa-capstone.json")
+cred = credentials.Certificate("./settings/credentials.json")
 app = firebase_admin.initialize_app(cred)
-
 store = firestore.client()
-doc_ref = store.collection('students')
 
-try:
-    docs = doc_ref.get()
-    for doc in docs:
-        print(doc.to_dict())
-except google.cloud.exceptions.NotFound:
-    print('Missing data')
+DATA = '../data/output/students.json'
+COLLECTION = 'test_student'
+
+with open(DATA) as f:
+    data = json.load(f)
+
+doc_ref = store.collection(COLLECTION)
+for student in data['students']:
+    doc_ref.add(student)

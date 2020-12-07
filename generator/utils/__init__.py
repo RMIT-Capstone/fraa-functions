@@ -3,6 +3,10 @@ import random
 import csv
 
 
+def to_json(data):
+    return json.dumps(data, default=lambda o: o.__dict__, sort_keys=True, indent=4)
+
+
 def get_random_course():
     prefix = random.sample(['COSC', 'ISYS', 'OENG', 'EEET'], 1)[0]
     return prefix + str(random.randint(1000, 9999))
@@ -31,7 +35,7 @@ def get_random_school():
 
 
 def export_data(data, export_path):
-    data = json.dumps(data, default=lambda o: o.__dict__, sort_keys=True, indent=4)
+    data = to_json(data)
     f = open(export_path, "w")
     f.write(data)
     f.close()
