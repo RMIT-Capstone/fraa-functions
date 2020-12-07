@@ -29,7 +29,7 @@ class StudentFactory:
     @staticmethod
     def connect_to_courses(courses, students):
         for student in students['students']:
-            num = random.randint(1, len(courses['courses']))  # num must < len(courses['courses'])
+            num = random.randint(1, len(courses['courses']))
             selected_courses = random.sample(courses['courses'], num)
             subscribed_courses = []
             for course in selected_courses:
@@ -47,7 +47,7 @@ class CourseFactory:
         school = utils.get_random_school()
         semester = utils.get_random_semester()
         sessionCount = random.randint(1, 5)
-        createAt = datetime.datetime.now().isoformat()
+        createAt = datetime.datetime.utcnow()
         return classes.Course(code, lecturer, name, school, semester, sessionCount, createAt)
 
     def generate_course_data(self, number):

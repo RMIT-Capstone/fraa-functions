@@ -1,5 +1,5 @@
 import factory
-import utils
+import publisher
 
 # Create raw data
 students = factory.StudentFactory().generate_student_data(number=2)
@@ -13,8 +13,10 @@ students = factory.StudentFactory().connect_to_courses(courses=courses, students
 # generate session data base on courses created
 sessions = factory.SessionFactory().generate_session_data(courses=courses)
 
-# Export to json file
-utils.export_data(students, '../data/output/students.json')
-utils.export_data(courses, '../data/output/courses.json')
-utils.export_data(lecturers, '../data/output/lecturers.json')
-utils.export_data(sessions, '../data/output/sessions.json')
+# # Export to json file
+# utils.export_data(students, '../data/output/students.json')
+# utils.export_data(courses, '../data/output/courses.json')
+# utils.export_data(lecturers, '../data/output/lecturers.json')
+# utils.export_data(sessions, '../data/output/sessions.json')
+
+print(courses['courses'][0].get_detail())

@@ -27,7 +27,7 @@ cred = credentials.Certificate("./settings/credentials.json")
 app = firebase_admin.initialize_app(cred)
 store = firestore.client()
 
-DEST_PATH = '../data/output/'
+DEST_PATH = '../../data/output/'
 COLLECTION = ['students', 'lecturers', 'sessions', 'courses']
 
 
