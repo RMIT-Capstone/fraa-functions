@@ -18,7 +18,7 @@ module.exports = async (req, res, next) => {
 
   if (path === USERS_ROUTES.CREATE_USER) {
     const { email, password, displayName, school, isLecturer } = req.body;
-    const { error, valid } = await validateCreateUserRequest(password, displayName, school, isLecturer);
+    const { error, valid } = await validateCreateUserRequest(email, password, displayName, school, isLecturer);
     if (!valid) return sendErrorObject(res, error);
   }
 
