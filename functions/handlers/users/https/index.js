@@ -226,7 +226,7 @@ const countMissedAndTotalAttendanceSessions = async (req, res) => {
   }
 };
 
-const countMissedTotalAttendanceSessionsByCourse = async (req, res) => {
+const countMissedTotalAttendanceSessionsByCourses = async (req, res) => {
   const { email, courses, semester } = req.body;
   try {
     const querySnapshot = await db
@@ -277,5 +277,5 @@ module.exports = {
   getUserByEmail,
   getAllUsers,
   countMissedAndTotalAttendanceSessions,
-  countMissedTotalAttendanceSessionsByCourse,
+  countMissedTotalAttendanceSessionsByCourses,
 };

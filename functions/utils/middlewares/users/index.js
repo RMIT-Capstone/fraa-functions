@@ -71,7 +71,7 @@ module.exports = async (req, res, next) => {
   }
 
   if (path === USERS_ROUTES.COUNT_MISSED_TOTAL_ATTENDANCE_SESSIONS ||
-    path === USERS_ROUTES.COUNT_MISSED_TOTAL_ATTENDANCE_SESSIONS_BY_COURSES) {
+    path === USERS_ROUTES.COUNT_MISSED_TOTAL_ATTENDANCE_SESSIONS_GROUP) {
     const { email, courses, semester } = req.body;
     const { error, valid } = await validateCountMissedTotalAttendanceSessionsRequest(email, courses, semester);
     if (!valid) return sendErrorObject(res, error);

@@ -9,6 +9,6 @@ module.exports = {
   SUBSCRIBE_TO_COURSES: 'subscribe_to_courses',
   UNSUBSCRIBE_FROM_COURSES: 'unsubscribe_from_courses',
   REGISTER_TO_ATTENDANCE_SESSION: 'register_to_attendance_session',
-  COUNT_MISSED_TOTAL_ATTENDANCE_SESSIONS: 'count_missed_total_attendance_session',
-  COUNT_MISSED_TOTAL_ATTENDANCE_SESSIONS_BY_COURSES: 'count_missed_total_attendance_sessions_by_courses',
+  COUNT_MISSED_TOTAL_ATTENDANCE_SESSIONS: 'count_missed_total_attendance_sessions_by_courses',
+  COUNT_MISSED_TOTAL_ATTENDANCE_SESSIONS_GROUP: 'count_missed_total_attendance_sessions_by_courses_group',
 };

@@ -22,7 +22,7 @@ const {
   getUserByEmail,
   getAllUsers,
   countMissedAndTotalAttendanceSessions,
-  countMissedTotalAttendanceSessionsByCourse,
+  countMissedTotalAttendanceSessionsByCourses,
 } = require('./handlers/users/https');
 
 // course handlers
@@ -106,9 +106,9 @@ app.post(`/${USERS_ROUTES.COUNT_MISSED_TOTAL_ATTENDANCE_SESSIONS}`,
   usersValidator,
   countMissedAndTotalAttendanceSessions,
 );
-app.post(`/${USERS_ROUTES.COUNT_MISSED_TOTAL_ATTENDANCE_SESSIONS_BY_COURSES}`,
+app.post(`/${USERS_ROUTES.COUNT_MISSED_TOTAL_ATTENDANCE_SESSIONS_GROUP}`,
   usersValidator,
-  countMissedTotalAttendanceSessionsByCourse,
+  countMissedTotalAttendanceSessionsByCourses,
 );
 
 // user background functions
