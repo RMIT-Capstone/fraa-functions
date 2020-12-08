@@ -14,11 +14,11 @@ class StudentFactory:
         email = 's{}@rmit.edu.vn'.format(sid)
         school = utils.get_random_school()
         firstTimePassword = True
-        createAt = datetime.datetime.utcnow()
+        createdAt = datetime.datetime.utcnow()
         subscribedCourses = []
-        attendance_count = 0
-        return classes.Student(fullName, email, school, createAt, subscribedCourses,
-                               firstTimePassword, attendance_count)
+        totalAttendedEventsCount = 0
+        return classes.Student(fullName, email, school, createdAt, subscribedCourses,
+                               firstTimePassword, totalAttendedEventsCount)
 
     def generate_student_data(self, number):
         data = {'students': [], 'count': number}
@@ -45,10 +45,10 @@ class CourseFactory:
         name = []
         lecturer = ''
         school = utils.get_random_school()
-        semester = utils.get_random_semester()
+        semester = '2020C'
         sessionCount = random.randint(1, 5)
-        createAt = datetime.datetime.utcnow()
-        return classes.Course(code, lecturer, name, school, semester, sessionCount, createAt)
+        createdAt = datetime.datetime.utcnow()
+        return classes.Course(code, lecturer, name, school, semester, sessionCount, createdAt)
 
     def generate_course_data(self, number):
         data = {'courses': [], 'count': number}
@@ -68,10 +68,10 @@ class LecturerFactory:
         sid = str(random.randint(3000000, 4000000))
         email = 'v{}@rmit.edu.vn'.format(sid)
         school = utils.get_random_school()
-        createAt = datetime.datetime.utcnow()
+        createdAt = datetime.datetime.utcnow()
         subscribedCourses = []
         firstTimePassword = True
-        return classes.Lecturer(fullName, email, school, createAt, subscribedCourses, firstTimePassword)
+        return classes.Lecturer(fullName, email, school, createdAt, subscribedCourses, firstTimePassword)
 
     def generate_lecturer_data(self, number):
         data = {'lecturers': [], 'count': number}
@@ -101,24 +101,25 @@ class SessionFactory:
             courseName = ' '.join(map(str, course['name']))
             lecturer = course['lecturer']
             semester = course['semester']
-        validOn = datetime.datetime.now().isoformat()
-        expireOn = (datetime.datetime.now() + datetime.timedelta(minutes=15)).isoformat()
-        createAt = datetime.datetime.utcnow()
+        validOn = datetime.datetime.utcnow()
+        expireOn = (datetime.datetime.utcnow() +
+                    datetime.timedelta(minutes=15))
+        createdAt = datetime.datetime.utcnow()
         location = utils.get_random_location()
         attendees = attendees
-        return classes.Session(courseCode, courseName, createAt, expireOn, lecturer,
+        return classes.Session(courseCode, courseName, createdAt, expireOn, lecturer,
                                location, semester, validOn, attendees)
 
     def generate_session_data(self, courses, students):
-        data = {"attendance_sessions": [], "count": 0}
+        data = {"attendance-sessions": [], "count": 0}
         for course in courses['courses']:
             for i in range(course.get_session_count()):
                 attendees = []
                 for student in students['students']:
                     for c in student.get_subscribe_courses():
-                        if c == course.get_course_code() and random.choice([True, False])==True:
+                        if c == course.get_course_code() and random.choice([True, False]) == True:
                             attendees.append(student.get_email())
                 session = self.create_session(course, attendees)
-                data["attendance_sessions"].append(session)
+                data["attendance-sessions"].append(session)
                 data["count"] += 1
         return data

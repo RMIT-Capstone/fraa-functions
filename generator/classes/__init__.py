@@ -1,23 +1,25 @@
 class Student:
-    def __init__(self, fullName, email, school, createAt, subscribedCourses, firstTimePassword, attendance_count):
+    def __init__(self, fullName, email, school, createdAt, subscribedCourses, firstTimePassword,
+                 totalAttendedEventsCount):
         self.fullName = fullName
         self.email = email
         self.school = school
-        self.createAt = createAt
+        self.createdAt = createdAt
         self.subscribedCourses = subscribedCourses
         self.firstTimePassword = firstTimePassword
-        self.attendance_count = attendance_count
+        self.totalAttendedEventsCount = totalAttendedEventsCount
+        # self.verified = verified
 
     def subscribe_course(self, courses):
         self.subscribedCourses = courses
 
     def check_attendance(self, total_attendance):
-        self.attendance_count = total_attendance
+        self.totalAttendedEventsCount = total_attendance
 
     def get_detail(self):
-        return {"fullName": self.fullName, "school": self.school, "email": self.email, "createAt": self.createAt,
+        return {"fullName": self.fullName, "school": self.school, "email": self.email, "createdAt": self.createdAt,
                 "subscribedCourses": self.subscribedCourses, "firstTimePassword": self.firstTimePassword,
-                "attendance_count": self.attendance_count}
+                "totalAttendedEventsCount": self.totalAttendedEventsCount}
 
     def get_subscribe_courses(self):
         return self.subscribedCourses
@@ -27,14 +29,14 @@ class Student:
 
 
 class Course:
-    def __init__(self, code, lecturer, name, school, semester, sessionCount, createAt):
+    def __init__(self, code, lecturer, name, school, semester, sessionCount, createdAt):
         self.code = code
         self.name = name
         self.lecturer = lecturer
         self.school = school
         self.semester = semester
         self.sessionCount = sessionCount
-        self.createAt = createAt
+        self.createdAt = createdAt
 
     def add_lecturer(self, lecturer):
         self.lecturer = lecturer
@@ -44,7 +46,7 @@ class Course:
 
     def get_detail(self):
         return {"code": self.code, "lecturer": self.lecturer, "name": self.name, "school": self.school,
-                "semester": self.semester, "sessionCount": self.sessionCount, "createAt": self.createAt}
+                "semester": self.semester, "sessionCount": self.sessionCount, "createdAt": self.createdAt}
 
     def get_session_count(self):
         return int(self.sessionCount)
@@ -57,11 +59,11 @@ class Course:
 
 
 class Lecturer:
-    def __init__(self, fullName, email, school, createAt, subscribedCourses, firstTimePassword):
+    def __init__(self, fullName, email, school, createdAt, subscribedCourses, firstTimePassword):
         self.fullName = fullName
         self.email = email
         self.school = school
-        self.createAt = createAt
+        self.createdAt = createdAt
         self.subscribedCourses = subscribedCourses
         self.firstTimePassword = firstTimePassword
 
@@ -75,16 +77,16 @@ class Lecturer:
         return self.subscribedCourses
 
     def get_detail(self):
-        return {"fullName": self.fullName, "school": self.school, "email": self.email, "createAt": self.createAt,
+        return {"fullName": self.fullName, "school": self.school, "email": self.email, "createdAt": self.createdAt,
                 "subscribedCourses": self.subscribedCourses, "firstTimePassword": self.firstTimePassword}
 
 
 class Session:
-    def __init__(self, courseCode, courseName, createAt, expireOn, lecturer, location, semester, validOn, attendees):
+    def __init__(self, courseCode, courseName, createdAt, expireOn, lecturer, location, semester, validOn, attendees):
         self.attendees = attendees
         self.courseCode = courseCode
         self.courseName = courseName
-        self.createAt = createAt
+        self.createdAt = createdAt
         self.expireOn = expireOn
         self.lecturer = lecturer
         self.semester = semester
@@ -95,7 +97,6 @@ class Session:
         self.attendees = attendees
 
     def get_detail(self):
-        return {"courseCode": self.courseCode, "courseName": self.courseName, "createAt": self.createAt,
+        return {"courseCode": self.courseCode, "courseName": self.courseName, "createdAt": self.createdAt,
                 "expireOn": self.expireOn, "lecturer": self.lecturer, "location": self.location,
                 "validOn": self.validOn, "semester": self.semester, "attendees": self.attendees}
-

@@ -8,7 +8,7 @@ store = firestore.client()
 
 def publish_collection(data, collection):
     doc_ref = store.collection(collection)
-    for record in data[collection.split(']')[-1]]:
+    for record in data[collection]:
         doc_ref.add(record.get_detail())
     print('Finished publish the data')
 
@@ -24,5 +24,5 @@ def delete_collection(collection):
 
 def shown_data(data, collection):
     print('Collection: ', collection)
-    for record in data[collection.split(']')[-1]]:
+    for record in data[collection]:
         print(record.get_detail())
