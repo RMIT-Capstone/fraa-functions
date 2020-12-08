@@ -15,7 +15,7 @@ const onCreateUser = async (req, res) => {
     const { idToken, error } = await createUserInAuth(email, password);
     if (error) {
       if (error === 'Email already in use')
-        return sendErrorMessage(res, `${ERROR_MESSAGES.USER_ALREADY_EXISTS} ${email}`);
+        return sendErrorMessage(res, `${ERROR_MESSAGES.USER_ALREADY_EXISTS_WITH_EMAIL} ${email}`);
       else {
         console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} onCreateUser: `, error);
         return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
@@ -24,10 +24,43 @@ const onCreateUser = async (req, res) => {
     await createUserInFirestore(email, displayName, school, isLecturer);
 
     return res.status(200).json({ idToken });
-  }
-  catch (errorOnCreateUser) {
-    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} onCreateUser:`, errorOnCreateUser);
+  } catch (errorOnCreateUser) {
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} onCreateUser: `, errorOnCreateUser);
     return res.json({ error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE });
+  }
+};
+
+const deleteUserInAuth = async (req, res) => {
+  const { email } = req.body;
+  try {
+    const recordId = await getUserIdInFBAuthWithEmail(email);
+    await admin
+      .auth
+      .deleteUser(recordId);
+    return res.json({ success: 'User deleted.' });
+  } catch (errorDeleteUserInAuth) {
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} deleteUserInAuth: `, errorDeleteUserInAuth);
+    return res.json({ error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE });
+  }
+};
+
+const updateUser = async (req, res) => {
+  const { id, displayName, firstTimePassword, school, verified, isLecturer } = req.body;
+  const collection = isLecturer ? 'lecturers' : 'students';
+  try {
+    await db
+      .collection(collection)
+      .doc(id)
+      .update({
+        displayName,
+        firstTimePassword,
+        school,
+        verified,
+      });
+    return res.json({ success: 'User updated successfully.' });
+  } catch (errorUpdateUser) {
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} updateUser: `, errorUpdateUser);
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
 
@@ -142,9 +175,11 @@ const changeUserPassword = async (req, res) => {
   const { email, password } = req.body;
   try {
     const recordId = await getUserIdInFBAuthWithEmail(email);
-    await admin.auth().updateUser(recordId, {
-      password: password,
-    });
+    await admin
+      .auth()
+      .updateUser(recordId, {
+        password: password,
+      });
     return res.json({ success: 'Password updated successfully.' });
   } catch (errorChangeUserPassword) {
     console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} changeUserPassword: `, errorChangeUserPassword);
@@ -272,6 +307,8 @@ const countMissedTotalAttendanceSessionsByCourses = async (req, res) => {
 
 module.exports = {
   onCreateUser,
+  deleteUserInAuth,
+  updateUser,
   signIn,
   generateOTP,
   verifyOTP,

@@ -14,6 +14,10 @@ const stringIsEmpty = string => {
   return string.trim() === '';
 };
 
+const booleanIsMissing = bool => {
+  return bool === undefined || typeof bool !== 'boolean';
+};
+
 const isEmail = email => {
   let regEx;
   // eslint-disable-next-line no-useless-escape,max-len
@@ -25,5 +29,6 @@ module.exports = {
   getRandomInt,
   generateOTPCode,
   stringIsEmpty,
+  booleanIsMissing,
   isEmail,
 };

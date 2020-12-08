@@ -6,6 +6,8 @@ module.exports = {
   COURSE_ALREADY_EXISTS_WITH_CODE: 'A course already exists with code:',
   COURSE_DOES_NOT_EXISTS_WITH_ID: 'No course exists with id:',
   COURSE_DOES_NOT_EXISTS_WITH_CODE: 'No course exists with code:',
-  USER_ALREADY_EXISTS: 'A student/lecturer already exists with email:',
-  USER_DOES_NOT_EXIST: 'No student/lecturer exists with email:',
+  USER_ALREADY_EXISTS_WITH_EMAIL: 'A student/lecturer already exists with email:',
+  USER_DOES_NOT_EXIST_WITH_EMAIL: 'No student/lecturer exists with email:',
+  USER_DOES_NOT_EXIST_WITH_ID: 'No student/lecturer exists with id:',
+  USER_ALREADY_EXISTS_WITH_ID: 'A student/lecturer exists with id:',
 };

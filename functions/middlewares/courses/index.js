@@ -1,4 +1,4 @@
-const { sendErrorObject } = require('../../../helpers/express-helpers');
+const { sendErrorObject } = require('../../helpers/express-helpers');
 const {
   validateDeleteCourseRequest,
   validateUpdateCourseRequest,
@@ -7,8 +7,8 @@ const {
   validateGetCourseByCodeRequest,
   validateGetMoreCoursesRequest,
   validateCreateCourseRequest,
-} = require('../../../validators/courses-validators');
-const COURSE_ROUTES = require('../../routes/courses');
+} = require('../../validators/courses-validators');
+const COURSE_ROUTES = require('../../utils/routes/courses');
 
 module.exports = async (req, res, next) => {
   const path = req.path.split('/')[1];

@@ -15,6 +15,8 @@ const USERS_ROUTES = require('./utils/routes/users');
 // user handlers
 const {
   onCreateUser,
+  deleteUserInAuth,
+  updateUser,
   verifyOTP,
   generateOTP,
   signIn,
@@ -46,23 +48,23 @@ const {
   getAttendanceSessionsInMonthRange,
   getDailyAttendanceSessions,
   getMonthlyAttendanceSessions,
-  registerStudentToAttendanceSession
+  registerStudentToAttendanceSession,
 } = require('./handlers/attendance-sessions/https');
 
 // background functions
 const { onUserDeleteInAuth } = require('./handlers/users/background');
 
 // middlewares
-const coursesValidator = require('./utils/middlewares/courses');
-const attendanceSessionsValidator = require('./utils/middlewares/attendance-sessions');
-const usersValidator = require('./utils/middlewares/users');
+const coursesValidator = require('./middlewares/courses');
+const attendanceSessionsValidator = require('./middlewares/attendance-sessions');
+const usersValidator = require('./middlewares/users');
 
 // TODO: check auth headers when doing CRUD operations
 
 // attendance session handlers
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.CREATE_ATTENDANCE_SESSION}`,
   attendanceSessionsValidator,
-  createAttendanceSession
+  createAttendanceSession,
 );
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_ATTENDANCE_SESSIONS_IN_DATE_RANGE}`,
   attendanceSessionsValidator,
@@ -94,6 +96,8 @@ app.post(`/${COURSES_ROUTES.DELETE_COURSE}`, coursesValidator, deleteCourse);
 // user handlers
 app.post(`/${USERS_ROUTES.CREATE_USER}`, usersValidator, onCreateUser);
 app.post(`/${USERS_ROUTES.SIGN_IN}`, usersValidator, signIn);
+app.post(`/${USERS_ROUTES.UPDATE_USER}`, usersValidator, updateUser);
+app.post(`/${USERS_ROUTES.DELETE_USER}`, usersValidator, deleteUserInAuth);
 app.post(`/${USERS_ROUTES.CHANGE_PASSWORD}`, usersValidator, changeUserPassword);
 app.post(`/${USERS_ROUTES.GENERATE_OTP}`, usersValidator, generateOTP);
 app.post(`/${USERS_ROUTES.VERIFY_OTP}`, usersValidator, verifyOTP);

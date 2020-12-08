@@ -6,12 +6,13 @@ const {
   validateGenerateOTPRequest,
   validateVerifyOTPRequest,
   validateSignInRequest,
+  validateUpdateRequest,
   validateChangePasswordRequest,
   validateCreateUserRequest,
   validateCountMissedTotalAttendanceSessionsRequest,
-} = require('../../../validators/users-validators');
-const { sendErrorObject } = require('../../../helpers/express-helpers');
-const USERS_ROUTES = require('../../routes/users');
+} = require('../../validators/users-validators');
+const { sendErrorObject } = require('../../helpers/express-helpers');
+const USERS_ROUTES = require('../../utils/routes/users');
 
 module.exports = async (req, res, next) => {
   const path = req.path.split('/')[1];
@@ -25,6 +26,13 @@ module.exports = async (req, res, next) => {
   if (path === USERS_ROUTES.SIGN_IN) {
     const { email, password, isLecturer } = req.body;
     const { error, valid } = await validateSignInRequest(email, password, isLecturer);
+    if (!valid) return sendErrorObject(res, error);
+  }
+
+  if (path === USERS_ROUTES.UPDATE_USER) {
+    const { id, displayName, firstTimePassword, school, verified, isLecturer } = req.body;
+    const { error, valid } =
+      await validateUpdateRequest(id, displayName, firstTimePassword, school, verified, isLecturer);
     if (!valid) return sendErrorObject(res, error);
   }
 

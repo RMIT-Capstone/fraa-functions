@@ -1,5 +1,6 @@
 const { db, admin } = require('../../utils/admin');
 
+// TODO: refactor this to accept email AND collection
 const getStudentDocumentIdWithEmail = async email => {
   try {
     const querySnapshot = await db
@@ -34,11 +35,44 @@ const getLecturerDocumentIdWithEmail = async email => {
       const documentId = querySnapshot.docs[0].id;
       return { lecturerDocId: documentId, lecturerDocIdError: null };
     }
-  }
-  catch (errorGetLecturerDocumentIdWithEmail) {
+  } catch (errorGetLecturerDocumentIdWithEmail) {
     console.error(
       'Something went wrong with getLecturerDocumentIdWithEmail: ', errorGetLecturerDocumentIdWithEmail);
     return { lecturerDocId: null, lecturerDocIdError: errorGetLecturerDocumentIdWithEmail };
+  }
+};
+
+const userExistsWithEmail = async (email, collection) => {
+  try {
+    const querySnapshot = await db
+      .collection(collection)
+      .where('email', '==', email)
+      .get();
+
+    if (querySnapshot.empty) {
+      return { userExists: false, errorUserExists: null };
+    }
+    return { userExists: true, errorUserExists: null };
+  } catch (errorUserExistsWithEmail) {
+    console.error('Something went wrong with userExistsWithEmail: ', errorUserExistsWithEmail);
+    return { userExists: null, errorUserExists: true };
+  }
+};
+
+const userExistsWithId = async (id, collection) => {
+  try {
+    const documentSnapshot = await db
+      .collection(collection)
+      .doc(id)
+      .get();
+
+    if (documentSnapshot.exists) {
+      return { userExists: true, userExistsError: null };
+    }
+    return { userExists: false, userExistsError: null };
+  } catch (errorUserExistsWithId) {
+    console.error('Something went wrong with userExistsWithId: ', errorUserExistsWithId);
+    return { userExists: null, errorUserExistsWithId: true };
   }
 };
 
@@ -98,4 +132,6 @@ module.exports = {
   getLatestOTPDocumentOfUser,
   deleteOTPDocumentsByEmail,
   getUserIdInFBAuthWithEmail,
+  userExistsWithEmail,
+  userExistsWithId,
 };
