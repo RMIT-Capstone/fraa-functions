@@ -44,6 +44,7 @@ const createUserInFirestore = async (email, displayName, school, isLecturer) => 
         totalAttendedEventsCount: 0,
         createdAt: new Date(),
         firstTimePassword: true,
+        verified: false,
       });
   }
   catch (errorCreateUserInFirestore) {
