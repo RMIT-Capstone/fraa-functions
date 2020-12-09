@@ -4,6 +4,10 @@ import datetime
 import utils
 import random
 
+random.seed(0)
+SCHOOL_PREFIX = ['SST', 'SBM', 'SDM', 'SSC', 'SIB']
+COURSE_PREFIX = ['COSC', 'ISYS', 'OENG', 'EEET']
+
 
 class StudentFactory:
     @staticmethod
@@ -12,7 +16,7 @@ class StudentFactory:
         fullName = fake.name()
         sid = str(random.randint(3000000, 4000000))
         email = 's{}@rmit.edu.vn'.format(sid)
-        school = utils.get_random_school()
+        school = random.sample(SCHOOL_PREFIX, 1)[0]
         firstTimePassword = True
         createdAt = datetime.datetime.utcnow()
         subscribedCourses = []
@@ -21,16 +25,16 @@ class StudentFactory:
                                firstTimePassword, totalAttendedEventsCount)
 
     def generate_student_data(self, number):
-        data = {'students': [], 'count': number}
+        data = []
         for i in range(number):
-            data['students'].append(self.create_student())
+            data.append(self.create_student())
         return data
 
     @staticmethod
     def connect_to_courses(courses, students):
-        for student in students['students']:
-            num = random.randint(1, len(courses['courses']))
-            selected_courses = random.sample(courses['courses'], num)
+        for student in students:
+            num = random.randint(1, len(courses))
+            selected_courses = random.sample(courses, num)
             subscribed_courses = []
             for course in selected_courses:
                 subscribed_courses.append(course.get_course_code())
@@ -41,22 +45,23 @@ class StudentFactory:
 class CourseFactory:
     @staticmethod
     def create_course():
-        code = utils.get_random_course()
-        name = []
+        code = random.sample(COURSE_PREFIX, 1)[
+            0] + str(random.randint(1000, 9999))
+        name = ''
         lecturer = ''
-        school = utils.get_random_school()
+        school = random.sample(SCHOOL_PREFIX, 1)[0]
         semester = '2020C'
-        sessionCount = random.randint(1, 5)
+        sessionCount = 3
         createdAt = datetime.datetime.utcnow()
         return classes.Course(code, lecturer, name, school, semester, sessionCount, createdAt)
 
     def generate_course_data(self, number):
-        data = {'courses': [], 'count': number}
+        data = []
         titles = utils.get_all_course_title()
         for i in range(number):
             course = self.create_course()
-            course.add_name(titles[i][0].split())
-            data['courses'].append(course)
+            course.add_name(titles[i][0])
+            data.append(course)
         return data
 
 
@@ -67,22 +72,22 @@ class LecturerFactory:
         fullName = fake.name()
         sid = str(random.randint(3000000, 4000000))
         email = 'v{}@rmit.edu.vn'.format(sid)
-        school = utils.get_random_school()
+        school = random.sample(SCHOOL_PREFIX, 1)[0]
         createdAt = datetime.datetime.utcnow()
         subscribedCourses = []
         firstTimePassword = True
         return classes.Lecturer(fullName, email, school, createdAt, subscribedCourses, firstTimePassword)
 
     def generate_lecturer_data(self, number):
-        data = {'lecturers': [], 'count': number}
+        data = []
         for i in range(number):
-            data['lecturers'].append(self.create_lecturer())
+            data.append(self.create_lecturer())
         return data
 
     @staticmethod
     def connect_to_courses(courses, lecturers):
-        for course in courses['courses']:
-            lecturer = utils.get_random(lecturers['lecturers'])
+        for course in courses:
+            lecturer = random.sample(lecturers, 1)[0]
             course.add_lecturer(lecturer.get_name())
             subscribed_courses = lecturer.get_subscribed_course()
             subscribed_courses.append(course.get_course_code())
@@ -98,28 +103,29 @@ class SessionFactory:
         else:
             course = course.get_detail()
             courseCode = course['code']
-            courseName = ' '.join(map(str, course['name']))
+            courseName = course['name']
             lecturer = course['lecturer']
             semester = course['semester']
-        validOn = datetime.datetime.utcnow()
-        expireOn = (datetime.datetime.utcnow() +
-                    datetime.timedelta(minutes=15))
-        createdAt = datetime.datetime.utcnow()
-        location = utils.get_random_location()
+        validOn = datetime.datetime.now().isoformat()
+        expireOn = (datetime.datetime.now() + datetime.timedelta(minutes=15)).isoformat()
+        createdAt = datetime.datetime.now().isoformat()
+        build = str(random.randint(1, 2))
+        floor = str(random.randint(1, 2))
+        room = str(random.randint(1, 2))
+        location = 'SGS/{build}.{floor}.{room}'.format(build=build, floor=floor, room=room)
         attendees = attendees
         return classes.Session(courseCode, courseName, createdAt, expireOn, lecturer,
                                location, semester, validOn, attendees)
 
     def generate_session_data(self, courses, students):
-        data = {"attendance-sessions": [], "count": 0}
-        for course in courses['courses']:
+        data = []
+        for course in courses:
             for i in range(course.get_session_count()):
                 attendees = []
-                for student in students['students']:
-                    for c in student.get_subscribe_courses():
-                        if c == course.get_course_code() and random.choice([True, False]) == True:
+                for student in students:
+                    for subscribed_course in student.get_subscribe_courses():
+                        if subscribed_course == course.get_course_code() and random.choice([True, False]) is True:
                             attendees.append(student.get_email())
                 session = self.create_session(course, attendees)
-                data["attendance-sessions"].append(session)
-                data["count"] += 1
+                data.append(session)
         return data
