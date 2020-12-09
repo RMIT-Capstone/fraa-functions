@@ -1,7 +1,9 @@
-import firebase_admin
-from firebase_admin import credentials, firestore
-import requests
 import json
+
+import firebase_admin
+import requests
+from firebase_admin import credentials, firestore
+from dateutil.parser import parse
 
 cred = credentials.Certificate('./publisher/settings/credentials.json')
 app = firebase_admin.initialize_app(cred)
@@ -24,8 +26,8 @@ def delete_collection(collection):
     print('{} collection is deleted: {} documents'.format(collection, deleted))
 
 
-def shown_data(data, collection):
-    print('Collection: ', collection)
+def shown_data(data):
+    print('DATA:')
     for record in data:
         print(record.get_detail())
 
@@ -33,20 +35,19 @@ def shown_data(data, collection):
 HOST_SERVER = 'https://asia-northeast1-fraa-capstone.cloudfunctions.net/api/'
 
 
-def post_data(payload, api, get_return=False):
+def post_data(payload, api):
     try:
         req = requests.post(HOST_SERVER + api,
                             data=json.dumps(payload),
                             headers={'content-type': 'application/json'})
-        if get_return is True:
-            return req.text
+        return req
     except Exception as e:
         print(e)
 
 
 def publish_courses(courses):
-    for course in courses:
-        course = course.get_detail()
+    for data in courses:
+        course = data.get_detail()
         payload = {
             'course': {
                 'code': course['code'],
@@ -55,8 +56,12 @@ def publish_courses(courses):
                 'school': course['school']
             }
         }
-        post_data(payload=payload, api='create_course')
-    print('Finished publish')
+        res = post_data(payload=payload, api='create_course')
+        if res.status_code == 200:
+            data.set_id(json.loads(res.text)['id'])
+        else:
+            print(res.text)
+    print('Finished publish courses')
 
 
 def publish_students(students):
@@ -99,14 +104,15 @@ def publish_lecturers(lecturers):
     print('Finished publish lecturers')
 
 
-def publish_sessions(sessions):
-    for session in sessions:
-        session = session.get_detail()
-        course = post_data(payload={'code': session['courseCode']}, api='get_course_by_code', get_return=True)
-        _id = json.loads(course)['course']['id']
+def publish_sessions_no_attendees(sessions):
+    for data in sessions:
+        session = data.get_detail()
+        res = post_data(payload={'code': session['courseCode']}, api='get_course_by_code')
+        course_id = json.loads(res.text)['course']['id']
+
         payload = {
             "content": {
-                "courseId": _id,
+                "courseId": course_id,
                 "courseCode": session['courseCode'],
                 "courseName": session['courseName'],
                 "lecturer": session['lecturer'],
@@ -116,5 +122,33 @@ def publish_sessions(sessions):
                 "semester": "2020C"
             }
         }
-        post_data(payload=payload, api='create_attendance_session')
-    print('Finished publish lecturers')
+        res = post_data(payload=payload, api='create_attendance_session')
+        session_id = json.loads(res.text)
+        print(session_id)
+
+        for attendee in session['attendees']:
+            payload = {
+                "email": attendee,
+                "sessionId": session_id
+            }
+            post_data(payload=payload, api='register_to_attendance_session')
+    print('Finished publish sessions')
+
+
+def publish_sessions(sessions):
+    doc_ref = store.collection('attendance-sessions')
+    for data in sessions:
+        session = data.get_detail()
+        payload = {
+            "courseCode": session['courseCode'],
+            "courseName": session['courseName'],
+            "lecturer": session['lecturer'],
+            "validOn": parse(session['validOn']),
+            "expireOn": parse(session['expireOn']),
+            "location": session['location'],
+            "semester": "2020C",
+            "attendees": session["attendees"],
+            "createdAt": parse(session['createdAt'])
+        }
+        doc_ref.add(payload)
+    print('Finished publish the sessions')

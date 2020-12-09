@@ -4,7 +4,7 @@ import datetime
 import utils
 import random
 
-random.seed(0)
+# random.seed(0)
 SCHOOL_PREFIX = ['SST', 'SBM', 'SDM', 'SSC', 'SIB']
 COURSE_PREFIX = ['COSC', 'ISYS', 'OENG', 'EEET']
 
@@ -33,7 +33,10 @@ class StudentFactory:
     @staticmethod
     def connect_to_courses(courses, students):
         for student in students:
-            num = random.randint(1, len(courses))
+            if len(courses)>3:
+                num = random.randint(1, 3)
+            else:
+                num = random.randint(1, len(courses))
             selected_courses = random.sample(courses, num)
             subscribed_courses = []
             for course in selected_courses:
@@ -47,13 +50,12 @@ class CourseFactory:
     def create_course():
         code = random.sample(COURSE_PREFIX, 1)[
             0] + str(random.randint(1000, 9999))
-        name = ''
-        lecturer = ''
+        name = lecturer = _id = ''
         school = random.sample(SCHOOL_PREFIX, 1)[0]
         semester = '2020C'
         sessionCount = 3
         createdAt = datetime.datetime.utcnow()
-        return classes.Course(code, lecturer, name, school, semester, sessionCount, createdAt)
+        return classes.Course(code, lecturer, name, school, semester, sessionCount, createdAt, _id)
 
     def generate_course_data(self, number):
         data = []
@@ -97,15 +99,13 @@ class LecturerFactory:
 
 class SessionFactory:
     @staticmethod
-    def create_session(course=None, attendees=None):
-        if course is None:
-            courseCode = courseName = lecturer = semester = None
-        else:
-            course = course.get_detail()
-            courseCode = course['code']
-            courseName = course['name']
-            lecturer = course['lecturer']
-            semester = course['semester']
+    def create_session(course, attendees=None):
+        course = course.get_detail()
+        courseCode = course['code']
+        courseName = course['name']
+        lecturer = course['lecturer']
+        semester = course['semester']
+        courseId = course['_id']
         validOn = datetime.datetime.now().isoformat()
         expireOn = (datetime.datetime.now() + datetime.timedelta(minutes=15)).isoformat()
         createdAt = datetime.datetime.now().isoformat()
@@ -114,8 +114,9 @@ class SessionFactory:
         room = str(random.randint(1, 2))
         location = 'SGS/{build}.{floor}.{room}'.format(build=build, floor=floor, room=room)
         attendees = attendees
+        _id = ''
         return classes.Session(courseCode, courseName, createdAt, expireOn, lecturer,
-                               location, semester, validOn, attendees)
+                               location, semester, validOn, attendees, _id, courseId)
 
     def generate_session_data(self, courses, students):
         data = []
@@ -124,8 +125,14 @@ class SessionFactory:
                 attendees = []
                 for student in students:
                     for subscribed_course in student.get_subscribe_courses():
-                        if subscribed_course == course.get_course_code() and random.choice([True, False]) is True:
+                        rate = [False] * 1 + [True] * 9
+                        if subscribed_course == course.get_course_code() and random.choice(rate) is True:
                             attendees.append(student.get_email())
                 session = self.create_session(course, attendees)
+                validOn = (datetime.datetime.now() - datetime.timedelta(days=1) 
+                           + datetime.timedelta(days=i)).isoformat()
+                expireOn = (datetime.datetime.now() - datetime.timedelta(days=1) 
+                            + datetime.timedelta(days=i, minutes=30)).isoformat()
+                session.set_time(validOn=validOn, expireOn=expireOn)
                 data.append(session)
         return data

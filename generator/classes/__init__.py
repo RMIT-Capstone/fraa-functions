@@ -29,7 +29,7 @@ class Student:
 
 
 class Course:
-    def __init__(self, code, lecturer, name, school, semester, sessionCount, createdAt):
+    def __init__(self, code, lecturer, name, school, semester, sessionCount, createdAt, _id):
         self.code = code
         self.name = name
         self.lecturer = lecturer
@@ -37,6 +37,7 @@ class Course:
         self.semester = semester
         self.sessionCount = sessionCount
         self.createdAt = createdAt
+        self._id = _id
 
     def add_lecturer(self, lecturer):
         self.lecturer = lecturer
@@ -46,7 +47,8 @@ class Course:
 
     def get_detail(self):
         return {"code": self.code, "lecturer": self.lecturer, "name": self.name, "school": self.school,
-                "semester": self.semester, "sessionCount": self.sessionCount, "createdAt": self.createdAt}
+                "semester": self.semester, "sessionCount": self.sessionCount,
+                "createdAt": self.createdAt, "_id": self._id}
 
     def get_session_count(self):
         return int(self.sessionCount)
@@ -56,6 +58,9 @@ class Course:
 
     def get_lecturer(self):
         return self.lecturer
+
+    def set_id(self, _id):
+        self._id = _id
 
 
 class Lecturer:
@@ -82,7 +87,8 @@ class Lecturer:
 
 
 class Session:
-    def __init__(self, courseCode, courseName, createdAt, expireOn, lecturer, location, semester, validOn, attendees):
+    def __init__(self, courseCode, courseName, createdAt, expireOn, lecturer,
+                 location, semester, validOn, attendees, _id, courseId):
         self.attendees = attendees
         self.courseCode = courseCode
         self.courseName = courseName
@@ -92,6 +98,8 @@ class Session:
         self.semester = semester
         self.location = location
         self.validOn = validOn
+        self._id = _id
+        self.courseId = courseId
 
     def add_attendees(self, attendees):
         self.attendees = attendees
@@ -99,4 +107,12 @@ class Session:
     def get_detail(self):
         return {"courseCode": self.courseCode, "courseName": self.courseName, "createdAt": self.createdAt,
                 "expireOn": self.expireOn, "lecturer": self.lecturer, "location": self.location,
-                "validOn": self.validOn, "semester": self.semester, "attendees": self.attendees}
+                "courseId": self.courseId, "validOn": self.validOn, "semester": self.semester,
+                "attendees": self.attendees, "_id": self._id}
+
+    def set_time(self, validOn, expireOn):
+        self.validOn = validOn
+        self.expireOn = expireOn
+
+    def set_id(self, _id):
+        self._id = _id

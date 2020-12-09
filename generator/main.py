@@ -1,10 +1,9 @@
 import factory
 import publisher
 
-
 # Create raw data
-students = factory.StudentFactory().generate_student_data(number=2)
-lecturers = factory.LecturerFactory().generate_lecturer_data(number=2)
+students = factory.StudentFactory().generate_student_data(number=1)
+lecturers = factory.LecturerFactory().generate_lecturer_data(number=1)
 courses = factory.CourseFactory().generate_course_data(number=1)
 
 # linking courses data with lecturers/students
@@ -19,3 +18,4 @@ sessions = factory.SessionFactory().generate_session_data(courses=courses, stude
 publisher.publish_courses(courses)
 publisher.publish_sessions(sessions)
 publisher.publish_students(students)
+publisher.publish_lecturers(lecturers)
