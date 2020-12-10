@@ -4,7 +4,7 @@ import datetime
 import utils
 import random
 
-# random.seed(0)
+random.seed(0)
 SCHOOL_PREFIX = ['SST', 'SBM', 'SDM', 'SSC', 'SIB']
 COURSE_PREFIX = ['COSC', 'ISYS', 'OENG', 'EEET']
 

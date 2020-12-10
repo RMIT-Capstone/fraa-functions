@@ -16,6 +16,6 @@ sessions = factory.SessionFactory().generate_session_data(courses=courses, stude
 
 # Publish data
 publisher.publish_courses(courses)
-publisher.publish_sessions(sessions)
 publisher.publish_students(students)
 publisher.publish_lecturers(lecturers)
+publisher.publish_sessions(sessions)

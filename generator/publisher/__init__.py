@@ -57,10 +57,10 @@ def publish_courses(courses):
             }
         }
         res = post_data(payload=payload, api='create_course')
-        if res.status_code == 200:
-            data.set_id(json.loads(res.text)['id'])
+        if "error" in json.loads(res.text):
+            print('Course existed: ', course['code'])
         else:
-            print(res.text)
+            data.set_id(json.loads(res.text)['id'])
     print('Finished publish courses')
 
 
@@ -74,13 +74,17 @@ def publish_students(students):
             'school': student['school'],
             'isLecturer': False
         }
-        post_data(payload=student_payload, api='create_user')
-
-        course_payload = {
-            'email': student['email'],
-            'courses': student['subscribedCourses']
-        }
-        post_data(payload=course_payload, api='subscribe_to_courses')
+        res = post_data(payload=student_payload, api='create_user')
+        if "error" in json.loads(res.text):
+            print('Error: ', res.text)
+        else:
+            course_payload = {
+                'email': student['email'],
+                'courses': student['subscribedCourses']
+            }
+            res2 = post_data(payload=course_payload, api='subscribe_to_courses')
+            if "error" in json.loads(res2.text):
+                print('Error subscribed to courses:', course_payload)
     print('Finished publish students')
 
 
@@ -94,13 +98,10 @@ def publish_lecturers(lecturers):
             'school': lecturer['school'],
             'isLecturer': True
         }
-        post_data(payload=payload, api='create_user')
+        res = post_data(payload=payload, api='create_user')
+        if "error" in json.loads(res.text):
+            print('Error: ', res.text)
 
-        course_payload = {
-            'email': lecturer['email'],
-            'courses': lecturer['subscribedCourses']
-        }
-        post_data(payload=course_payload, api='create_user')
     print('Finished publish lecturers')
 
 
@@ -150,5 +151,21 @@ def publish_sessions(sessions):
             "attendees": session["attendees"],
             "createdAt": parse(session['createdAt'])
         }
-        doc_ref.add(payload)
+        try:
+            doc_ref.add(payload)
+        except Exception as err:
+            print(err)
+            pass
+
+        for attendee in session['attendees']:
+            payload = {
+                "email": attendee,
+                "isLecturer": False
+            }
+            res = post_data(payload=payload, api='get_user_by_email')
+            if "error" in json.loads(res.text):
+                print('Error: ', res.text)
+            else:
+                _id = json.loads(res.text)['id']
+                store.collection('students').document(_id).update({"totalAttendedEventsCount": firestore.Increment(1)})
     print('Finished publish the sessions')
