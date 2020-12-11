@@ -7,12 +7,12 @@ const courseExistsWithDocumentId = async id => {
       .doc(id)
       .get();
     if (documentSnapshot.exists) {
-      return { courseExistsWithDocId: true, courseExistsWithDocIdError: null };
+      return { courseExists: true, errorCheckExists: null };
     }
-    return { courseExistsWithDocId: false, courseExistsWithDocIdError: null };
+    return { courseExists: false, errorCheckExists: null };
   } catch (errorCourseDocumentExistsWithDocumentId) {
     console.error('Something went wrong with getCourseDocumentIdWithCode: ', errorCourseDocumentExistsWithDocumentId);
-    return { courseExistsWithDocId: null, courseExistsWithDocIdError: errorCourseDocumentExistsWithDocumentId };
+    return { courseExists: null, errorCheckExists: errorCourseDocumentExistsWithDocumentId };
   }
 };
 
@@ -34,11 +34,11 @@ const getCourseDocumentIdWithCode = async code => {
   }
 };
 
-const studentAlreadySubscribedToCourses = async (userDocId, courseCode) => {
+const studentAlreadySubscribedToCourses = async (userId, courseCode) => {
   try {
     const querySnapshot = await db
-      .collection('students')
-      .doc(userDocId)
+      .collection('users')
+      .doc(userId)
       .get();
     const { subscribedCourses } = querySnapshot.data();
     if (!subscribedCourses) return { subscribed: false, subscribedError: null };

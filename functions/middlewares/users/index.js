@@ -1,14 +1,15 @@
 const {
+  validateCreateUserRequest,
+  validateDeleteUserRequest,
+  validateUpdateUserRequest,
+  validateGetUserByEmailRequest,
   validateUserAttendanceRegistrationRequest,
   validateUserSubscriptionRequest,
-  validateGetUserRequest,
   validateGetAllUsersRequest,
   validateGenerateOTPRequest,
   validateVerifyOTPRequest,
   validateSignInRequest,
-  validateUpdateRequest,
   validateChangePasswordRequest,
-  validateCreateUserRequest,
   validateCountMissedTotalAttendanceSessionsRequest,
 } = require('../../validators/users-validators');
 const { sendErrorObject } = require('../../helpers/express-helpers');
@@ -18,21 +19,39 @@ module.exports = async (req, res, next) => {
   const path = req.path.split('/')[1];
 
   if (path === USERS_ROUTES.CREATE_USER) {
-    const { email, password, displayName, school, isLecturer } = req.body;
-    const { error, valid } = await validateCreateUserRequest(email, password, displayName, school, isLecturer);
+    const { user } = req.body;
+    const { error, valid } = await validateCreateUserRequest(user);
     if (!valid) return sendErrorObject(res, error);
   }
 
-  if (path === USERS_ROUTES.SIGN_IN) {
-    const { email, password, isLecturer } = req.body;
-    const { error, valid } = await validateSignInRequest(email, password, isLecturer);
+  if (path === USERS_ROUTES.DELETE_USER) {
+    const { email } = req.body;
+    const { error, valid } = await validateDeleteUserRequest(email);
     if (!valid) return sendErrorObject(res, error);
   }
 
   if (path === USERS_ROUTES.UPDATE_USER) {
-    const { id, displayName, firstTimePassword, school, verified, isLecturer } = req.body;
+    const { user } = req.body;
     const { error, valid } =
-      await validateUpdateRequest(id, displayName, firstTimePassword, school, verified, isLecturer);
+      await validateUpdateUserRequest(user);
+    if (!valid) return sendErrorObject(res, error);
+  }
+
+  if (path === USERS_ROUTES.GET_USER_BY_EMAIL) {
+    const { email } = req.body;
+    const { valid, error } = await validateGetUserByEmailRequest(email);
+    if (!valid) return sendErrorObject(res, error);
+  }
+
+  if (path === USERS_ROUTES.GET_ALL_USERS) {
+    const { isLecturer } = req.body;
+    const { valid, error } = await validateGetAllUsersRequest(isLecturer);
+    if (!valid) return sendErrorObject(res, error);
+  }
+
+  if (path === USERS_ROUTES.SIGN_IN) {
+    const { email, password } = req.body;
+    const { error, valid } = await validateSignInRequest(email, password);
     if (!valid) return sendErrorObject(res, error);
   }
 
@@ -54,21 +73,9 @@ module.exports = async (req, res, next) => {
     if (!valid) return sendErrorObject(res, error);
   }
 
-  if (path === USERS_ROUTES.GET_USER_BY_EMAIL) {
-    const { email, isLecturer } = req.body;
-    const { valid, error } = await validateGetUserRequest(email, isLecturer);
-    if (!valid) return sendErrorObject(res, error);
-  }
-
-  if (path === USERS_ROUTES.GET_ALL_USERS) {
-    const { isLecturer } = req.body;
-    const { valid, error } = await validateGetAllUsersRequest(isLecturer);
-    if (!valid) return sendErrorObject(res, error);
-  }
-
   if (path === USERS_ROUTES.SUBSCRIBE_TO_COURSES || path === USERS_ROUTES.UNSUBSCRIBE_FROM_COURSES) {
-    const { email, courses } = req.body;
-    const { error, valid } = await validateUserSubscriptionRequest(email, courses, path);
+    const { userId, courses } = req.body;
+    const { error, valid } = await validateUserSubscriptionRequest(userId, courses, path);
     if (!valid) return sendErrorObject(res, error);
   }
 

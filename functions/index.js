@@ -95,14 +95,14 @@ app.post(`/${COURSES_ROUTES.DELETE_COURSE}`, coursesValidator, deleteCourse);
 
 // user handlers
 app.post(`/${USERS_ROUTES.CREATE_USER}`, usersValidator, onCreateUser);
-app.post(`/${USERS_ROUTES.SIGN_IN}`, usersValidator, signIn);
-app.post(`/${USERS_ROUTES.UPDATE_USER}`, usersValidator, updateUser);
 app.post(`/${USERS_ROUTES.DELETE_USER}`, usersValidator, deleteUserInAuth);
+app.post(`/${USERS_ROUTES.UPDATE_USER}`, usersValidator, updateUser);
+app.post(`/${USERS_ROUTES.GET_USER_BY_EMAIL}`, usersValidator, getUserByEmail);
+app.post(`/${USERS_ROUTES.GET_ALL_USERS}`, usersValidator, getAllUsers);
+app.post(`/${USERS_ROUTES.SIGN_IN}`, usersValidator, signIn);
 app.post(`/${USERS_ROUTES.CHANGE_PASSWORD}`, usersValidator, changeUserPassword);
 app.post(`/${USERS_ROUTES.GENERATE_OTP}`, usersValidator, generateOTP);
 app.post(`/${USERS_ROUTES.VERIFY_OTP}`, usersValidator, verifyOTP);
-app.post(`/${USERS_ROUTES.GET_USER_BY_EMAIL}`, usersValidator, getUserByEmail);
-app.post(`/${USERS_ROUTES.GET_ALL_USERS}`, usersValidator, getAllUsers);
 app.post(`/${USERS_ROUTES.SUBSCRIBE_TO_COURSES}`, usersValidator, subscribeUserToCourses);
 app.post(`/${USERS_ROUTES.UNSUBSCRIBE_FROM_COURSES}`, usersValidator, unsubscribeStudentFromCourses);
 app.post(`/${USERS_ROUTES.REGISTER_TO_ATTENDANCE_SESSION}`, usersValidator, registerStudentToAttendanceSession);
@@ -114,6 +114,7 @@ app.post(`/${USERS_ROUTES.COUNT_MISSED_TOTAL_ATTENDANCE_SESSIONS_GROUP}`,
   usersValidator,
   countMissedTotalAttendanceSessionsByCourses,
 );
+
 
 // user background functions
 exports.onUserDeleteInAuth = functions.region('asia-northeast1').auth.user().onDelete(onUserDeleteInAuth);

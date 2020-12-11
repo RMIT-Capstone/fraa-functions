@@ -18,6 +18,14 @@ const booleanIsMissing = bool => {
   return bool === undefined || typeof bool !== 'boolean';
 };
 
+const objectIsMissing = object => {
+  return object === undefined || typeof object !== 'object';
+};
+
+const arrayIsMissing = array => {
+  return array === undefined || !Array.isArray(array);
+};
+
 const isEmail = email => {
   let regEx;
   // eslint-disable-next-line no-useless-escape,max-len
@@ -30,5 +38,7 @@ module.exports = {
   generateOTPCode,
   stringIsEmpty,
   booleanIsMissing,
+  objectIsMissing,
+  arrayIsMissing,
   isEmail,
 };

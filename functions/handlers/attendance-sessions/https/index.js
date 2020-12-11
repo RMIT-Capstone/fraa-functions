@@ -1,7 +1,7 @@
 const { db, admin } = require('../../../utils/admin');
-const { sendErrorMessage } = require('../../../helpers/express-helpers');
-const { getStudentDocumentIdWithEmail } = require('../../../helpers/users-helpers');
+const { sendErrorMessage, sendSuccessMessage } = require('../../../helpers/express-helpers');
 const ERROR_MESSAGES = require('../../constants/ErrorMessages');
+const { getUserIdInFirestoreWithEmail } = require('../../../helpers/users-helpers');
 
 const today = new Date();
 
@@ -21,11 +21,10 @@ exports.createAttendanceSession = async (req, res) => {
       .collection('courses')
       .doc(courseId)
       .update({
-        sessionCounts: admin.firestore.FieldValue.increment(1)
+        sessionCounts: admin.firestore.FieldValue.increment(1),
       });
     return res.json(content);
-  }
-  catch (errorCreateAttendance) {
+  } catch (errorCreateAttendance) {
     console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} createAttendanceSession: `, errorCreateAttendance);
     return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
@@ -53,11 +52,10 @@ exports.getAttendanceSessionsInDateRange = async (req, res) => {
       markedDates = markAttendanceSessionsDate(sessions);
     }
     return res.json({ sessions, markedDates });
-  }
-  catch (errorGetAttendanceSessionByDateWithCourseCode) {
+  } catch (errorGetAttendanceSessionByDateWithCourseCode) {
     console.error(
       `${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getAttendanceSessionInDateRangeOfCourses: `,
-      errorGetAttendanceSessionByDateWithCourseCode
+      errorGetAttendanceSessionByDateWithCourseCode,
     );
     return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
@@ -90,11 +88,10 @@ exports.getAttendanceSessionsInMonthRange = async (req, res) => {
       markedDates = markAttendanceSessionsDate(sessions);
     }
     return res.json({ sessions, markedDates });
-  }
-  catch (errorGetAttendanceSessionsInMonthRange) {
+  } catch (errorGetAttendanceSessionsInMonthRange) {
     console.error(
       `${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getAttendanceSessionsInMonthRange`,
-      errorGetAttendanceSessionsInMonthRange
+      errorGetAttendanceSessionsInMonthRange,
     );
     return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
@@ -127,11 +124,10 @@ exports.getDailyAttendanceSessions = async (req, res) => {
       markedDates = markAttendanceSessionsDate(sessions);
     }
     return res.json({ sessions, markedDates });
-  }
-  catch (errorGetDailyAttendanceSessions) {
+  } catch (errorGetDailyAttendanceSessions) {
     console.error(
       `${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getDailyAttendanceSessions: `,
-      errorGetDailyAttendanceSessions
+      errorGetDailyAttendanceSessions,
     );
     return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
@@ -169,8 +165,7 @@ exports.getMonthlyAttendanceSessions = async (req, res) => {
       markedDates = markAttendanceSessionsDate(sessions);
     }
     return res.json({ sessions, markedDates });
-  }
-  catch (errorGetMonthlyAttendanceSessions) {
+  } catch (errorGetMonthlyAttendanceSessions) {
     console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE}`, errorGetMonthlyAttendanceSessions);
     return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
@@ -186,17 +181,20 @@ exports.registerStudentToAttendanceSession = async (req, res) => {
         attendees: admin.firestore.FieldValue.arrayUnion(email),
       });
 
-    const { studentDocId } = await getStudentDocumentIdWithEmail(email);
+    const { userId, errorGetUserId } = await getUserIdInFirestoreWithEmail(email);
+    if (errorGetUserId) {
+      console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE}`, errorGetUserId);
+      return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
+    }
 
     await db
-      .collection('students')
-      .doc(studentDocId)
+      .collection('users')
+      .doc(userId)
       .update({
         totalAttendedEventsCount: admin.firestore.FieldValue.increment(1),
       });
-    return res.json({ success: 'User registered.' });
-  }
-  catch (errorRegisterStudentToAttendanceSession) {
+    return sendSuccessMessage(res, 'User registered');
+  } catch (errorRegisterStudentToAttendanceSession) {
     console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE}`, errorRegisterStudentToAttendanceSession);
     return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }

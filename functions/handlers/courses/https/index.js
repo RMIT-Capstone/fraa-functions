@@ -1,6 +1,6 @@
 const { db, admin } = require('../../../utils/admin');
-const { getStudentDocumentIdWithEmail } = require('../../../helpers/users-helpers');
 const { sendErrorMessage } = require('../../../helpers/express-helpers');
+const { sendSuccessMessage } = require('../../../helpers/express-helpers');
 const ERROR_MESSAGES = require('../../constants/ErrorMessages');
 
 exports.createCourse = async (req, res) => {
@@ -173,21 +173,19 @@ exports.deleteCourse = async (req, res) => {
 };
 
 exports.subscribeUserToCourses = async (req, res) => {
-  const { courses, email } = req.body;
-  const { studentDocId, studentDocIdError } = await getStudentDocumentIdWithEmail(email);
-  if (studentDocIdError) return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}.`);
+  const { courses, userId } = req.body;
   try {
     // https://stackoverflow.com/questions/35612428/call-async-await-functions-in-parallel
     await Promise.all(courses.map(async course => {
       await db
-        .collection('students')
-        .doc(studentDocId)
+        .collection('users')
+        .doc(userId)
         .update({
           subscribedCourses: admin.firestore.FieldValue.arrayUnion(course),
         });
     }));
 
-    return res.json({ success: 'Student subscribed to course(s).' });
+    return sendSuccessMessage(res, 'Student subscribed to course(s).');
   }
   catch (errorSubscribeUserToCourses) {
     console.error(
@@ -199,15 +197,12 @@ exports.subscribeUserToCourses = async (req, res) => {
 };
 
 exports.unsubscribeStudentFromCourses = async (req, res) => {
-  const { courses, email } = req.body;
-  const { studentDocId, studentDocIdError } = await getStudentDocumentIdWithEmail(email);
-  if (studentDocIdError) return res.json({ error: `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}.` });
-
+  const { courses, userId } = req.body;
   try {
     await Promise.all(courses.map(async course => {
       await db
-        .collection('students')
-        .doc(studentDocId)
+        .collection('users')
+        .doc(userId)
         .update({
           subscribedCourses: admin.firestore.FieldValue.arrayRemove(course),
         });
