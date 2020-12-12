@@ -18,7 +18,6 @@ const {
 const ERROR_MESSAGES = require('../../handlers/constants/ErrorMessages');
 const USERS_ROUTES = require('../../utils/routes/users');
 
-
 const validateCreateUserRequest = async (user) => {
   let error = {};
   if (objectIsMissing(user)) error.user = `${ERROR_MESSAGES.MISSING_FIELD} user`;
@@ -244,7 +243,6 @@ const validateCountMissedTotalAttendanceSessionsRequest = async (email, courses,
   // TODO: validate courses in courses array
   return { error, valid: Object.keys(error).length === 0 };
 };
-
 
 module.exports = {
   validateCreateUserRequest,

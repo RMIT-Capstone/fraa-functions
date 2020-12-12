@@ -6,9 +6,8 @@ const {
   deleteOTPDocumentsByEmail,
 } = require('../../../helpers/users-helpers');
 const { generateOTPCode } = require('../../../helpers/utilities-helpers');
-const { sendErrorMessage, sendSuccessMessage } = require('../../../helpers/express-helpers');
+const { sendErrorMessage, sendSuccessMessage, sendSuccessObject } = require('../../../helpers/express-helpers');
 const ERROR_MESSAGES = require('../../constants/ErrorMessages');
-const { sendSuccessObject } = require('../../../helpers/express-helpers');
 
 const onCreateUser = async (req, res) => {
   const { user, user: { email, password } } = req.body;
