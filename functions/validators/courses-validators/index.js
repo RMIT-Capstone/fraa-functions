@@ -33,7 +33,7 @@ const validateGetCourseByCodeRequest = async code => {
   else {
     const { courseDocId, courseDocIdError } = await getCourseDocumentIdWithCode(code);
     if (courseDocIdError) error.course = 'Error retrieving course document id with code.';
-    if (!courseDocId) error.course = `${ERROR_MESSAGES.COURSE_DOES_NOT_EXISTS_WITH_CODE} ${code}.`;
+    if (!courseDocId) error.course = `${ERROR_MESSAGES.COURSE_DOES_NOT_EXIST_WITH_CODE} ${code}.`;
   }
 
   return { error, valid: Object.keys(error).length === 0 };
@@ -62,9 +62,9 @@ const validateUpdateCourseRequest = async (course) => {
     const { id } = course;
     if (stringIsEmpty(id)) error.id = `${ERROR_MESSAGES.MISSING_FIELD} id.`;
     else {
-      const { courseExistsWithDocId, courseExistsWithDocIdError } = await courseExistsWithDocumentId(id);
-      if (courseExistsWithDocIdError) error.course = 'Error checking course exists.';
-      if (!courseExistsWithDocId) error.course = `${ERROR_MESSAGES.COURSE_DOES_NOT_EXISTS_WITH_ID} ${id}`;
+      const { courseExists, errorCheckExists } = await courseExistsWithDocumentId(id);
+      if (errorCheckExists) error.course = 'Error checking course exists.';
+      if (!courseExists) error.course = `${ERROR_MESSAGES.COURSE_DOES_NOT_EXISTS_WITH_ID} ${id}`;
     }
   }
 
@@ -75,9 +75,9 @@ const validateDeleteCourseRequest = async (id) => {
   let error = {};
   if (stringIsEmpty(id)) error.id = `${ERROR_MESSAGES.MISSING_FIELD} id.`;
   else {
-    const { courseExistsWithDocId, courseExistsWithDocIdError } = await courseExistsWithDocumentId(id);
-    if (courseExistsWithDocIdError) error.course = 'Error checking course exists.';
-    if (!courseExistsWithDocId) error.course = `${ERROR_MESSAGES.COURSE_DOES_NOT_EXISTS_WITH_ID} ${id}`;
+    const { courseExists, errorCheckExists } = await courseExistsWithDocumentId(id);
+    if (errorCheckExists) error.course = 'Error checking course exists.';
+    if (!courseExists) error.course = `${ERROR_MESSAGES.COURSE_DOES_NOT_EXISTS_WITH_ID} ${id}`;
   }
 
   return { error, valid: Object.keys(error).length === 0 };

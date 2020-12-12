@@ -1,6 +1,8 @@
 module.exports = {
   CREATE_USER: 'create_user',
   SIGN_IN: 'sign_in',
+  UPDATE_USER: 'update_user',
+  DELETE_USER: 'delete_user',
   CHANGE_PASSWORD: 'change_password',
   GENERATE_OTP: 'generate_otp',
   VERIFY_OTP: 'verify_otp',

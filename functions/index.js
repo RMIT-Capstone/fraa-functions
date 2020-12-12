@@ -15,6 +15,8 @@ const USERS_ROUTES = require('./utils/routes/users');
 // user handlers
 const {
   onCreateUser,
+  deleteUserInAuth,
+  updateUser,
   verifyOTP,
   generateOTP,
   signIn,
@@ -46,23 +48,23 @@ const {
   getAttendanceSessionsInMonthRange,
   getDailyAttendanceSessions,
   getMonthlyAttendanceSessions,
-  registerStudentToAttendanceSession
+  registerStudentToAttendanceSession,
 } = require('./handlers/attendance-sessions/https');
 
 // background functions
 const { onUserDeleteInAuth } = require('./handlers/users/background');
 
 // middlewares
-const coursesValidator = require('./utils/middlewares/courses');
-const attendanceSessionsValidator = require('./utils/middlewares/attendance-sessions');
-const usersValidator = require('./utils/middlewares/users');
+const coursesValidator = require('./middlewares/courses');
+const attendanceSessionsValidator = require('./middlewares/attendance-sessions');
+const usersValidator = require('./middlewares/users');
 
 // TODO: check auth headers when doing CRUD operations
 
 // attendance session handlers
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.CREATE_ATTENDANCE_SESSION}`,
   attendanceSessionsValidator,
-  createAttendanceSession
+  createAttendanceSession,
 );
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.GET_ATTENDANCE_SESSIONS_IN_DATE_RANGE}`,
   attendanceSessionsValidator,
@@ -93,12 +95,14 @@ app.post(`/${COURSES_ROUTES.DELETE_COURSE}`, coursesValidator, deleteCourse);
 
 // user handlers
 app.post(`/${USERS_ROUTES.CREATE_USER}`, usersValidator, onCreateUser);
+app.post(`/${USERS_ROUTES.DELETE_USER}`, usersValidator, deleteUserInAuth);
+app.post(`/${USERS_ROUTES.UPDATE_USER}`, usersValidator, updateUser);
+app.post(`/${USERS_ROUTES.GET_USER_BY_EMAIL}`, usersValidator, getUserByEmail);
+app.post(`/${USERS_ROUTES.GET_ALL_USERS}`, usersValidator, getAllUsers);
 app.post(`/${USERS_ROUTES.SIGN_IN}`, usersValidator, signIn);
 app.post(`/${USERS_ROUTES.CHANGE_PASSWORD}`, usersValidator, changeUserPassword);
 app.post(`/${USERS_ROUTES.GENERATE_OTP}`, usersValidator, generateOTP);
 app.post(`/${USERS_ROUTES.VERIFY_OTP}`, usersValidator, verifyOTP);
-app.post(`/${USERS_ROUTES.GET_USER_BY_EMAIL}`, usersValidator, getUserByEmail);
-app.post(`/${USERS_ROUTES.GET_ALL_USERS}`, usersValidator, getAllUsers);
 app.post(`/${USERS_ROUTES.SUBSCRIBE_TO_COURSES}`, usersValidator, subscribeUserToCourses);
 app.post(`/${USERS_ROUTES.UNSUBSCRIBE_FROM_COURSES}`, usersValidator, unsubscribeStudentFromCourses);
 app.post(`/${USERS_ROUTES.REGISTER_TO_ATTENDANCE_SESSION}`, usersValidator, registerStudentToAttendanceSession);
@@ -110,6 +114,7 @@ app.post(`/${USERS_ROUTES.COUNT_MISSED_TOTAL_ATTENDANCE_SESSIONS_GROUP}`,
   usersValidator,
   countMissedTotalAttendanceSessionsByCourses,
 );
+
 
 // user background functions
 exports.onUserDeleteInAuth = functions.region('asia-northeast1').auth.user().onDelete(onUserDeleteInAuth);

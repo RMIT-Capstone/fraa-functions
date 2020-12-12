@@ -6,51 +6,27 @@ const {
   deleteOTPDocumentsByEmail,
 } = require('../../../helpers/users-helpers');
 const { generateOTPCode } = require('../../../helpers/utilities-helpers');
-const { sendErrorMessage } = require('../../../helpers/express-helpers');
+const { sendErrorMessage, sendSuccessMessage } = require('../../../helpers/express-helpers');
 const ERROR_MESSAGES = require('../../constants/ErrorMessages');
+const { sendSuccessObject } = require('../../../helpers/express-helpers');
 
 const onCreateUser = async (req, res) => {
-  const { email, password, displayName, school, isLecturer } = req.body;
+  const { user, user: { email, password } } = req.body;
   try {
     const { idToken, error } = await createUserInAuth(email, password);
     if (error) {
       if (error === 'Email already in use')
-        return sendErrorMessage(res, `${ERROR_MESSAGES.USER_ALREADY_EXISTS} ${email}`);
+        return sendErrorMessage(res, `${ERROR_MESSAGES.USER_ALREADY_EXISTS_WITH_EMAIL} ${email}`);
       else {
         console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} onCreateUser: `, error);
         return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
       }
     }
-    await createUserInFirestore(email, displayName, school, isLecturer);
-
-    return res.status(200).json({ idToken });
-  }
-  catch (errorOnCreateUser) {
-    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} onCreateUser:`, errorOnCreateUser);
+    const createResult = await createUserInFirestore(user);
+    return sendSuccessObject(res, { idToken, user: createResult });
+  } catch (errorOnCreateUser) {
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} onCreateUser: `, errorOnCreateUser);
     return res.json({ error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE });
-  }
-};
-
-const createUserInFirestore = async (email, displayName, school, isLecturer) => {
-  try {
-    const collection = isLecturer ? 'lecturers' : 'students';
-    await db
-      .collection(collection)
-      .add({
-        email,
-        displayName,
-        school,
-        subscribedCourses: [],
-        totalAttendedEventsCount: 0,
-        createdAt: new Date(),
-        firstTimePassword: true,
-      });
-  }
-  catch (errorCreateUserInFirestore) {
-    console.error(
-      `${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} createUserInFirestore: `,
-      errorCreateUserInFirestore
-    );
   }
 };
 
@@ -59,35 +35,170 @@ const createUserInAuth = async (email, password) => {
     const createAccount = await firebase.auth().createUserWithEmailAndPassword(email, password);
     const idToken = await createAccount.user.getIdToken();
     return { idToken, error: null };
-  }
-  catch (errorCreateUserInAuth) {
+  } catch (errorCreateUserInAuth) {
     if (errorCreateUserInAuth.code === 'auth/email-already-in-use') {
       return { idToken: null, error: 'Email already in use' };
-    }
-    else {
+    } else {
       console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} createUserInAuth: `, errorCreateUserInAuth);
       return { idToken: null, error: errorCreateUserInAuth };
     }
   }
 };
 
+const createUserInFirestore = async (user) => {
+  try {
+    const { isLecturer } = user;
+
+    isLecturer ? user.isLecturer = true : user.isLecturer = false;
+    user.subscribedCourses = [];
+    user.createdAt = new Date();
+    user.firstTimePassword = true;
+    user.verified = false;
+    delete user.password;
+
+    const result = await db
+      .collection('users')
+      .add(user);
+    user.id = result.id;
+
+    return user;
+
+  } catch (errorCreateUserInFirestore) {
+    console.error(
+      `${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} createUserInFirestore: `,
+      errorCreateUserInFirestore,
+    );
+    return null;
+  }
+};
+
+const deleteUserInAuth = async (req, res) => {
+  const { email } = req.body;
+  try {
+    const recordId = await getUserIdInFBAuthWithEmail(email);
+    await admin
+      .auth()
+      .deleteUser(recordId);
+    return sendSuccessObject(res, { uid: recordId });
+  } catch (errorDeleteUserInAuth) {
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} deleteUserInAuth: `, errorDeleteUserInAuth);
+    return res.json({ error: ERROR_MESSAGES.GENERIC_ERROR_MESSAGE });
+  }
+};
+
+const updateUser = async (req, res) => {
+  const { user, user: { id, displayName, firstTimePassword, school, verified } } = req.body;
+  try {
+    await db
+      .collection('users')
+      .doc(id)
+      .update({
+        displayName,
+        firstTimePassword,
+        school,
+        verified,
+      });
+    return sendSuccessObject(res, user);
+  } catch (errorUpdateUser) {
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} updateUser: `, errorUpdateUser);
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
+  }
+};
+
+const getUserByEmail = async (req, res) => {
+  const { email } = req.body;
+  try {
+    const { data, errorGetUser } = await getUserInFirestore(email);
+    if (errorGetUser) {
+      console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getUserByEmail: `, errorGetUser);
+      return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
+    }
+    return sendSuccessObject(res, { user: data });
+  } catch (errorGetUserByEmail) {
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getUserByEmail: `, errorGetUserByEmail);
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
+  }
+};
+
+const getUserInFirestore = async (email) => {
+  try {
+    const querySnapshot = await db
+      .collection('users')
+      .where('email', '==', email)
+      .get();
+
+    const data = querySnapshot.docs[0].data();
+    data.id = querySnapshot.docs[0].id;
+    data.createdAt = data.createdAt.toDate();
+
+    return { data, errorGetUser: null };
+  } catch (errorGetUserInFirestore) {
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getUserInFirestore: `, errorGetUserInFirestore);
+    return { data: null, errorGetUser: errorGetUserInFirestore };
+  }
+};
+
+const getAllUsers = async (req, res) => {
+  const { isLecturer } = req.body;
+  try {
+    const querySnapshot = await db
+      .collection('users')
+      .where('isLecturer', '==', isLecturer)
+      .get();
+
+    const users = [];
+    querySnapshot.forEach((snapshot) => {
+      let data = snapshot.data();
+      data.id = snapshot.id;
+      data.createdAt = snapshot.createTime.toDate();
+      users.push(data);
+    });
+
+    return sendSuccessObject(res, { users });
+  } catch (errorGetAllStudents) {
+    console.error('Something went wrong with getAllStudents: ', errorGetAllStudents);
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
+  }
+};
+
 const signIn = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, isLecturer } = req.body;
   try {
     const signIn = await firebase.auth().signInWithEmailAndPassword(email, password);
-    const idToken = await signIn.user.getIdToken();
-    return res.json({ token: idToken });
+    const token = await signIn.user.getIdToken();
+    const { data: user, errorGetUser } = await getUserInFirestore(email, isLecturer);
+
+    if (errorGetUser) {
+      console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getUserByEmail: `, errorGetUser);
+      return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
+    }
+
+    return sendSuccessObject(res, { token, user });
   } catch (errorSignIn) {
     if (errorSignIn.code === 'auth/wrong-password') {
-      return res.json({ error: 'Password is incorrect' });
-    }
-    else if (errorSignIn.code === 'auth/user-not-found') {
-      return res.json({ error: 'User does not exist' });
-    }
-    else {
+      return sendErrorMessage(res, 'Password is incorrect');
+    } else if (errorSignIn.code === 'auth/user-not-found') {
+      return sendErrorMessage(res, 'User does not exist');
+    } else {
       console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} signIn: `, errorSignIn);
       return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
     }
+  }
+};
+
+const changeUserPassword = async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const recordId = await getUserIdInFBAuthWithEmail(email);
+    await admin
+      .auth()
+      .updateUser(recordId, {
+        password: password,
+      });
+    return sendSuccessMessage(res, 'Password changed successfully');
+  } catch (errorChangeUserPassword) {
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} changeUserPassword: `, errorChangeUserPassword);
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
 
@@ -98,15 +209,16 @@ const generateOTP = async (req, res) => {
     const now = new Date();
     now.setMinutes(now.getMinutes() + 5);
     const fiveMinutesFromNow = new Date(now);
-    await db.collection('reset-password-otp').add({
-      email,
-      OTP,
-      expiryTime: fiveMinutesFromNow,
-    });
+    await db
+      .collection('reset-password-otp')
+      .add({
+        email,
+        OTP,
+        expiryTime: fiveMinutesFromNow,
+      });
     await sendOTPToUser(email, OTP);
-    return res.status(200).json({ success: 'OTP code created.' });
-  }
-  catch (errorGenerateOTP) {
+    return sendSuccessMessage(res, 'OTP code generated');
+  } catch (errorGenerateOTP) {
     console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} generateOTP: `, errorGenerateOTP);
     return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
@@ -120,76 +232,17 @@ const verifyOTP = async (req, res) => {
     const now = new Date();
 
     if (expiryTime.toDate() < now) {
-      return res.json({ error: 'OTP expired.' });
+      return sendSuccessMessage(res, 'OTP expired');
     }
     if (OTP === userOTP) {
       const { success } = await deleteOTPDocumentsByEmail(email);
-      if (success) return res.json({ success: 'Valid OTP.' });
+      if (success) return sendSuccessMessage(res, 'Valid OTP');
       else return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
+    } else {
+      return sendSuccessMessage(res, 'Invalid OTP');
     }
-    else {
-      return res.json({ error: 'Invalid OTP.' });
-    }
-  }
-  catch (errorVerifyOTP) {
+  } catch (errorVerifyOTP) {
     console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} verifyOTP: `, errorVerifyOTP);
-    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
-  }
-};
-
-const changeUserPassword = async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    const recordId = await getUserIdInFBAuthWithEmail(email);
-    await admin.auth().updateUser(recordId, {
-      password: password,
-    });
-    return res.json({ success: 'Password updated successfully.' });
-  } catch (errorChangeUserPassword) {
-    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} changeUserPassword: `, errorChangeUserPassword);
-    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
-  }
-};
-
-const getUserByEmail = async (req, res) => {
-  const { email, isLecturer } = req.body;
-  const collection = isLecturer ? 'lecturers' : 'students';
-  try {
-    const querySnapshot = await db
-      .collection(collection)
-      .where('email', '==', email)
-      .get();
-
-    const data = querySnapshot.docs[0].data();
-    data.id = querySnapshot.docs[0].id;
-    data.createdAt = data.createdAt.toDate();
-
-    return res.json(data);
-  } catch (errorGetUserByEmail) {
-    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getUserByEmail: `, errorGetUserByEmail);
-    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
-  }
-};
-
-const getAllUsers = async (req, res) => {
-  const { isLecturer } = req.body;
-  const collection = isLecturer ? 'lecturers' : 'students';
-  try {
-    const querySnapshot = await db
-      .collection(collection)
-      .get();
-
-    const students = [];
-    querySnapshot.forEach((snapshot) => {
-      let data = snapshot.data();
-      data.id = snapshot.id;
-      data.createdAt = snapshot.createTime.toDate();
-      students.push(data);
-    });
-
-    return res.send(students);
-  } catch (errorGetAllStudents) {
-    console.error('Something went wrong with getAllStudents: ', errorGetAllStudents);
     return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };
@@ -242,22 +295,19 @@ const countMissedTotalAttendanceSessionsByCourses = async (req, res) => {
       return res.send({ missed, total });
     }
 
+    courses.forEach((course) => {
+      missed[course] = 0;
+      total[course] = 0;
+    });
+
     querySnapshot.forEach(snapshot => {
       const { attendees, validOn, courseCode } = snapshot.data();
       if (validOn.toDate() < now && !attendees.includes(email) && courses.includes(courseCode)) {
-        if (!(courseCode in missed)) {
-          missed[courseCode] = 1;
-        } else {
-          missed[courseCode] = missed[courseCode] + 1;
-        }
+        missed[courseCode] = missed[courseCode] + 1;
       }
 
       if (courses.includes(courseCode)) {
-        if (!(courseCode in total)) {
-          total[courseCode] = 1;
-        } else {
-          total[courseCode] = total[courseCode] + 1;
-        }
+        total[courseCode] = total[courseCode] + 1;
       }
     });
 
@@ -271,6 +321,8 @@ const countMissedTotalAttendanceSessionsByCourses = async (req, res) => {
 
 module.exports = {
   onCreateUser,
+  deleteUserInAuth,
+  updateUser,
   signIn,
   generateOTP,
   verifyOTP,

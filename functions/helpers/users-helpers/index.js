@@ -1,44 +1,36 @@
 const { db, admin } = require('../../utils/admin');
 
-const getStudentDocumentIdWithEmail = async email => {
+const userWithEmailExistsInFirestore = async (email) => {
   try {
     const querySnapshot = await db
-      .collection('students')
+      .collection('users')
       .where('email', '==', email)
       .get();
 
     if (querySnapshot.empty) {
-      return { studentDocId: null, studentDocIdError: null };
-    } else {
-      const documentId = querySnapshot.docs[0].id;
-      return { studentDocId: documentId, studentDocIdError: null };
+      return { existsWithEmail: false, errorCheckExists: null };
     }
-  }
-  catch (errorGetUserDocumentIdWithEmail) {
-    console.error('Something went wrong with getUserDocumentIdWithEmail: ', errorGetUserDocumentIdWithEmail);
-    return { studentDocId: null, studentDocIdError: errorGetUserDocumentIdWithEmail };
+    return { existsWithEmail: true, errorCheckExists: null };
+  } catch (errorCheckUserExistsWithEmail) {
+    console.error('Something went wrong with userWithEmailExistsInFirestore: ', errorCheckUserExistsWithEmail);
+    return { existsWithEmail: null, errorCheckExists: errorCheckUserExistsWithEmail };
   }
 };
 
-const getLecturerDocumentIdWithEmail = async email => {
+const userWithIdExistsInFirestore = async (id) => {
   try {
-    const querySnapshot = await db
-      .collection('lecturers')
-      .where('email', '==', email)
+    const documentSnapshot = await db
+      .collection('users')
+      .doc(id)
       .get();
 
-    if (querySnapshot.empty) {
-      return { lecturerDocId: null, lecturerDocIdError: null };
+    if (documentSnapshot.exists) {
+      return { existsWithId: true, errorCheckExists: null };
     }
-    else {
-      const documentId = querySnapshot.docs[0].id;
-      return { lecturerDocId: documentId, lecturerDocIdError: null };
-    }
-  }
-  catch (errorGetLecturerDocumentIdWithEmail) {
-    console.error(
-      'Something went wrong with getLecturerDocumentIdWithEmail: ', errorGetLecturerDocumentIdWithEmail);
-    return { lecturerDocId: null, lecturerDocIdError: errorGetLecturerDocumentIdWithEmail };
+    return { existsWithId: false, errorCheckExists: null };
+  } catch (errorCheckUserExistsWithId) {
+    console.error('Something went wrong with userWithIdExistsInFirestore: ', errorCheckUserExistsWithId);
+    return { existsWithId: null, errorCheckExists: errorCheckUserExistsWithId };
   }
 };
 
@@ -51,8 +43,7 @@ const getLatestOTPDocumentOfUser = async email => {
       .get();
     if (querySnapshot.empty) return { error: `no OTP code found with ${email}` };
     return { data: querySnapshot.docs[0].data(), error: null };
-  }
-  catch (errorGetLatestOTPDocumentOfUser) {
+  } catch (errorGetLatestOTPDocumentOfUser) {
     console.error('Something went wrong with getLatestOTPDocumentOfUser: ', errorGetLatestOTPDocumentOfUser);
     return { data: null, error: errorGetLatestOTPDocumentOfUser };
   }
@@ -70,10 +61,26 @@ const deleteOTPDocumentsByEmail = async email => {
       });
     }
     return { success: true };
-  }
-  catch (errorDeleteOTPDocuments) {
+  } catch (errorDeleteOTPDocuments) {
     console.error('Something went wrong with deleteOTPDocumentsByEmail', errorDeleteOTPDocuments);
     return { success: false };
+  }
+};
+
+const getUserIdInFirestoreWithEmail = async (email) => {
+  try {
+    const querySnapshot = await db
+      .collection('users')
+      .where('email', '==', email)
+      .get();
+
+    if (querySnapshot.empty) {
+      return { userId: null, errorGetUserId: null };
+    }
+    return { userId: querySnapshot.docs[0].id, errorGetUserId: null };
+  } catch (errorGetUserIdInFirestoreWithEmail) {
+    console.error('Something went wrong with getUserIdInFirestoreWithEmail: ', errorGetUserIdInFirestoreWithEmail);
+    return { userId: null, errorGetUserId: null };
   }
 };
 
@@ -93,9 +100,10 @@ const getUserIdInFBAuthWithEmail = async email => {
 };
 
 module.exports = {
-  getStudentDocumentIdWithEmail,
-  getLecturerDocumentIdWithEmail,
+  userWithEmailExistsInFirestore,
+  userWithIdExistsInFirestore,
   getLatestOTPDocumentOfUser,
   deleteOTPDocumentsByEmail,
+  getUserIdInFirestoreWithEmail,
   getUserIdInFBAuthWithEmail,
 };

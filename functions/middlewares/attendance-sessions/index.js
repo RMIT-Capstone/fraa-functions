@@ -1,12 +1,12 @@
-const { sendErrorObject } = require('../../../helpers/express-helpers');
+const { sendErrorObject } = require('../../helpers/express-helpers');
 const {
   validateGetMonthlyAttendanceSessionsRequest,
   validateGetDailyAttendanceSessionsRequest,
   validateGetAttendanceSessionsInMonthRangeRequest,
   validateGetAttendanceSessionsInDateRangeRequest,
   validateCreateAttendanceSessionRequest,
-} = require('../../../validators/attendance-sessions-validators');
-const ATTENDANCE_SESSIONS_ROUTES = require('../../routes/attendance-sessions');
+} = require('../../validators/attendance-sessions-validators');
+const ATTENDANCE_SESSIONS_ROUTES = require('../../utils/routes/attendance-sessions');
 
 module.exports = async (req, res, next) => {
   const path = req.path.split('/')[1];

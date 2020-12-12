@@ -2,68 +2,130 @@ const {
   userAlreadyRegisteredToAttendanceSession,
   attendanceSessionExistsWithDocId,
 } = require('../../helpers/attendance-sessions-helpers');
-const { isEmail, stringIsEmpty } = require('../../helpers/utilities-helpers');
+const {
+  isEmail,
+  stringIsEmpty,
+  booleanIsMissing,
+  objectIsMissing,
+  arrayIsMissing,
+} = require('../../helpers/utilities-helpers');
 const { studentAlreadySubscribedToCourses, getCourseDocumentIdWithCode } = require('../../helpers/courses-helpers');
 const {
-  getStudentDocumentIdWithEmail,
-  getLecturerDocumentIdWithEmail,
+  userWithEmailExistsInFirestore,
+  userWithIdExistsInFirestore,
   getLatestOTPDocumentOfUser,
-  getUserIdInFBAuthWithEmail
 } = require('../../helpers/users-helpers');
 const ERROR_MESSAGES = require('../../handlers/constants/ErrorMessages');
 const USERS_ROUTES = require('../../utils/routes/users');
 
-const validateCreateUserRequest = async (email, password, displayName, school, isLecturer) => {
+
+const validateCreateUserRequest = async (user) => {
   let error = {};
-  if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email.`;
-  else if (!isEmail(email)) error.email = 'Email is not in correct format';
-  if (stringIsEmpty(password)) error.password = `${ERROR_MESSAGES.MISSING_FIELD} password.`;
-  else if (password.length < 6) error.password = 'Password must be longer than 6 characters.';
-  if (stringIsEmpty(displayName)) error.displayName = `${ERROR_MESSAGES.MISSING_FIELD} displayName.`;
-  if (stringIsEmpty(school)) error.school = `${ERROR_MESSAGES.MISSING_FIELD} school.`;
-  if (isLecturer === undefined || !(typeof isLecturer === 'boolean')) {
-    error.isLecturer = 'isLecturer must not be empty and has to be boolean.';
+  if (objectIsMissing(user)) error.user = `${ERROR_MESSAGES.MISSING_FIELD} user`;
+  else {
+    const { email, password, displayName, school, isLecturer } = user;
+    if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email`;
+    else if (!isEmail(email)) error.email = 'Email is not in correct format';
+    if (stringIsEmpty(password)) error.password = `${ERROR_MESSAGES.MISSING_FIELD} password`;
+    else if (password.length < 6) error.password = 'Password must be longer than 6 characters';
+    if (stringIsEmpty(displayName)) error.displayName = `${ERROR_MESSAGES.MISSING_FIELD} displayName`;
+    if (stringIsEmpty(school)) error.school = `${ERROR_MESSAGES.MISSING_FIELD} school`;
+    if (booleanIsMissing(isLecturer)) {
+      error.isLecturer = 'isLecturer must not be empty and has to be boolean';
+    }
   }
+
   // email duplicate is already handled inside create user function in users/https
 
   return { error, valid: Object.keys(error).length === 0 };
 };
 
-const validateSignInRequest = async (email, password, isLecturer) => {
+const validateDeleteUserRequest = async (email) => {
   let error = {};
-  if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email.`;
-  else if (!isEmail(email)) error.email = 'Email is not in correct format.';
-  if (isLecturer === undefined || !(typeof isLecturer === 'boolean')) {
-    error.isLecturer = 'isLecturer must not be empty and has to be boolean.';
-  } else {
-    if (!stringIsEmpty(email) && isEmail(email)) {
-      if (isLecturer) {
-        const { lecturerDocId, lecturerDocIdError } = await getLecturerDocumentIdWithEmail(email);
-        if (lecturerDocIdError) error.lecturer = 'Error retrieving lecturer document id with email.';
-        if (!lecturerDocId) error.lecturer = `No lecturer exists with email: ${email}`;
-      } else {
-        const { studentDocId, errorStudentDocId } = await getStudentDocumentIdWithEmail(email);
-        if (errorStudentDocId) error.student = 'Error retrieving student document id with email.';
-        if (!studentDocId) error.student = `No student exists with email: ${email}`;
+  if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email`;
+  else if (!isEmail(email)) error.email = 'Email is not in correct format';
+  else {
+    const { existsWithEmail, errorCheckExists } = await userWithEmailExistsInFirestore(email);
+    if (errorCheckExists) error.user = 'Error checking user exists';
+    if (!existsWithEmail) error.user = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST_WITH_EMAIL} ${email}`;
+  }
+
+  return { error, valid: Object.keys(error).length === 0 };
+};
+
+const validateUpdateUserRequest = async (user) => {
+  let error = {};
+
+  if (objectIsMissing(user)) error.user = `${ERROR_MESSAGES.MISSING_FIELD} user`;
+  else {
+    const { id, displayName, firstTimePassword, school, verified } = user;
+    if (stringIsEmpty(id)) error.id = `${ERROR_MESSAGES.MISSING_FIELD} id.`;
+    else {
+      const { existsWithId, errorCheckExists } = await userWithIdExistsInFirestore(id);
+      if (errorCheckExists) error.user = 'Error checking user exists with id';
+      if (!existsWithId) error.user = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST_WITH_ID} ${id}`;
+      else {
+        if (stringIsEmpty(displayName)) error.displayName = `${ERROR_MESSAGES.MISSING_FIELD} displayName`;
+        if (booleanIsMissing(firstTimePassword)) {
+          error.firstTimePassword = `${ERROR_MESSAGES.MISSING_FIELD} firstTimePassword`;
+        }
+        if (stringIsEmpty(school)) error.school = `${ERROR_MESSAGES.MISSING_FIELD} school`;
+        if (booleanIsMissing(verified)) error.verified = `${ERROR_MESSAGES.MISSING_FIELD} verified`;
       }
     }
   }
+
+  return { error, valid: Object.keys(error).length === 0 };
+};
+
+const validateGetUserByEmailRequest = async (email) => {
+  let error = {};
+  if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email`;
+  else if (!isEmail(email)) error.email = 'Email is not in correct format';
+  else {
+    const { existsWithEmail, errorCheckExists } = await userWithEmailExistsInFirestore(email);
+    if (errorCheckExists) error.user = 'Error checking user exists';
+    if (!existsWithEmail) error.user = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST_WITH_EMAIL} ${email}`;
+  }
+
+  return { error, valid: Object.keys(error).length === 0 };
+};
+
+const validateGetAllUsersRequest = (isLecturer) => {
+  let error = {};
+  if (booleanIsMissing(isLecturer)) {
+    error.isLecturer = 'isLecturer must not be empty and has to be boolean';
+  }
+
+  return { error, valid: Object.keys(error).length === 0 };
+};
+
+const validateSignInRequest = async (email, password) => {
+  let error = {};
+  if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email`;
+  else if (!isEmail(email)) error.email = 'Email is not in correct format';
+  else {
+    const { existsWithEmail, errorCheckExists } = await userWithEmailExistsInFirestore(email);
+    if (errorCheckExists) error.user = 'Error checking user exists';
+    if (!existsWithEmail) error.user = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST_WITH_EMAIL} ${email}`;
+  }
   if (stringIsEmpty(password)) error.password = `${ERROR_MESSAGES.MISSING_FIELD} password`;
-  else if (password.length < 6) error.password = 'Password must be longer than 6 characters.';
+  else if (password.length < 6) error.password = 'Password must be longer than 6 characters';
 
   return { error, valid: Object.keys(error).length === 0 };
 };
 
 const validateChangePasswordRequest = async (email, password) => {
   let error = {};
-  if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email.`;
-  else if (!isEmail(email)) error.email = 'Email is not in correct format.';
+  if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email`;
+  else if (!isEmail(email)) error.email = 'Email is not in correct format';
   else {
-    const userId = await getUserIdInFBAuthWithEmail(email);
-    if (!userId) error.user = `No user exists with email: ${email}`;
+    const { existsWithEmail, errorCheckExists } = await userWithEmailExistsInFirestore(email);
+    if (errorCheckExists) error.user = 'Error checking user exists';
+    if (!existsWithEmail) error.user = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST_WITH_EMAIL} ${email}`;
   }
   if (stringIsEmpty(password)) error.password = `${ERROR_MESSAGES.MISSING_FIELD} password`;
-  else if (password.length < 6) error.password = 'Password must be longer than 6 characters.';
+  else if (password.length < 6) error.password = 'Password must be longer than 6 characters';
 
   return { error, valid: Object.keys(error).length === 0 };
 };
@@ -74,8 +136,9 @@ const validateGenerateOTPRequest = async (email) => {
   if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email.`;
   else if (!isEmail(email)) error.email = 'Email is not in correct format';
   else {
-    const userId = await getUserIdInFBAuthWithEmail(email);
-    if (!userId) error.user = `No user exists with email: ${email}`;
+    const { existsWithEmail, errorCheckExists } = await userWithEmailExistsInFirestore(email);
+    if (errorCheckExists) error.user = 'Error checking user exists';
+    if (!existsWithEmail) error.user = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST_WITH_EMAIL} ${email}`;
   }
 
   return { error, valid: Object.keys(error).length === 0 };
@@ -84,76 +147,43 @@ const validateGenerateOTPRequest = async (email) => {
 const validateVerifyOTPRequest = async (email, OTP) => {
   let error = {};
 
-  if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email.`;
+  if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email`;
   else if (!isEmail(email)) error.email = 'Email is not in correct format';
   else {
-    const userId = await getUserIdInFBAuthWithEmail(email);
-    if (!userId) error.user = `No user exists with email: ${email}`;
+    const { existsWithEmail, errorCheckExists } = await userWithEmailExistsInFirestore(email);
+    if (errorCheckExists) error.user = 'Error checking user exists';
+    if (!existsWithEmail) error.user = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST_WITH_EMAIL} ${email}`;
   }
-  if (stringIsEmpty(OTP)) error.OTP = `${ERROR_MESSAGES.MISSING_FIELD} OTP.`;
+  if (stringIsEmpty(OTP)) error.OTP = `${ERROR_MESSAGES.MISSING_FIELD} OTP`;
   else {
     const { data, OTPDocumentError } = await getLatestOTPDocumentOfUser(email);
-    if (OTPDocumentError) error.OTP = 'Error retrieving user OTP documents with email.';
-    if (!data) error.OTP = `No OTP documents is found with ${email}.`;
+    if (OTPDocumentError) error.OTP = 'Error retrieving user OTP documents with email';
+    if (!data) error.OTP = `No OTP documents is found with ${email}`;
   }
 
   return { error, valid: Object.keys(error).length === 0 };
 };
 
-const validateGetUserRequest = async (email, isLecturer) => {
+
+const validateUserSubscriptionRequest = async (userId, courses, path) => {
   let error = {};
-  if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email.`;
-  else if (!isEmail(email)) error.email = 'Email is not in correct format';
-  if (isLecturer === undefined || typeof isLecturer !== 'boolean') {
-    error.isLecturer = 'isLecturer must not be empty and has to be boolean.';
-  } else {
-    if (!stringIsEmpty(email) && isEmail(email)) {
-      if (isLecturer) {
-        const { lecturerDocId, lecturerDocIdError } = await getLecturerDocumentIdWithEmail(email);
-        if (lecturerDocIdError) error.lecturer = 'Error retrieving lecturer document id with email.';
-        if (!lecturerDocId) error.lecturer = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}.`;
-      } else {
-        const { studentDocId, studentDocIdError } = await getStudentDocumentIdWithEmail(email);
-        if (studentDocIdError) error.student = 'Error retrieving student document id with email.';
-        if (!studentDocId) error.student = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}.`;
-      }
-    }
-  }
-
-  return { error, valid: Object.keys(error).length === 0 };
-};
-
-const validateGetAllUsersRequest = (isLecturer) => {
-  let error = {};
-  if (isLecturer === undefined || !(typeof isLecturer === 'boolean')) {
-    error.isLecturer = 'isLecturer must not be empty and has to be boolean.';
-  }
-
-  return { error, valid: Object.keys(error).length === 0 };
-};
-
-const validateUserSubscriptionRequest = async (email, courses, path) => {
-  let error = {};
-  if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email.`;
-  else if (!isEmail(email)) error.email = 'Email is not in correct format';
-  if (!courses || !Array.isArray(courses)) error.courses = `${ERROR_MESSAGES.MISSING_FIELD} courses.`;
+  if (stringIsEmpty(userId)) error.userId = `${ERROR_MESSAGES.MISSING_FIELD} userId`;
+  else if (arrayIsMissing(courses)) error.courses = `${ERROR_MESSAGES.MISSING_FIELD} courses`;
   else {
-    if (!stringIsEmpty(email) && isEmail(email)) {
-      let invalidCourses = [];
-      let subscribedCourses = [];
-      let notSubscribedCourses = [];
+    let invalidCourses = [];
+    let subscribedCourses = [];
+    let notSubscribedCourses = [];
 
-      const { studentDocId, studentDocIdError } = await getStudentDocumentIdWithEmail(email);
-      if (studentDocIdError) error.student = 'Error retrieving student id with email.';
-      if (!studentDocId) error.user = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}`;
-
-      // TODO: is this really necessary ?
+    const { existsWithId, errorCheckExists } = await userWithIdExistsInFirestore(userId);
+    if (errorCheckExists) error.user = 'Error checking user exists with id';
+    if (!existsWithId) error.user = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST_WITH_ID} ${userId}`;
+    else {
       await Promise.all(courses.map(async courseCode => {
         const { courseDocId, courseDocIdError } = await getCourseDocumentIdWithCode(courseCode);
-        const { subscribed, subscribedError } = await studentAlreadySubscribedToCourses(studentDocId, courseCode);
+        const { subscribed, subscribedError } = await studentAlreadySubscribedToCourses(userId, courseCode);
 
         if (!courseDocId) invalidCourses.push(courseCode);
-        if (courseDocIdError) error.course = 'Error retrieving course document id with code.';
+        if (courseDocIdError) error.course = 'Error retrieving course document id with code';
 
         if (path === USERS_ROUTES.SUBSCRIBE_TO_COURSES) {
           if (subscribed) subscribedCourses.push(courseCode);
@@ -161,14 +191,14 @@ const validateUserSubscriptionRequest = async (email, courses, path) => {
           if (!subscribed) notSubscribedCourses.push(courseCode);
         }
 
-        if (subscribedError) error.subscription = 'Error checking user subscription.';
+        if (subscribedError) error.subscription = 'Error checking user subscription';
         if (invalidCourses.length > 0) error.courses = `Course(s) do not exists: ${invalidCourses}`;
 
         if (path === USERS_ROUTES.SUBSCRIBE_TO_COURSES && subscribedCourses.length > 0) {
-          error.user = `User already subscribed to course(s): ${subscribedCourses}.`;
+          error.user = `User already subscribed to course(s): ${subscribedCourses}`;
         }
         if (path === USERS_ROUTES.UNSUBSCRIBE_FROM_COURSES && notSubscribedCourses.length > 0) {
-          error.user = `User is not subscribed to course(s): ${notSubscribedCourses}.`;
+          error.user = `User is not subscribed to course(s): ${notSubscribedCourses}`;
         }
       }));
     }
@@ -179,23 +209,24 @@ const validateUserSubscriptionRequest = async (email, courses, path) => {
 
 const validateUserAttendanceRegistrationRequest = async (email, sessionId) => {
   let error = {};
-  if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email.`;
-  else if (!isEmail(email)) error.email = 'Email is in incorrect format.';
-  if (!sessionId) error.sessionId = `${ERROR_MESSAGES.MISSING_FIELD} sessionId.`;
+  if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email`;
+  else if (!isEmail(email)) error.email = 'Email is in incorrect format';
+  else {
+    const { existsWithEmail, errorCheckExists } = await userWithEmailExistsInFirestore(email);
+    if (errorCheckExists) error.user = 'Error checking user exists';
+    if (!existsWithEmail) error.user = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST_WITH_EMAIL} ${email}`;
+  }
+  if (!sessionId) error.sessionId = `${ERROR_MESSAGES.MISSING_FIELD} sessionId`;
   else {
     if (!stringIsEmpty(email) && isEmail(email)) {
       // eslint-disable-next-line max-len
       const { attendanceSessionExists, attendanceSessionExistsError } = await attendanceSessionExistsWithDocId(sessionId);
       if (attendanceSessionExistsError) error.session = 'Error retrieving session id with email.';
-      if (!attendanceSessionExists) error.session = `No attendance session exists with id: ${sessionId}.`;
+      if (!attendanceSessionExists) error.session = `No attendance session exists with id: ${sessionId}`;
       else {
-        const { studentDocId, studentDocIdError } = await getStudentDocumentIdWithEmail(email);
-        if (studentDocIdError) error.student = 'Error retrieving document id with email.';
-        if (!studentDocId) error.student = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST} ${email}.`;
-
         const { attended, errorAttended } = await userAlreadyRegisteredToAttendanceSession(email, sessionId);
-        if (errorAttended) error.student = 'Error checking user attendance.';
-        if (attended) error.attended = 'Student have already attended this session.';
+        if (errorAttended) error.student = 'Error checking user attendance';
+        if (attended) error.attended = 'Student have already attended this session';
       }
     }
   }
@@ -207,7 +238,7 @@ const validateCountMissedTotalAttendanceSessionsRequest = async (email, courses,
   let error = {};
   if (stringIsEmpty(email)) error.email = `${ERROR_MESSAGES.MISSING_FIELD} email.`;
   else if (!isEmail(email)) error.email = 'Email is in incorrect format.';
-  if (!courses || !Array.isArray(courses)) error.courses = `${ERROR_MESSAGES.MISSING_FIELD} courses.`;
+  if (arrayIsMissing(courses)) error.courses = `${ERROR_MESSAGES.MISSING_FIELD} courses.`;
   if (stringIsEmpty(semester)) error.semester = `${ERROR_MESSAGES.MISSING_FIELD} semester.`;
   // TODO: validate user subscription
   // TODO: validate courses in courses array
@@ -217,12 +248,14 @@ const validateCountMissedTotalAttendanceSessionsRequest = async (email, courses,
 
 module.exports = {
   validateCreateUserRequest,
+  validateDeleteUserRequest,
+  validateUpdateUserRequest,
+  validateGetUserByEmailRequest,
+  validateGetAllUsersRequest,
   validateSignInRequest,
   validateChangePasswordRequest,
   validateGenerateOTPRequest,
   validateVerifyOTPRequest,
-  validateGetUserRequest,
-  validateGetAllUsersRequest,
   validateUserSubscriptionRequest,
   validateUserAttendanceRegistrationRequest,
   validateCountMissedTotalAttendanceSessionsRequest,

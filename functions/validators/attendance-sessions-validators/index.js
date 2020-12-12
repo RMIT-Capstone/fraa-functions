@@ -14,9 +14,9 @@ const validateCreateAttendanceSessionRequest = async (courseId, courseCode, cour
   else if (stringIsEmpty(semester)) error.semester = `${ERROR_MESSAGES.MISSING_FIELD} semester.`;
   else if (stringIsEmpty(validOn)) error.validOn = `${ERROR_MESSAGES.MISSING_FIELD} validOn.`;
   else {
-    const { courseExistsWithDocId, courseExistsWithDocIdError } = await courseExistsWithDocumentId(courseId);
-    if (courseExistsWithDocIdError) error.course = 'Error checking course exists.';
-    if (!courseExistsWithDocId) error.course = `${ERROR_MESSAGES.COURSE_DOES_NOT_EXISTS_WITH_ID} ${courseId}.`;
+    const { courseExists, errorCheckExists } = await courseExistsWithDocumentId(courseId);
+    if (errorCheckExists) error.course = 'Error checking course exists.';
+    if (!courseExists) error.course = `${ERROR_MESSAGES.COURSE_DOES_NOT_EXISTS_WITH_ID} ${courseId}.`;
     else {
       let sessions = [];
       const start = new Date(validOn).setHours(0, 0, 0, 0);
