@@ -2,36 +2,91 @@ const { stringIsEmpty } = require('../../helpers/utilities-helpers');
 const { getCourseDocumentIdWithCode, courseExistsWithDocumentId } = require('../../helpers/courses-helpers');
 const ERROR_MESSAGES = require('../../handlers/constants/ErrorMessages');
 const Joi = require("joi");
-
 const checkCourseExisted = async (currentError, code) => {
   const { courseDocId, courseDocIdError } = await getCourseDocumentIdWithCode(code);
   if (courseDocIdError) currentError.course = 'Error retrieving course document id with code.';
   if (courseDocId) currentError.course = `${ERROR_MESSAGES.COURSE_ALREADY_EXISTS_WITH_CODE} ${code}.`;
 };
 
+// const validateCreateCourseRequest = async course => {
+//   let error = {};
+//   if (!course || typeof course !== 'object') error.course = `${ERROR_MESSAGES.MISSING_FIELD} course.`;
+//   else {
+//     const validate = Joi.object({
+//       code: Joi.string().alphanum().min(8).max(8).required(),
+//       name: Joi.string().min(3).max(30).required(),
+//       school: Joi.string().alphanum().min(3).max(3).required(),
+//       lecturer: Joi.string().min(3).max(50).required(),
+//     }).options({ abortEarly: false }).validate(course);
+//
+//     if ("error" in validate) validate.error.details.forEach((e) => {
+//       error[e.path[0]] = e.message.replace(/"|\"/g, ``);
+//     });
+//     else {
+//       const { courseDocId, courseDocIdError } = await getCourseDocumentIdWithCode(course.code);
+//       if (courseDocIdError) error.course = 'Error retrieving course document id with code.';
+//       if (courseDocId) error.course = `${ERROR_MESSAGES.COURSE_ALREADY_EXISTS_WITH_CODE} ${course.code}.`;
+//     }
+//   }
+//   return { error, valid: Object.keys(error).length === 0 };
+// };
+
 const validateCreateCourseRequest = async course => {
-  let error = {};
-  if (!course || typeof course !== 'object') error.course = `${ERROR_MESSAGES.MISSING_FIELD} course.`;
-  else {
+  if (!(!course || typeof course !== 'object')) {
     const validate = Joi.object({
       code: Joi.string().alphanum().min(8).max(8).required(),
       name: Joi.string().min(3).max(30).required(),
       school: Joi.string().alphanum().min(3).max(3).required(),
       lecturer: Joi.string().min(3).max(50).required(),
     }).options({ abortEarly: false }).validate(course);
-
-    if ("error" in validate) validate.error.details.forEach((e) => {
-      error[e.path[0]] = e.message.replace(/"|\"/g, ``);
-    });
-    else {
+    if ("error" in validate) {
+      let msg = {};
+      validate.error.details.forEach((e) => {
+        msg[e.path[0]] = e.message.replace(/"|\"/g, ``);
+      });
+      let err = new Error();
+      err.name = 'schemaError';
+      err.message = msg;
+      throw err;
+    } else {
       const { courseDocId, courseDocIdError } = await getCourseDocumentIdWithCode(course.code);
-      if (courseDocIdError) error.course = 'Error retrieving course document id with code.';
-      if (courseDocId) error.course = `${ERROR_MESSAGES.COURSE_ALREADY_EXISTS_WITH_CODE} ${course.code}.`;
+      if (courseDocIdError) throw new Error('Error retrieving course document id with code.');
+      if (courseDocId) throw new Error(`${ERROR_MESSAGES.COURSE_ALREADY_EXISTS_WITH_CODE} ${course.code}.`);
     }
+  } else {
+    throw new Error(`${ERROR_MESSAGES.MISSING_FIELD} course.`);
   }
-  return { error, valid: Object.keys(error).length === 0 };
 };
 
+
+// const validateCreateCourseRequest = async course => {
+//   let error = {};
+//   const schema = Joi.object({
+//     code: Joi.string().alphanum().min(8).max(8).required(),
+//     name: Joi.string().min(3).max(30).required(),
+//     school: Joi.string().alphanum().min(3).max(3).required(),
+//     lecturer: Joi.string().min(3).max(50).required(),
+//   }).options({ abortEarly: false });
+//   console.log(course.code);
+//   switch (true) {
+//   case (!course || typeof course !== 'object'):
+//     error.course = `${ERROR_MESSAGES.MISSING_FIELD} course.`;
+//     break;
+//   case ("error" in schema.validate(course)):
+//     schema.validate(course).error.details.forEach((e) => {
+//       error[e.path[0]] = e.message.replace(/"|\"/g, ``);
+//     });
+//     break;
+//   case (!("error" in schema.validate(course)) && getCourseDocumentIdWithCode(course.code).courseDocIdError !== null):
+//     error.course = 'Error retrieving course document id with code.';
+//     break;
+//   case (!("error" in schema.validate(course)) && getCourseDocumentIdWithCode(course.code).courseDocId !== null):
+//     error.course = `${ERROR_MESSAGES.COURSE_ALREADY_EXISTS_WITH_CODE} ${course.code}.`;
+//     break;
+//   }
+//   return { error, valid: Object.keys(error).length === 0 };
+//
+// };
 const validateGetMoreCoursesRequest = startAfter => {
   let error = {};
   if (stringIsEmpty(startAfter)) error.startAfter = `${ERROR_MESSAGES.MISSING_FIELD} startAfter.`;
