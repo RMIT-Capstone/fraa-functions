@@ -22,8 +22,7 @@ const getCourseDocumentIdWithCode = async code => {
       .collection('courses')
       .where('code', '==', code)
       .get();
-
-    if (querySnapshot.empty) return { courseDocId: null, courseDocIdError: null };
+    if (querySnapshot.empty) throw new Error('Empty query snapshot');
     else {
       const documentId = querySnapshot.docs[0].id;
       return { courseDocId: documentId, courseDocIdError: null };
