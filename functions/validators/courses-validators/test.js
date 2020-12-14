@@ -6,23 +6,24 @@ const Joi = require("joi");
 const validateCreateCourseRequest = async course => {
   let error = {};
   const schema = Joi.object({
-    code: Joi.string().alphanum().min(3).max(30).required(),
-    name: Joi.string().alphanum().min(3).max(30).required(),
-    school: Joi.string().alphanum().min(3).max(30).required(),
-    lecturer: Joi.string().alphanum().min(3).max(30).required(),
+    code: Joi.string().alphanum().min(8).max(8).required(),
+    name: Joi.string().min(3).max(30).required(),
+    school: Joi.string().alphanum().min(3).max(3).required(),
+    lecturer: Joi.string().min(3).max(50).required(),
   }).options({ abortEarly: false });
   if (!course || typeof course !== 'object') error.course = `${ERROR_MESSAGES.MISSING_FIELD} course.`;
   else {
-    const validate = await schema.validate(course.course);
-    // const validate = {}
+    const validate = await schema.validate(course);
     if ("error" in validate) {
-      console.log('ERROR:', validate)
-      await validate.error.details.forEach(async (e) =>  error[e.path[0]] = e.message.replace(`"`, ``).replace(`\"`, ``));
+      validate.error.details.forEach((e) => {
+        console.log(e.message.replace(/"|\"/g, ``));
+        error[e.path[0]] = e.message.replace(`"`, ``).replace(`\"`, ``);
+      });
     }
     else {
-      const { courseDocId, courseDocIdError } = await getCourseDocumentIdWithCode(code);
+      const { courseDocId, courseDocIdError } = await getCourseDocumentIdWithCode(course.code);
       if (courseDocIdError) error.course = 'Error retrieving course document id with code.';
-      if (courseDocId) error.course = `${ERROR_MESSAGES.COURSE_ALREADY_EXISTS_WITH_CODE} ${code}.`;
+      if (courseDocId) error.course = `${ERROR_MESSAGES.COURSE_ALREADY_EXISTS_WITH_CODE} ${course.code}.`;
     }
   }
 
