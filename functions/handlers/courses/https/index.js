@@ -1,6 +1,5 @@
 const { db, admin } = require('../../../utils/admin');
-const { sendErrorMessage } = require('../../../helpers/express-helpers');
-const { sendSuccessMessage } = require('../../../helpers/express-helpers');
+const { sendErrorMessage, sendSuccessMessage, sendSuccessObject } = require('../../../helpers/express-helpers');
 const ERROR_MESSAGES = require('../../constants/ErrorMessages');
 
 exports.createCourse = async (req, res) => {
@@ -12,7 +11,7 @@ exports.createCourse = async (req, res) => {
       .collection('courses')
       .add(course);
     course.id = docRef.id;
-    return res.json(course);
+    return sendSuccessObject(res, course);
   }
   catch (errorCreateCourse) {
     console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} createCourse: `, errorCreateCourse);
@@ -139,8 +138,9 @@ exports.getMoreCoursesByName = async (req, res) => {
 
 exports.updateCourse = async (req, res) => {
   // very important thing to note is that course code cannot be updated
-  const { course, course: { name, id } } = req.body;
+  const { course, course: { name, id, code } } = req.body;
   delete course.id;
+  if (code) delete course.code;
   if (name) {
     course.name = course.name.toLowerCase().split(' ');
   }

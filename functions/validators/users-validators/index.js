@@ -18,7 +18,6 @@ const {
 const ERROR_MESSAGES = require('../../handlers/constants/ErrorMessages');
 const USERS_ROUTES = require('../../utils/routes/users');
 
-
 const validateCreateUserRequest = async (user) => {
   let error = {};
   if (objectIsMissing(user)) error.user = `${ERROR_MESSAGES.MISSING_FIELD} user`;
@@ -221,7 +220,7 @@ const validateUserAttendanceRegistrationRequest = async (email, sessionId) => {
     if (!stringIsEmpty(email) && isEmail(email)) {
       // eslint-disable-next-line max-len
       const { attendanceSessionExists, attendanceSessionExistsError } = await attendanceSessionExistsWithDocId(sessionId);
-      if (attendanceSessionExistsError) error.session = 'Error retrieving session id with email.';
+      if (attendanceSessionExistsError) error.session = 'Error retrieving session id with email';
       if (!attendanceSessionExists) error.session = `No attendance session exists with id: ${sessionId}`;
       else {
         const { attended, errorAttended } = await userAlreadyRegisteredToAttendanceSession(email, sessionId);
@@ -244,7 +243,6 @@ const validateCountMissedTotalAttendanceSessionsRequest = async (email, courses,
   // TODO: validate courses in courses array
   return { error, valid: Object.keys(error).length === 0 };
 };
-
 
 module.exports = {
   validateCreateUserRequest,

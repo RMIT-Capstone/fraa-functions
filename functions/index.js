@@ -61,6 +61,7 @@ const usersValidator = require('./middlewares/users');
 
 // TODO: check auth headers when doing CRUD operations
 
+// TODO: CHECK THIS
 // attendance session handlers
 app.post(`/${ATTENDANCE_SESSIONS_ROUTES.CREATE_ATTENDANCE_SESSION}`,
   attendanceSessionsValidator,
