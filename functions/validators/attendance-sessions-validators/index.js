@@ -2,54 +2,60 @@ const { db } = require('../../utils/admin');
 const { stringIsEmpty } = require('../../helpers/utilities-helpers');
 const { courseExistsWithDocumentId } = require('../../helpers/courses-helpers');
 const ERROR_MESSAGES = require('../../handlers/constants/ErrorMessages');
+const { arrayIsMissing } = require('../../helpers/utilities-helpers');
+const { objectIsMissing } = require('../../helpers/utilities-helpers');
 
 // eslint-disable-next-line max-len
-const validateCreateAttendanceSessionRequest = async (courseId, courseCode, courseName, lecturer, location, semester, validOn, expireOn) => {
+const validateCreateAttendanceSessionRequest = async (validOn, expireOn, location, semester, course) => {
   let error = {};
-  if (stringIsEmpty(courseId)) error.courseId = `${ERROR_MESSAGES.MISSING_FIELD} courseId`;
-  else if (stringIsEmpty(courseCode)) error.courseCode = `${ERROR_MESSAGES.MISSING_FIELD} courseCode.`;
-  else if (stringIsEmpty(courseName)) error.courseName = `${ERROR_MESSAGES.MISSING_FIELD} courseName.`;
-  else if (stringIsEmpty(lecturer)) error.lecturer = `${ERROR_MESSAGES.MISSING_FIELD} lecturer.`;
-  else if (stringIsEmpty(location)) error.location = `${ERROR_MESSAGES.MISSING_FIELD} location.`;
-  else if (stringIsEmpty(semester)) error.semester = `${ERROR_MESSAGES.MISSING_FIELD} semester.`;
-  else if (stringIsEmpty(validOn)) error.validOn = `${ERROR_MESSAGES.MISSING_FIELD} validOn.`;
+  if (objectIsMissing(course)) error.course = `${ERROR_MESSAGES.MISSING_FIELD} course`;
   else {
-    const { courseExists, errorCheckExists } = await courseExistsWithDocumentId(courseId);
-    if (errorCheckExists) error.course = 'Error checking course exists.';
-    if (!courseExists) error.course = `${ERROR_MESSAGES.COURSE_DOES_NOT_EXISTS_WITH_ID} ${courseId}.`;
+    const { courseId, courseCode, courseName, lecturer } = course;
+    if (stringIsEmpty(courseId)) error.courseId = `${ERROR_MESSAGES.MISSING_FIELD} courseId`;
+    else if (stringIsEmpty(courseCode)) error.courseCode = `${ERROR_MESSAGES.MISSING_FIELD} courseCode`;
     else {
-      let sessions = [];
-      const start = new Date(validOn).setHours(0, 0, 0, 0);
-      const end = new Date(validOn).setHours(23, 59, 59, 999);
-      const querySnapshot = await db
-        .collection('attendance-sessions')
-        .where('courseCode', '==', courseCode)
-        .get();
+      const { courseExists, errorCheckExists } = await courseExistsWithDocumentId(courseId);
+      if (errorCheckExists) error.course = 'Error checking course exists';
+      if (!courseExists) error.course = `${ERROR_MESSAGES.COURSE_DOES_NOT_EXISTS_WITH_ID} ${courseId}`;
+      else {
+        let sessions = [];
+        const start = new Date(validOn).setHours(0, 0, 0, 0);
+        const end = new Date(validOn).setHours(23, 59, 59, 999);
+        const querySnapshot = await db
+          .collection('attendance-sessions')
+          .where('course.courseCode', '==', courseCode)
+          .get();
 
-      if (!querySnapshot.empty) {
-        querySnapshot.forEach(snapshot => {
-          sessions.push(snapshot.data());
-        });
+        if (!querySnapshot.empty) {
+          querySnapshot.forEach(snapshot => {
+            sessions.push(snapshot.data());
+          });
 
-        const filteredSession = sessions.filter(session => {
-          const { validOn } = session;
-          return validOn.toDate() > start && validOn.toDate() < end;
-        });
+          const filteredSession = sessions.filter(session => {
+            const { validOn } = session;
+            return validOn.toDate() > start && validOn.toDate() < end;
+          });
 
-        if (filteredSession.length !== 0) {
-          error.invalidRequest = 'Cannot have 2 sessions in the same day with the same course.';
+          if (filteredSession.length !== 0) {
+            error.invalidRequest = 'Cannot have 2 sessions in the same day with the same course.';
+          }
         }
       }
     }
+
+    if (stringIsEmpty(courseName)) error.courseName = `${ERROR_MESSAGES.MISSING_FIELD} courseName`;
+    if (stringIsEmpty(lecturer)) error.lecturer = `${ERROR_MESSAGES.MISSING_FIELD} lecturer`;
   }
-  if (stringIsEmpty(expireOn)) error.expireOn = `${ERROR_MESSAGES.MISSING_FIELD} expireOn.`;
+  if (stringIsEmpty(validOn)) error.validOn = `${ERROR_MESSAGES.MISSING_FIELD} validOn`;
+  if (stringIsEmpty(expireOn)) error.validOn = `${ERROR_MESSAGES.MISSING_FIELD} expireOn`;
+  if (stringIsEmpty(location)) error.location = `${ERROR_MESSAGES.MISSING_FIELD} location`;
 
   return { error, valid: Object.keys(error).length === 0 };
 };
 
 const validateGetAttendanceSessionsInDateRangeRequest = (courses, startTime, endTime) => {
   let error = {};
-  if (!courses || !Array.isArray(courses)) error.courseCode = `${ERROR_MESSAGES.MISSING_FIELD} courses.`;
+  if (arrayIsMissing(courses)) error.courseCode = `${ERROR_MESSAGES.MISSING_FIELD} courses.`;
   if (stringIsEmpty(startTime)) error.startTime = `${ERROR_MESSAGES.MISSING_FIELD} startTime.`;
   if (stringIsEmpty(endTime)) error.endTime = `${ERROR_MESSAGES.MISSING_FIELD} endTime.`;
   if (startTime > endTime) error.time = 'Start time must be sooner than end time.';
@@ -59,7 +65,7 @@ const validateGetAttendanceSessionsInDateRangeRequest = (courses, startTime, end
 
 const validateGetAttendanceSessionsInMonthRangeRequest = (courses, startMonth, monthRange) => {
   let error = {};
-  if (!courses || !Array.isArray(courses)) error.courses = `${ERROR_MESSAGES.MISSING_FIELD} courses.`;
+  if (arrayIsMissing(courses)) error.courses = `${ERROR_MESSAGES.MISSING_FIELD} courses.`;
   if (startMonth <= 0 || startMonth > 11) error.startMonth = `startMonth must be between 1 and 11`;
   if (monthRange <= 0 || monthRange > 6) {
     error.monthRange = 'monthRange must be at least 1 and maximum 6.';
@@ -69,14 +75,14 @@ const validateGetAttendanceSessionsInMonthRangeRequest = (courses, startMonth, m
 
 const validateGetDailyAttendanceSessionsRequest = (courses) => {
   let error = {};
-  if (!courses || !Array.isArray(courses)) error.courses = 'Must include courses.';
+  if (arrayIsMissing(courses)) error.courses = 'Must include courses.';
 
   return { error, valid: Object.keys(error).length === 0 };
 };
 
 const validateGetMonthlyAttendanceSessionsRequest = (courses, month) => {
   let error = {};
-  if (!courses || !Array.isArray(courses)) error.courses = 'Must include courses.';
+  if (arrayIsMissing(courses)) error.courses = 'Must include courses.';
   if (!month) error.month = 'Must include month.';
   if (month < 0 || month > 11) error.month = 'Month must be between 0 and 11';
 

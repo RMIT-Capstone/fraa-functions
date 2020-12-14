@@ -1,8 +1,8 @@
 const { db, admin } = require('../../../utils/admin');
 const { sendErrorMessage, sendSuccessMessage } = require('../../../helpers/express-helpers');
 const { getUserIdInFirestoreWithEmail } = require('../../../helpers/users-helpers');
-const ERROR_MESSAGES = require('../../constants/ErrorMessages');
 const { sendSuccessObject } = require('../../../helpers/express-helpers');
+const ERROR_MESSAGES = require('../../constants/ErrorMessages');
 
 const today = new Date();
 
@@ -54,7 +54,7 @@ exports.getAttendanceSessionsInDateRange = async (req, res) => {
     if (sessions.length !== 0) {
       markedDates = markAttendanceSessionsDate(sessions);
     }
-    return res.json({ sessions, markedDates });
+    return sendSuccessObject(res, { sessions, markedDates });
   } catch (errorGetAttendanceSessionByDateWithCourseCode) {
     console.error(
       `${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getAttendanceSessionInDateRangeOfCourses: `,
@@ -90,7 +90,7 @@ exports.getAttendanceSessionsInMonthRange = async (req, res) => {
     if (sessions.length !== 0) {
       markedDates = markAttendanceSessionsDate(sessions);
     }
-    return res.json({ sessions, markedDates });
+    return sendSuccessObject(res, { sessions, markedDates });
   } catch (errorGetAttendanceSessionsInMonthRange) {
     console.error(
       `${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getAttendanceSessionsInMonthRange`,
@@ -126,7 +126,7 @@ exports.getDailyAttendanceSessions = async (req, res) => {
     if (sessions.length !== 0) {
       markedDates = markAttendanceSessionsDate(sessions);
     }
-    return res.json({ sessions, markedDates });
+    return sendSuccessObject(res, { sessions, markedDates });
   } catch (errorGetDailyAttendanceSessions) {
     console.error(
       `${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getDailyAttendanceSessions: `,
@@ -167,7 +167,7 @@ exports.getMonthlyAttendanceSessions = async (req, res) => {
     if (sessions.length !== 0) {
       markedDates = markAttendanceSessionsDate(sessions);
     }
-    return res.json({ sessions, markedDates });
+    return sendSuccessObject(res, { sessions, markedDates });
   } catch (errorGetMonthlyAttendanceSessions) {
     console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE}`, errorGetMonthlyAttendanceSessions);
     return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);

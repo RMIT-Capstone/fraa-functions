@@ -10,9 +10,26 @@ const courseExistsWithDocumentId = async id => {
       return { courseExists: true, errorCheckExists: null };
     }
     return { courseExists: false, errorCheckExists: null };
-  } catch (errorCourseDocumentExistsWithDocumentId) {
-    console.error('Something went wrong with getCourseDocumentIdWithCode: ', errorCourseDocumentExistsWithDocumentId);
-    return { courseExists: null, errorCheckExists: errorCourseDocumentExistsWithDocumentId };
+  } catch (errorCourseExistsWithDocumentId) {
+    console.error('Something went wrong with getCourseDocumentIdWithCode: ', errorCourseExistsWithDocumentId);
+    return { courseExists: null, errorCheckExists: errorCourseExistsWithDocumentId };
+  }
+};
+
+const courseExistsWithCourseCode = async (courseCode) => {
+  try {
+    const querySnapshot = await db
+      .collection('courses')
+      .where('code', '==', courseCode)
+      .get();
+
+    if (querySnapshot.empty) {
+      return { courseExists: false, errorCheckExists: null };
+    }
+    return { courseExists: true, errorCheckExists: null };
+  } catch (errorCourseExistsWithCourseCode) {
+    console.error('Something went wrong with courseExistsWithCourseCode: ', errorCourseExistsWithCourseCode);
+    return { courseExists: null, errorCheckExists: null };
   }
 };
 
@@ -52,10 +69,9 @@ const studentAlreadySubscribedToCourses = async (userId, courseCode) => {
   }
 };
 
-
-
 module.exports = {
   courseExistsWithDocumentId,
+  courseExistsWithCourseCode,
   getCourseDocumentIdWithCode,
   studentAlreadySubscribedToCourses,
 };

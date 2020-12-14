@@ -220,7 +220,7 @@ const validateUserAttendanceRegistrationRequest = async (email, sessionId) => {
     if (!stringIsEmpty(email) && isEmail(email)) {
       // eslint-disable-next-line max-len
       const { attendanceSessionExists, attendanceSessionExistsError } = await attendanceSessionExistsWithDocId(sessionId);
-      if (attendanceSessionExistsError) error.session = 'Error retrieving session id with email.';
+      if (attendanceSessionExistsError) error.session = 'Error retrieving session id with email';
       if (!attendanceSessionExists) error.session = `No attendance session exists with id: ${sessionId}`;
       else {
         const { attended, errorAttended } = await userAlreadyRegisteredToAttendanceSession(email, sessionId);

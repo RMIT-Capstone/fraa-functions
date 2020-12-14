@@ -3,13 +3,13 @@ const {
   validateDeleteUserRequest,
   validateUpdateUserRequest,
   validateGetUserByEmailRequest,
-  validateUserAttendanceRegistrationRequest,
-  validateUserSubscriptionRequest,
   validateGetAllUsersRequest,
-  validateGenerateOTPRequest,
-  validateVerifyOTPRequest,
   validateSignInRequest,
   validateChangePasswordRequest,
+  validateGenerateOTPRequest,
+  validateVerifyOTPRequest,
+  validateUserSubscriptionRequest,
+  validateUserAttendanceRegistrationRequest,
   validateCountMissedTotalAttendanceSessionsRequest,
 } = require('../../validators/users-validators');
 const { sendErrorObject } = require('../../helpers/express-helpers');
