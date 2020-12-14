@@ -7,7 +7,7 @@ const {
   validateGetCourseByCodeRequest,
   validateGetMoreCoursesRequest,
   validateCreateCourseRequest,
-} = require('../../validators/courses-validators');
+} = require('../../validators/courses-validators/test');
 const COURSE_ROUTES = require('../../utils/routes/courses');
 
 module.exports = async (req, res, next) => {
