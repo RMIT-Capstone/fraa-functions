@@ -263,7 +263,7 @@ const countMissedAndTotalAttendanceSessions = async (req, res) => {
     }
 
     querySnapshot.forEach(snapshot => {
-      const { attendees, validOn, courseCode } = snapshot.data();
+      const { attendees, validOn, course: { courseCode } } = snapshot.data();
       if (validOn.toDate() < now && !attendees.includes(email) && courses.includes(courseCode)) {
         missed++;
       }
@@ -300,7 +300,7 @@ const countMissedTotalAttendanceSessionsByCourses = async (req, res) => {
     });
 
     querySnapshot.forEach(snapshot => {
-      const { attendees, validOn, courseCode } = snapshot.data();
+      const { attendees, validOn, course: { courseCode } } = snapshot.data();
       if (validOn.toDate() < now && !attendees.includes(email) && courses.includes(courseCode)) {
         missed[courseCode] = missed[courseCode] + 1;
       }
