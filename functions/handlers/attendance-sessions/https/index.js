@@ -46,7 +46,7 @@ exports.getAttendanceSessionsInDateRange = async (req, res) => {
 
     querySnapshot.forEach(snapshot => {
       let data = snapshot.data();
-      const { courseCode } = data;
+      const { course: { courseCode } } = data;
       transformAttendanceSessionData(data, snapshot);
       if (courses.includes(courseCode)) sessions.push(data);
     });
@@ -80,7 +80,7 @@ exports.getAttendanceSessionsInMonthRange = async (req, res) => {
 
     querySnapshot.forEach(snapshot => {
       let data = snapshot.data();
-      const { courseCode } = data;
+      const { course: { courseCode } } = data;
       if (courses.includes(courseCode)) {
         transformAttendanceSessionData(data, snapshot);
         sessions.push(data);
@@ -105,8 +105,10 @@ exports.getDailyAttendanceSessions = async (req, res) => {
   try {
     let sessions = [], markedDates = {};
 
-    const start = new Date().setHours(0, 0, 0, 0);
-    const end = new Date().setHours(23, 59, 59, 999);
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
     const querySnapshot = await db
       .collection('attendance-sessions')
       .where('validOn', '>=', start)
@@ -116,7 +118,7 @@ exports.getDailyAttendanceSessions = async (req, res) => {
 
     querySnapshot.forEach(snapshot => {
       let data = snapshot.data();
-      const { courseCode } = data;
+      const { course: { courseCode } } = data;
       if (courses.includes(courseCode)) {
         transformAttendanceSessionData(data, snapshot);
         sessions.push(data);
@@ -126,6 +128,7 @@ exports.getDailyAttendanceSessions = async (req, res) => {
     if (sessions.length !== 0) {
       markedDates = markAttendanceSessionsDate(sessions);
     }
+
     return sendSuccessObject(res, { sessions, markedDates });
   } catch (errorGetDailyAttendanceSessions) {
     console.error(
@@ -152,7 +155,7 @@ exports.getMonthlyAttendanceSessions = async (req, res) => {
 
     querySnapshot.forEach(snapshot => {
       let data = snapshot.data();
-      const { courseCode } = data;
+      const { course: { courseCode } } = data;
       if (courses.includes(courseCode)) {
         transformAttendanceSessionData(data, snapshot);
         sessions.push(data);
