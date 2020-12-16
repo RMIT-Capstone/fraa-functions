@@ -53,15 +53,14 @@ const createUserInFirestore = async (user) => {
     user.createdAt = new Date();
     user.firstTimePassword = true;
     user.verified = false;
+    user.totalAttendedEventsCount = 0;
     delete user.password;
 
     const result = await db
       .collection('users')
       .add(user);
     user.id = result.id;
-
     return user;
-
   } catch (errorCreateUserInFirestore) {
     console.error(
       `${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} createUserInFirestore: `,
@@ -272,7 +271,7 @@ const countMissedAndTotalAttendanceSessions = async (req, res) => {
       }
     });
 
-    return res.send({ missed, total });
+    return sendSuccessObject(res, { missed, total });
   } catch (errorCountMissedEvents) {
     console.error('Something went wrong with countMissedAndTotalAttendanceSessions: ', errorCountMissedEvents);
     return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
@@ -310,7 +309,7 @@ const countMissedTotalAttendanceSessionsByCourses = async (req, res) => {
       }
     });
 
-    return res.send({ missed, total });
+    return sendSuccessObject(res, { missed, total });
   } catch (errorCountMissedTotalAttendanceSessionsByCourse) {
     console.error('Something went wrong with countMissedTotalAttendanceSessionsByCourse: ',
       errorCountMissedTotalAttendanceSessionsByCourse);
