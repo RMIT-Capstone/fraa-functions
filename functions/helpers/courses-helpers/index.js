@@ -1,4 +1,5 @@
 const { db } = require('../../utils/admin');
+const ERROR = require('../../utils/errors');
 
 const courseExistsWithDocumentId = async id => {
   try {
@@ -6,13 +7,11 @@ const courseExistsWithDocumentId = async id => {
       .collection('courses')
       .doc(id)
       .get();
-    if (documentSnapshot.exists) {
-      return { courseExists: true, errorCheckExists: null };
-    }
-    return { courseExists: false, errorCheckExists: null };
+    if (!documentSnapshot.exists) return { courseExists: false };
+    else return { courseExists: true };
   } catch (errorCourseDocumentExistsWithDocumentId) {
     console.error('Something went wrong with getCourseDocumentIdWithCode: ', errorCourseDocumentExistsWithDocumentId);
-    return { courseExists: null, errorCheckExists: errorCourseDocumentExistsWithDocumentId };
+    return errorCourseDocumentExistsWithDocumentId;
   }
 };
 
@@ -22,14 +21,14 @@ const getCourseDocumentIdWithCode = async code => {
       .collection('courses')
       .where('code', '==', code)
       .get();
-    if (querySnapshot.empty) throw new Error('Empty query snapshot');
-    else {
+    if (!querySnapshot.empty){
       const documentId = querySnapshot.docs[0].id;
-      return { courseDocId: documentId, courseDocIdError: null };
+      return { courseDocId: documentId };
     }
+    else throw new ERROR.MissingObjectError();
   } catch (errorGetCourseDocumentIdWithCode) {
     console.error('Something went wrong with getCourseDocumentIdWithCode', errorGetCourseDocumentIdWithCode);
-    return { courseDocId: null, courseDocIdError: errorGetCourseDocumentIdWithCode };
+    return errorGetCourseDocumentIdWithCode;
   }
 };
 
