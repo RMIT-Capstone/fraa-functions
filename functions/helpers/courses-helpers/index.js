@@ -21,11 +21,11 @@ const getCourseDocumentIdWithCode = async code => {
       .collection('courses')
       .where('code', '==', code)
       .get();
-    if (!querySnapshot.empty){
+    if (querySnapshot.empty) throw new ERROR.NotExisted();
+    else {
       const documentId = querySnapshot.docs[0].id;
       return { courseDocId: documentId };
     }
-    else throw new ERROR.MissingObjectError();
   } catch (errorGetCourseDocumentIdWithCode) {
     console.error('Something went wrong with getCourseDocumentIdWithCode', errorGetCourseDocumentIdWithCode);
     return errorGetCourseDocumentIdWithCode;
