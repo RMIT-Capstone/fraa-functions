@@ -2,9 +2,13 @@ const { stringIsEmpty } = require('../../helpers/utilities-helpers');
 const { getCourseDocumentIdWithCode, courseExistsWithDocumentId } = require('../../helpers/courses-helpers');
 const SCHEMA = require('../../schema');
 const ERROR = require('../../utils/errors');
+const { objectIsMissing } = require('../../helpers/utilities-helpers');
+const ERROR_MESSAGES = require('../../handlers/constants/ErrorMessages');
+const { courseExistsWithCourseCode } = require('../../helpers/courses-helpers');
 
 const validateCreateCourseRequest = async course => {
-  if (!course || typeof course !== 'object') throw new ERROR.MissingObjectError('course');
+  let error = {};
+  if (objectIsMissing(course)) error.course = `${ERROR_MESSAGES.MISSING_FIELD} course`;
   else {
     const validate = SCHEMA.createCourseRequest.validate(course);
     if ("error" in validate) {
@@ -64,9 +68,9 @@ const validateDeleteCourseRequest = async (id) => {
 module.exports = {
   validateCreateCourseRequest,
   validateGetMoreCoursesRequest,
-  validateGetCourseByCodeRequest,
   validateGetCoursesByNameRequest,
   validateGetMoreCoursesByNameRequest,
+  validateGetCourseByCodeRequest,
   validateUpdateCourseRequest,
   validateDeleteCourseRequest,
 };

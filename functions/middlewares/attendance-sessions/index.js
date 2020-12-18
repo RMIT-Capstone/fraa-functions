@@ -12,16 +12,9 @@ module.exports = async (req, res, next) => {
   const path = req.path.split('/')[1];
 
   if (path === ATTENDANCE_SESSIONS_ROUTES.CREATE_ATTENDANCE_SESSION) {
-    const { courseId, courseCode, courseName, lecturer, location, semester, validOn, expireOn } = req.body.content;
+    const { validOn, expireOn, location, semester, course } = req.body;
     const { error, valid } = await validateCreateAttendanceSessionRequest(
-      courseId,
-      courseCode,
-      courseName,
-      lecturer,
-      location,
-      semester,
-      validOn,
-      expireOn,
+      validOn, expireOn, location, semester, course,
     );
     if (!valid) return sendErrorObject(res, error);
   }

@@ -15,6 +15,23 @@ const courseExistsWithDocumentId = async id => {
   }
 };
 
+const courseExistsWithCourseCode = async (courseCode) => {
+  try {
+    const querySnapshot = await db
+      .collection('courses')
+      .where('code', '==', courseCode)
+      .get();
+
+    if (querySnapshot.empty) {
+      return { courseExists: false, errorCheckExists: null };
+    }
+    return { courseExists: true, errorCheckExists: null };
+  } catch (errorCourseExistsWithCourseCode) {
+    console.error('Something went wrong with courseExistsWithCourseCode: ', errorCourseExistsWithCourseCode);
+    return { courseExists: null, errorCheckExists: null };
+  }
+};
+
 const getCourseDocumentIdWithCode = async code => {
   try {
     const querySnapshot = await db
@@ -50,10 +67,9 @@ const studentAlreadySubscribedToCourses = async (userId, courseCode) => {
   }
 };
 
-
-
 module.exports = {
   courseExistsWithDocumentId,
+  courseExistsWithCourseCode,
   getCourseDocumentIdWithCode,
   studentAlreadySubscribedToCourses,
 };
