@@ -21,16 +21,14 @@ const userWithIdExistsInFirestore = async (id) => {
   try {
     const documentSnapshot = await db.collection("users").doc(id).get();
 
-    if (documentSnapshot.exists) {
-      return { existsWithId: true, errorCheckExists: null };
-    }
-    return { existsWithId: false, errorCheckExists: null };
+    if (documentSnapshot.exists) return { existsWithId: true };
+    else return { existsWithId: false };
   } catch (errorCheckUserExistsWithId) {
     console.error(
       "Something went wrong with userWithIdExistsInFirestore: ",
       errorCheckUserExistsWithId
     );
-    return { existsWithId: null, errorCheckExists: errorCheckUserExistsWithId };
+    return errorCheckUserExistsWithId;
   }
 };
 
@@ -41,15 +39,14 @@ const getLatestOTPDocumentOfUser = async (email) => {
       .where("email", "==", email)
       .orderBy("expiryTime", "desc")
       .get();
-    if (querySnapshot.empty)
-      return { error: `no OTP code found with ${email}` };
-    return { data: querySnapshot.docs[0].data(), error: null };
+    if (querySnapshot.empty) return null;
+    else return { data: querySnapshot.docs[0].data() };
   } catch (errorGetLatestOTPDocumentOfUser) {
     console.error(
       "Something went wrong with getLatestOTPDocumentOfUser: ",
       errorGetLatestOTPDocumentOfUser
     );
-    return { data: null, error: errorGetLatestOTPDocumentOfUser };
+    return errorGetLatestOTPDocumentOfUser;
   }
 };
 
