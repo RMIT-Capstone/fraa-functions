@@ -1,5 +1,19 @@
 const Joi = require("joi");
 
+const checkSchema = (schema, value) => {
+  const validate = schema.validate(value);
+  if ("error" in validate) {
+    let msg = {};
+    validate.error.details.forEach((e) => {
+      msg[e.path[0]] = e.message.replace(/"|\"/g, ``);
+    });
+    return msg;
+  }
+  return null;
+};
+
+// COURSE_SCHEMA
+
 const createCourseRequest = Joi.object({
   code: Joi.string().alphanum().min(8).max(8).required(),
   name: Joi.string().min(3).max(30).required(),
@@ -7,36 +21,44 @@ const createCourseRequest = Joi.object({
   lecturer: Joi.string().min(3).max(50).required(),
 }).options({ abortEarly: false });
 
-const checkCreateCourseRequest = async course => {
-  
-  const validate = Joi.object({
-    code: Joi.string().alphanum().min(8).max(8).required(),
-    name: Joi.string().min(3).max(30).required(),
-    school: Joi.string().alphanum().min(3).max(3).required(),
-    lecturer: Joi.string().min(3).max(50).required(),
-  }).options({ abortEarly: false }).validate(course);
-  if ("error" in validate) {
-    let msg = {};
-    validate.error.details.forEach((e) => {
-      msg[e.path[0]] = e.message.replace(/"|\"/g, ``);
-    });
-    return { error: msg };
-  }
-};
+// USER_SCHEMA
 
-const getMoreCoursesRequest = Joi.object({
-  startAfter: Joi.string().required()
+const createUserRequest = Joi.object({
+  email: Joi.string().email().required(),
+  password: Joi.string().min(6).max(30).required(),
+  displayName: Joi.string().min(3).max(50).required(),
+  school: Joi.string().alphanum().min(3).max(3).required(),
+  isLecturer: Joi.boolean().required(),
 }).options({ abortEarly: false });
 
-let updateCourseRequest, deleteCourseRequest;
+const requiredUserEmail = Joi.object({
+  email: Joi.string().email().required()
+}).options({ abortEarly: false });
 
-deleteCourseRequest, updateCourseRequest = Joi.object({
-  startAfter: Joi.string().required()
+const updateUserRequest = Joi.object({
+  id: Joi.string().required(),
+  firstTimePassword: Joi.boolean().required(),
+  displayName: Joi.string().min(3).max(50).required(),
+  school: Joi.string().alphanum().min(3).max(3).required(),
+  verified: Joi.boolean().required(),
+}).options({ abortEarly: false });
+
+const userAccountRequest = Joi.object({
+  email: Joi.string().email().required(),
+  password: Joi.string().min(6).max(30).required(),
+}).options({ abortEarly: false });
+
+const verifyOTPRequest = Joi.object({
+  email: Joi.string().email().required(),
+  OTP: Joi.string().min(6).max(30).required(),
 }).options({ abortEarly: false });
 
 module.exports = {
   createCourseRequest,
-  getMoreCoursesRequest,
-  updateCourseRequest,
-  checkCreateCourseRequest
+  createUserRequest,
+  requiredUserEmail,
+  updateUserRequest,
+  userAccountRequest,
+  verifyOTPRequest,
+  checkSchema
 };
