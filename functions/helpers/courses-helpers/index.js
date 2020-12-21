@@ -21,14 +21,11 @@ const courseExistsWithCourseCode = async (courseCode) => {
       .collection('courses')
       .where('code', '==', courseCode)
       .get();
-
-    if (querySnapshot.empty) {
-      return { courseExists: false, errorCheckExists: null };
-    }
-    return { courseExists: true, errorCheckExists: null };
+    if (!querySnapshot.empty) return { courseExists: true };
+    else return { courseExists: false };
   } catch (errorCourseExistsWithCourseCode) {
     console.error('Something went wrong with courseExistsWithCourseCode: ', errorCourseExistsWithCourseCode);
-    return { courseExists: null, errorCheckExists: null };
+    return errorCourseExistsWithCourseCode;
   }
 };
 

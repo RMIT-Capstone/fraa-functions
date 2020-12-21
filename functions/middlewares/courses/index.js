@@ -49,6 +49,7 @@ module.exports = async (req, res, next) => {
     }
     return next();
   }  catch (error){
+    console.log(error);
     return sendErrorObject(res, error.message);
   }
 
