@@ -36,7 +36,7 @@ exports.createAttendanceSession = async (req, res) => {
 exports.getAttendanceSessionsInDateRange = async (req, res) => {
   const { courses, startTime, endTime } = req.body;
   try {
-    let sessions = [], markedDates = {};
+    let sessions = [];
     const querySnapshot = await db
       .collection('attendance-sessions')
       .where('validOn', '>=', new Date(startTime))
@@ -51,10 +51,7 @@ exports.getAttendanceSessionsInDateRange = async (req, res) => {
       if (courses.includes(courseCode)) sessions.push(data);
     });
 
-    if (sessions.length !== 0) {
-      markedDates = markAttendanceSessionsDate(sessions);
-    }
-    return sendSuccessObject(res, { sessions, markedDates });
+    return sendSuccessObject(res, { sessions });
   } catch (errorGetAttendanceSessionByDateWithCourseCode) {
     console.error(
       `${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getAttendanceSessionInDateRangeOfCourses: `,
@@ -67,7 +64,7 @@ exports.getAttendanceSessionsInDateRange = async (req, res) => {
 exports.getAttendanceSessionsInMonthRange = async (req, res) => {
   const { courses, startMonth, monthRange } = req.body;
   try {
-    let sessions = [], markedDates = {};
+    let sessions = [];
 
     const firstDayOfStartMonth = new Date(today.getFullYear(), startMonth, 1, 0, 0, 0, 0);
     const lastDayOfEndMonth = new Date(today.getFullYear(), startMonth + monthRange - 1, 23, 59, 59, 59, 999);
@@ -87,10 +84,7 @@ exports.getAttendanceSessionsInMonthRange = async (req, res) => {
       }
     });
 
-    if (sessions.length !== 0) {
-      markedDates = markAttendanceSessionsDate(sessions);
-    }
-    return sendSuccessObject(res, { sessions, markedDates });
+    return sendSuccessObject(res, { sessions });
   } catch (errorGetAttendanceSessionsInMonthRange) {
     console.error(
       `${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getAttendanceSessionsInMonthRange`,
@@ -103,7 +97,7 @@ exports.getAttendanceSessionsInMonthRange = async (req, res) => {
 exports.getDailyAttendanceSessions = async (req, res) => {
   const { courses } = req.body;
   try {
-    let sessions = [], markedDates = {};
+    let sessions = [];
 
     const start = new Date();
     start.setHours(0, 0, 0, 0);
@@ -125,11 +119,7 @@ exports.getDailyAttendanceSessions = async (req, res) => {
       }
     });
 
-    if (sessions.length !== 0) {
-      markedDates = markAttendanceSessionsDate(sessions);
-    }
-
-    return sendSuccessObject(res, { sessions, markedDates });
+    return sendSuccessObject(res, { sessions });
   } catch (errorGetDailyAttendanceSessions) {
     console.error(
       `${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getDailyAttendanceSessions: `,
@@ -142,7 +132,7 @@ exports.getDailyAttendanceSessions = async (req, res) => {
 exports.getMonthlyAttendanceSessions = async (req, res) => {
   const { courses, month } = req.body;
   try {
-    let sessions = [], markedDates = {};
+    let sessions = [];
 
     const firstDayOfMonth = new Date(today.getFullYear(), month, 1, 0, 0, 0, 0);
     const lastDayOfMonth = new Date(today.getFullYear(), month + 1, 0, 23, 59, 59, 999);
@@ -166,11 +156,7 @@ exports.getMonthlyAttendanceSessions = async (req, res) => {
       //   if (courseCode === code) sessions[courseCode].push(data);
       // }
     });
-
-    if (sessions.length !== 0) {
-      markedDates = markAttendanceSessionsDate(sessions);
-    }
-    return sendSuccessObject(res, { sessions, markedDates });
+    return sendSuccessObject(res, { sessions });
   } catch (errorGetMonthlyAttendanceSessions) {
     console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE}`, errorGetMonthlyAttendanceSessions);
     return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
@@ -214,14 +200,15 @@ const transformAttendanceSessionData = (data, snapshot) => {
   data.id = snapshot.id;
 };
 
-const markAttendanceSessionsDate = sessions => {
-  let markedDates = {};
-  sessions.forEach((session) => {
-    const { validOn } = session;
-    const eventDate = new Date(validOn).toISOString().split('T')[0];
-    markedDates[eventDate] = {};
-    markedDates[eventDate].marked = true;
-    markedDates[eventDate].dotColor = '#E60028';
-  });
-  return markedDates;
-};
+// keep this just in case
+// const markAttendanceSessionsDate = sessions => {
+//   let markedDates = {};
+//   sessions.forEach((session) => {
+//     const { validOn } = session;
+//     const eventDate = new Date(validOn).toISOString().split('T')[0];
+//     markedDates[eventDate] = {};
+//     markedDates[eventDate].marked = true;
+//     markedDates[eventDate].dotColor = '#E60028';
+//   });
+//   return markedDates;
+// };
