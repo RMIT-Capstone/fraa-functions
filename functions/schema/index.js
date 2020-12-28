@@ -5,6 +5,7 @@ const checkSchema = (schema, value) => {
   if ("error" in validate) {
     let msg = {};
     validate.error.details.forEach((e) => {
+      // eslint-disable-next-line no-useless-escape
       msg[e.path[0]] = e.message.replace(/"|\"/g, ``);
     });
     return msg;
@@ -53,6 +54,22 @@ const verifyOTPRequest = Joi.object({
   OTP: Joi.string().min(6).max(30).required(),
 }).options({ abortEarly: false });
 
+const userSubscriptionRequest = Joi.object({
+  userId: Joi.string().alphanum().required(),
+  courses: Joi.array().required(),
+}).options({ abortEarly: false });
+
+const userAttendanceRegistrationRequest  = Joi.object({
+  email: Joi.string().email().required(),
+  sessionId: Joi.string().alphanum().required(),
+}).options({ abortEarly: false });
+
+const countMissedTotalAttendanceSessionsRequest = Joi.object({
+  email: Joi.string().email().required(),
+  courses: Joi.array().required(),
+  semester: Joi.string().alphanum().required(),
+}).options({ abortEarly: false });
+
 module.exports = {
   createCourseRequest,
   createUserRequest,
@@ -60,5 +77,8 @@ module.exports = {
   updateUserRequest,
   userAccountRequest,
   verifyOTPRequest,
+  userSubscriptionRequest,
+  userAttendanceRegistrationRequest,
+  countMissedTotalAttendanceSessionsRequest,
   checkSchema
 };

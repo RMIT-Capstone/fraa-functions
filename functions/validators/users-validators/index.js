@@ -3,26 +3,23 @@ const {
   attendanceSessionExistsWithDocId,
 } = require("../../helpers/attendance-sessions-helpers");
 const {
-  isEmail,
-  stringIsEmpty,
   booleanIsMissing,
-  objectIsMissing,
-  arrayIsMissing,
+  objectIsMissing
 } = require("../../helpers/utilities-helpers");
 const {
   studentAlreadySubscribedToCourses,
   getCourseDocumentIdWithCode,
+  studentAlreadySubscribedToCoursesByEmail
 } = require("../../helpers/courses-helpers");
 const {
   userWithEmailExistsInFirestore,
   userWithIdExistsInFirestore,
   getLatestOTPDocumentOfUser,
 } = require("../../helpers/users-helpers");
+const { checkSchema } = require("../../schema");
 const USERS_ROUTES = require("../../utils/routes/users");
 const SCHEMA = require("../../schema");
-const { checkSchema } = require("../../schema");
 const ERROR = require("../../utils/errors");
-const ERROR_MESSAGES = require("../../handlers/constants/ErrorMessages");
 
 const validateCreateUserRequest = async (user) => {
   if (objectIsMissing(user)) throw new ERROR.MissingObjectError("user");
@@ -95,127 +92,64 @@ const validateVerifyOTPRequest = async (email, OTP) => {
 };
 
 const validateUserSubscriptionRequest = async (userId, courses, path) => {
-  let error = {};
-  if (stringIsEmpty(userId))
-    error.userId = `${ERROR_MESSAGES.MISSING_FIELD} userId`;
-  else if (arrayIsMissing(courses))
-    error.courses = `${ERROR_MESSAGES.MISSING_FIELD} courses`;
-  else {
-    let invalidCourses = [];
-    let subscribedCourses = [];
-    let notSubscribedCourses = [];
-
-    const {
-      existsWithId,
-      errorCheckExists,
-    } = await userWithIdExistsInFirestore(userId);
-    if (errorCheckExists) error.user = "Error checking user exists with id";
-    if (!existsWithId)
-      error.user = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST_WITH_ID} ${userId}`;
-    else {
-      await Promise.all(
-        courses.map(async (courseCode) => {
-          const {
-            courseDocId,
-            courseDocIdError,
-          } = await getCourseDocumentIdWithCode(courseCode);
-          const {
-            subscribed,
-            subscribedError,
-          } = await studentAlreadySubscribedToCourses(userId, courseCode);
-
-          if (!courseDocId) invalidCourses.push(courseCode);
-          if (courseDocIdError)
-            error.course = "Error retrieving course document id with code";
-
-          if (path === USERS_ROUTES.SUBSCRIBE_TO_COURSES) {
-            if (subscribed) subscribedCourses.push(courseCode);
-          } else {
-            if (!subscribed) notSubscribedCourses.push(courseCode);
-          }
-
-          if (subscribedError)
-            error.subscription = "Error checking user subscription";
-          if (invalidCourses.length > 0)
-            error.courses = `Course(s) do not exists: ${invalidCourses}`;
-
-          if (
-            path === USERS_ROUTES.SUBSCRIBE_TO_COURSES &&
-            subscribedCourses.length > 0
-          ) {
-            error.user = `User already subscribed to course(s): ${subscribedCourses}`;
-          }
-          if (
-            path === USERS_ROUTES.UNSUBSCRIBE_FROM_COURSES &&
-            notSubscribedCourses.length > 0
-          ) {
-            error.user = `User is not subscribed to course(s): ${notSubscribedCourses}`;
-          }
-        })
-      );
-    }
+  const validate = checkSchema(SCHEMA.userSubscriptionRequest, { userId, courses });
+  if (validate !== null) throw new ERROR.schemaError(validate);
+  const { existsWithId } = await userWithIdExistsInFirestore(userId);
+  if (!existsWithId) throw new ERROR.NotExisted(userId);
+  let subscribedCourses = [];
+  let notSubscribedCourses = [];
+  let invalidCourses = [];
+  await Promise.all(
+    courses.map(async (courseCode) => {
+      const { courseDocId } = await getCourseDocumentIdWithCode(courseCode);
+      if (!courseDocId) invalidCourses.push(courseCode);
+      const { subscribed } = await studentAlreadySubscribedToCourses(userId, courseCode);
+      if (subscribed) subscribedCourses.push(courseCode);
+      if (!subscribed) notSubscribedCourses.push(courseCode);
+    })
+  );
+  if (invalidCourses.length > 0) throw new ERROR.NotExisted(invalidCourses);
+  if (path === USERS_ROUTES.SUBSCRIBE_TO_COURSES && subscribedCourses.length > 0) {
+    throw new ERROR.SubscribedError(`User already subscribed to course(s): ${subscribedCourses}`);
   }
-
-  return { error, valid: Object.keys(error).length === 0 };
+  if (path === USERS_ROUTES.UNSUBSCRIBE_FROM_COURSES && notSubscribedCourses.length > 0) {
+    throw new ERROR.SubscribedError( `User is not subscribed to course(s): ${notSubscribedCourses}`);
+  }
 };
 
 const validateUserAttendanceRegistrationRequest = async (email, sessionId) => {
-  let error = {};
-  if (stringIsEmpty(email))
-    error.email = `${ERROR_MESSAGES.MISSING_FIELD} email`;
-  else if (!isEmail(email)) error.email = "Email is in incorrect format";
-  else {
-    const {
-      existsWithEmail,
-      errorCheckExists,
-    } = await userWithEmailExistsInFirestore(email);
-    if (errorCheckExists) error.user = "Error checking user exists";
-    if (!existsWithEmail)
-      error.user = `${ERROR_MESSAGES.USER_DOES_NOT_EXIST_WITH_EMAIL} ${email}`;
-  }
-  if (!sessionId) error.sessionId = `${ERROR_MESSAGES.MISSING_FIELD} sessionId`;
-  else {
-    if (!stringIsEmpty(email) && isEmail(email)) {
-      // eslint-disable-next-line max-len
-      const {
-        attendanceSessionExists,
-        attendanceSessionExistsError,
-      } = await attendanceSessionExistsWithDocId(sessionId);
-      if (attendanceSessionExistsError)
-        error.session = "Error retrieving session id with email";
-      if (!attendanceSessionExists)
-        error.session = `No attendance session exists with id: ${sessionId}`;
-      else {
-        const {
-          attended,
-          errorAttended,
-        } = await userAlreadyRegisteredToAttendanceSession(email, sessionId);
-        if (errorAttended) error.student = "Error checking user attendance";
-        if (attended)
-          error.attended = "Student have already attended this session";
-      }
-    }
-  }
+  const validate = checkSchema(SCHEMA.userAttendanceRegistrationRequest, { email, sessionId });
+  if (validate !== null) throw new ERROR.schemaError(validate);
 
-  return { error, valid: Object.keys(error).length === 0 };
+  const { userExists } = await userWithEmailExistsInFirestore(email);
+  if (!userExists) throw new ERROR.NotExisted(email);
+
+  const { attendanceSessionExists } = await attendanceSessionExistsWithDocId(sessionId);
+  if (!attendanceSessionExists) throw new ERROR.NotExisted(`Attendance session with id: ${sessionId}`);
+
+  const { attended } = await userAlreadyRegisteredToAttendanceSession(email, sessionId);
+  if (attended) throw new ERROR.DuplicatedError("Student has already attended, this session");
 };
 
-const validateCountMissedTotalAttendanceSessionsRequest = async (
-  email,
-  courses,
-  semester
-) => {
-  let error = {};
-  if (stringIsEmpty(email))
-    error.email = `${ERROR_MESSAGES.MISSING_FIELD} email.`;
-  else if (!isEmail(email)) error.email = "Email is in incorrect format.";
-  if (arrayIsMissing(courses))
-    error.courses = `${ERROR_MESSAGES.MISSING_FIELD} courses.`;
-  if (stringIsEmpty(semester))
-    error.semester = `${ERROR_MESSAGES.MISSING_FIELD} semester.`;
-  // TODO: validate user subscription
-  // TODO: validate courses in courses array
-  return { error, valid: Object.keys(error).length === 0 };
+const validateCountMissedTotalAttendanceSessionsRequest = async ( email, courses, semester) => {
+  const validate = checkSchema(SCHEMA.countMissedTotalAttendanceSessionsRequest, { email, courses, semester });
+  if (validate !== null) throw new ERROR.schemaError(validate);
+  const { userExists } = await userWithEmailExistsInFirestore(email);
+  if (!userExists) throw new ERROR.NotExisted(email);
+  let notSubscribedCourses = [];
+  let invalidCourses = [];
+  await Promise.all(
+    courses.map(async (courseCode) => {
+      const { courseDocId } = await getCourseDocumentIdWithCode(courseCode);
+      if (!courseDocId) invalidCourses.push(courseCode);
+      const { subscribed } = await studentAlreadySubscribedToCoursesByEmail(email, courseCode);
+      if (!subscribed) notSubscribedCourses.push(courseCode);
+    })
+  );
+  if (invalidCourses.length > 0) throw new ERROR.NotExisted(invalidCourses);
+  if (notSubscribedCourses.length > 0) {
+    throw new ERROR.SubscribedError( `User is not subscribed to course(s): ${notSubscribedCourses}`);
+  }
 };
 
 module.exports = {

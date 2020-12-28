@@ -1,24 +1,20 @@
 const { stringIsEmpty } = require("../../helpers/utilities-helpers");
 const {
-  getCourseDocumentIdWithCode,
   courseExistsWithDocumentId,
   courseExistsWithCourseCode,
 } = require("../../helpers/courses-helpers");
+const { objectIsMissing } = require("../../helpers/utilities-helpers");
+const { checkSchema } = require("../../schema");
 const SCHEMA = require("../../schema");
 const ERROR = require("../../utils/errors");
-const { objectIsMissing } = require("../../helpers/utilities-helpers");
+
 
 const validateCreateCourseRequest = async (course) => {
   if (objectIsMissing(course)) throw new ERROR.MissingObjectError("course");
   else {
-    const validate = SCHEMA.createCourseRequest.validate(course);
-    if ("error" in validate) {
-      let msg = {};
-      validate.error.details.forEach((e) => {
-        msg[e.path[0]] = e.message.replace(/"|\"/g, ``);
-      });
-      throw new ERROR.schemaError(msg);
-    } else {
+    const validate = checkSchema(SCHEMA.createCourseRequest, course);
+    if (validate !== null) throw new ERROR.schemaError(validate);
+    else {
       const { courseExists } = await courseExistsWithCourseCode(course.code);
       if (courseExists) throw new ERROR.DuplicatedError(course.code);
     }

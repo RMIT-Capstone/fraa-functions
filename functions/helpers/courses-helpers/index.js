@@ -53,14 +53,26 @@ const studentAlreadySubscribedToCourses = async (userId, courseCode) => {
       .doc(userId)
       .get();
     const { subscribedCourses } = querySnapshot.data();
-    if (!subscribedCourses) return { subscribed: false, subscribedError: null };
-    return {
-      subscribed: subscribedCourses.includes(courseCode),
-      subscribedError: null,
-    };
+    if (!subscribedCourses) return { subscribed: false };
+    return { subscribed: subscribedCourses.includes(courseCode) };
   } catch (errorUserAlreadySubscribedToCourse) {
     console.error('Something went wrong with userAlreadySubscribedToCourse: ', errorUserAlreadySubscribedToCourse);
-    return { subscribed: null, subscribedError: errorUserAlreadySubscribedToCourse };
+    return errorUserAlreadySubscribedToCourse;
+  }
+};
+
+const studentAlreadySubscribedToCoursesByEmail = async (email, courseCode) => {
+  try {
+    const querySnapshot = await db
+      .collection('users')
+      .where("email", "==", email)
+      .get().then( snapshot => {  return snapshot.docs[0] });
+    const { subscribedCourses } = querySnapshot.data();
+    if (!subscribedCourses) return { subscribed: false };
+    return { subscribed: subscribedCourses.includes(courseCode) };
+  } catch (errorUserAlreadySubscribedToCourse) {
+    console.error('Something went wrong with userAlreadySubscribedToCourse: ', errorUserAlreadySubscribedToCourse);
+    return errorUserAlreadySubscribedToCourse;
   }
 };
 
@@ -69,4 +81,5 @@ module.exports = {
   courseExistsWithCourseCode,
   getCourseDocumentIdWithCode,
   studentAlreadySubscribedToCourses,
+  studentAlreadySubscribedToCoursesByEmail
 };

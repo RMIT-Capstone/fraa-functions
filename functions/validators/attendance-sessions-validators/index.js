@@ -5,7 +5,6 @@ const ERROR_MESSAGES = require('../../handlers/constants/ErrorMessages');
 const { arrayIsMissing } = require('../../helpers/utilities-helpers');
 const { objectIsMissing } = require('../../helpers/utilities-helpers');
 
-// eslint-disable-next-line max-len
 const validateCreateAttendanceSessionRequest = async (validOn, expireOn, location, semester, course) => {
   let error = {};
   if (objectIsMissing(course)) error.course = `${ERROR_MESSAGES.MISSING_FIELD} course`;

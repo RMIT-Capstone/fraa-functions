@@ -26,16 +26,12 @@ const attendanceSessionExistsWithDocId = async docId => {
       .collection('attendance-sessions')
       .doc(docId)
       .get();
-
-    return {
-      attendanceSessionExists: documentSnapshot.exists,
-      attendanceSessionExistsError: null,
-    };
+    return { attendanceSessionExists: documentSnapshot.exists };
   } catch (errorAttendanceSessionExistsWithDocId) {
     console.error(
       'Something went wrong with attendanceSessionExistsWithDocId: ',
       errorAttendanceSessionExistsWithDocId);
-    return { attendanceSessionExists: null, attendanceSessionExistsError: errorAttendanceSessionExistsWithDocId };
+    return errorAttendanceSessionExistsWithDocId;
   }
 };
 
@@ -47,16 +43,13 @@ const userAlreadyRegisteredToAttendanceSession = async (email, sessionId) => {
       .get();
 
     const { attendees } = documentSnapshot.data();
-    if (!attendees) return { attended: false, errorAttended: null };
-    return {
-      attended: Boolean(attendees.includes(email)),
-      errorAttended: null,
-    };
+    if (!attendees) return { attended: false };
+    return { attended: Boolean(attendees.includes(email)) };
   } catch (errorUserAlreadyRegisteredToAttendanceSession) {
     console.error(
       'Something went wrong with userAlreadyRegisteredToAttendanceSession: ',
       errorUserAlreadyRegisteredToAttendanceSession);
-    return { attended: null, errorAttended: errorUserAlreadyRegisteredToAttendanceSession };
+    return errorUserAlreadyRegisteredToAttendanceSession;
   }
 };
 

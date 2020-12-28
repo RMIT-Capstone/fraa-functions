@@ -42,10 +42,20 @@ class NotExisted extends Error {
   }
 }
 
+class SubscribedError extends Error {
+  constructor (message = `Can't not subscribed`) {
+    super(message);
+    Error.captureStackTrace(this, this.constructor);
+    this.name = this.constructor.name;
+    this.message = message;
+  }
+}
+
 module.exports = {
   schemaError,
   MissingObjectError,
   CourseRetrieveError,
   DuplicatedError,
-  NotExisted
+  NotExisted,
+  SubscribedError
 };
