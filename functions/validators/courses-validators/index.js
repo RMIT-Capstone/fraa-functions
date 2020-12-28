@@ -51,7 +51,7 @@ const validateGetCourseByCodeRequest = async code => {
   else {
     const { courseExists, errorCheckExists } = await courseExistsWithCourseCode(code);
     if (errorCheckExists) error.course = 'Error checking course exists with code';
-    if (!courseExists) error.course = `${ERROR_MESSAGES.COURSE_ALREADY_EXISTS_WITH_CODE} ${code}`;
+    if (!courseExists) error.course = `${ERROR_MESSAGES.COURSE_DOES_NOT_EXIST_WITH_CODE} ${code}`;
   }
 
   return { error, valid: Object.keys(error).length === 0 };
