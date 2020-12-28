@@ -22,6 +22,7 @@ const USERS_ROUTES = require("../../utils/routes/users");
 const SCHEMA = require("../../schema");
 const { checkSchema } = require("../../schema");
 const ERROR = require("../../utils/errors");
+const ERROR_MESSAGES = require("../../handlers/constants/ErrorMessages");
 
 const validateCreateUserRequest = async (user) => {
   if (objectIsMissing(user)) throw new ERROR.MissingObjectError("user");
