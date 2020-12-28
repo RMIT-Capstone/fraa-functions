@@ -4,7 +4,7 @@ import datetime
 import utils
 import random
 
-random.seed(0)
+random.seed(76)
 SCHOOL_PREFIX = ['SST', 'SBM', 'SDM', 'SSC', 'SIB']
 COURSE_PREFIX = ['COSC', 'ISYS', 'OENG', 'EEET']
 
@@ -59,9 +59,9 @@ class CourseFactory:
 
     def generate_course_data(self, number):
         data = []
-        title = random.sample(utils.get_all_course_title(), 1)[0][0]
         for i in range(number):
             course = self.create_course()
+            title = random.sample(utils.get_all_course_title(), 1)[0][0]
             course.add_name(title)
             data.append(course)
         return data

@@ -32,9 +32,10 @@ def shown_data(data):
         print(record.get_detail())
 
 
-# HOST_SERVER = 'https://asia-northeast1-fraa-capstone.cloudfunctions.net/api/'
+HOST_SERVER = 'https://asia-northeast1-fraa-capstone.cloudfunctions.net/api/'
 
-HOST_SERVER = 'http://localhost:5001/serve/asia-northeast1/api/'
+
+# HOST_SERVER = 'http://localhost:5001/serve/asia-northeast1/api/'
 
 
 def post_data(payload, api):
@@ -118,7 +119,7 @@ def publish_lecturers(lecturers):
     print('Finished publish lecturers')
 
 
-def publish_sessions_with_api(sessions):
+def publish_sessions(sessions):
     for data in sessions:
         session = data.get_detail()
         res = post_data(payload={'code': session['courseCode']}, api='get_course_by_code')
@@ -155,7 +156,47 @@ def publish_sessions_with_api(sessions):
     print('Finished publish sessions')
 
 
-def publish_sessions(sessions):
+def publish_sessions_with_cloud_api(sessions):
+    res = post_data(payload={}, api='get_courses')
+    courses = json.loads(res.text)['courses']
+    for data in sessions:
+        session = data.get_detail()
+        course_id = ''
+        for course in courses:
+            if course['code'] == session['courseCode']:
+                course_id = course['id']
+        payload = {
+            "course": {
+                "courseCode": session['courseCode'],
+                "courseName": session['courseName'],
+                "lecturer": session['lecturer'],
+                "courseId": course_id
+            },
+            "validOn": session['validOn'],
+            "expireOn": session['expireOn'],
+            "location": session['location'],
+            "semester": "2020C",
+            "attendees": session["attendees"],
+            "createdAt": session['createdAt']
+        }
+
+        res = post_data(payload=payload, api='create_attendance_session')
+        if "error" in json.loads(res.text):
+            print('Error: ', res.text)
+        else:
+            session_id = json.loads(res.text)['success']['id']
+            for attendee in session['attendees']:
+                payload = {
+                    "email": attendee,
+                    "sessionId": session_id
+                }
+                res2 = post_data(payload=payload, api='register_to_attendance_session')
+                if "error" in json.loads(res2.text):
+                    print('Error: ', res2.text)
+    print('Finished publish sessions')
+
+
+def publish_sessions_with_sdk(sessions):
     doc_ref = store.collection('attendance-sessions')
     for data in sessions:
         session = data.get_detail()
@@ -219,3 +260,31 @@ def delete_data(students, courses, lecturers):
             session.reference.delete()
     print('Finished delete data')
 
+
+def delete_data_with_cloud_api(students, courses, lecturers):
+    for student in students:
+        s = student.get_detail()
+        post_data(payload={'email': s['email']}, api='delete_user')
+    for lecturer in lecturers:
+        lec = lecturer.get_detail()
+        post_data(payload={'email': lec['email']}, api='delete_user')
+    # Delete courses
+    res = post_data(payload={}, api='get_courses')
+    courses_data = json.loads(res.text)['courses']
+    for course in courses:
+        c = course.get_detail()
+        course_id = ''
+        try:
+            for course_data in courses_data:
+                if course_data['code'] == c['code']:
+                    course_id = course_data['id']
+            post_data(payload={'id': course_id}, api='delete_course')
+        except Exception as e:
+            print('Error: ( delete course', c['code'], ')', e)
+    # Delete sessions
+    for course in courses:
+        c = course.get_detail()
+        sessions = store.collection('attendance-sessions').where('course.courseCode', '==', c['code']).get()
+        for session in sessions:
+            session.reference.delete()
+    print('Finished delete data')

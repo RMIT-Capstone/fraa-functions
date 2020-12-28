@@ -15,14 +15,14 @@ sessions = factory.SessionFactory().generate_session_data(courses=courses, stude
 
 
 # Publish data
-# publisher.publish_courses(courses)
-# publisher.publish_students(students)
-# publisher.publish_lecturers(lecturers)
-# publisher.publish_sessions_with_api(sessions)
+publisher.publish_courses(courses)
+publisher.publish_students(students)
+publisher.publish_lecturers(lecturers)
+publisher.publish_sessions_with_cloud_api(sessions)
 
 
 # Delete data
-publisher.delete_data(students=students, courses=courses, lecturers=lecturers)
+# publisher.delete_data_with_cloud_api(students=students, courses=courses, lecturers=lecturers)
 
 
 # Shown data
