@@ -59,10 +59,10 @@ class CourseFactory:
 
     def generate_course_data(self, number):
         data = []
-        titles = utils.get_all_course_title()
+        title = random.sample(utils.get_all_course_title(), 1)[0][0]
         for i in range(number):
             course = self.create_course()
-            course.add_name(titles[i][0])
+            course.add_name(title)
             data.append(course)
         return data
 
@@ -125,8 +125,8 @@ class SessionFactory:
                 attendees = []
                 for student in students:
                     for subscribed_course in student.get_subscribe_courses():
-                        rate = [False] * 1 + [True] * 9
-                        if subscribed_course == course.get_course_code() and random.choice(rate) is True:
+                        rate = [False] * 0 + [True] * 1
+                        if subscribed_course == course.get_course_code() and random.choice(rate) is True and 1 > i:
                             attendees.append(student.get_email())
                 session = self.create_session(course, attendees)
                 validOn = (datetime.datetime.now() - datetime.timedelta(days=1) 
