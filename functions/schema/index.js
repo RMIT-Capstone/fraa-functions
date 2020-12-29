@@ -5,8 +5,7 @@ const checkSchema = (schema, value) => {
   if ("error" in validate) {
     let msg = {};
     validate.error.details.forEach((e) => {
-      // eslint-disable-next-line no-useless-escape
-      msg[e.path[0]] = e.message.replace(/"|\"/g, ``);
+      msg[e.path] = e.message.replace(/"|\"/g, ``);
     });
     return msg;
   }
@@ -70,6 +69,43 @@ const countMissedTotalAttendanceSessionsRequest = Joi.object({
   semester: Joi.string().alphanum().required(),
 }).options({ abortEarly: false });
 
+
+// ATTENDANCE_SESSIONS_SCHEMA
+
+const createAttendanceSessionRequest = Joi.object().keys({
+  course: Joi.object({
+    courseId: Joi.string().alphanum().required(),
+    courseCode: Joi.string().alphanum().min(8).max(8).required(),
+    courseName: Joi.string().min(3).max(80).required(),
+    lecturer: Joi.string().min(3).max(50).required(),
+  }).required().options({ abortEarly: false }),
+  validOn: Joi.date().iso().required(),
+  expireOn: Joi.date().iso().greater(Joi.ref('validOn')).required(),
+  location: Joi.string().required(),
+  semester: Joi.string().alphanum().required(),
+}).options({ abortEarly: false });
+
+const getAttendanceSessionsInDateRangeRequest = Joi.object({
+  startTime: Joi.date().iso().required(),
+  endTime: Joi.date().iso().greater(Joi.ref('startTime')).required(),
+  courses: Joi.array().required(),
+}).options({ abortEarly: false });
+
+const getAttendanceSessionsInMonthRangeRequest = Joi.object({
+  startMonth: Joi.number().integer().min(0).max(11).required(),
+  monthRange: Joi.number().integer().min(0).max(6).required(),
+  courses: Joi.array().required(),
+}).options({ abortEarly: false });
+
+const requiredCoursesArray = Joi.object({
+  courses: Joi.array().required(),
+}).options({ abortEarly: false });
+
+const getMonthlyAttendanceSessionsRequest = Joi.object({
+  month: Joi.number().min(0).max(11).required(),
+  courses: Joi.array().required(),
+}).options({ abortEarly: false });
+
 module.exports = {
   createCourseRequest,
   createUserRequest,
@@ -80,5 +116,10 @@ module.exports = {
   userSubscriptionRequest,
   userAttendanceRegistrationRequest,
   countMissedTotalAttendanceSessionsRequest,
+  createAttendanceSessionRequest,
+  getAttendanceSessionsInDateRangeRequest,
+  getAttendanceSessionsInMonthRangeRequest,
+  requiredCoursesArray,
+  getMonthlyAttendanceSessionsRequest,
   checkSchema
 };

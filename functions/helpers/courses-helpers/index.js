@@ -66,7 +66,7 @@ const studentAlreadySubscribedToCoursesByEmail = async (email, courseCode) => {
     const querySnapshot = await db
       .collection('users')
       .where("email", "==", email)
-      .get().then( snapshot => {  return snapshot.docs[0] });
+      .get().then( snapshot => {  return snapshot.docs[0]; });
     const { subscribedCourses } = querySnapshot.data();
     if (!subscribedCourses) return { subscribed: false };
     return { subscribed: subscribedCourses.includes(courseCode) };
@@ -76,10 +76,30 @@ const studentAlreadySubscribedToCoursesByEmail = async (email, courseCode) => {
   }
 };
 
+const invalidCourseArrayWithCourseCode = async courses => {
+  try {
+    let invalidCourses = [];
+    await Promise.all(
+      courses.map(async (courseCode) => {
+        const querySnapshot = await db
+          .collection('courses')
+          .where('code', '==', courseCode)
+          .get();
+        if (querySnapshot.empty) invalidCourses.push(courseCode);
+      })
+    );
+    return invalidCourses;
+  } catch (errorInvalidCourseArrayWithCourseCode) {
+    console.error('Something went wrong with invalidCourseArrayWithCourseCode', errorInvalidCourseArrayWithCourseCode);
+    return errorInvalidCourseArrayWithCourseCode;
+  }
+};
+
 module.exports = {
   courseExistsWithDocumentId,
   courseExistsWithCourseCode,
   getCourseDocumentIdWithCode,
   studentAlreadySubscribedToCourses,
-  studentAlreadySubscribedToCoursesByEmail
+  studentAlreadySubscribedToCoursesByEmail,
+  invalidCourseArrayWithCourseCode
 };
