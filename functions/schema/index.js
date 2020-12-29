@@ -1,34 +1,60 @@
 const Joi = require("joi");
 
+// GENERAL FUNCTION
+
 const checkSchema = (schema, value) => {
   const validate = schema.validate(value);
   if ("error" in validate) {
+    console.log(validate.error.details);
     let msg = {};
     validate.error.details.forEach((e) => {
-      msg[e.path] = e.message.replace(/"|\"/g, ``);
+      if(e.path.length > 1) {
+        msg[e.path[1]] = e.message.replace(/"|\"/g, ``).split(".")[1];
+      }
+      else msg[e.path[0]] = e.message.replace(/"|\"/g, ``);
     });
     return msg;
   }
   return null;
 };
 
+const invalidString = (string) => {
+  if (!(typeof string === 'string') || !string) return true;
+  return string.trim() === '';
+};
+
+const invalidBoolean = (bool) => {
+  return bool === undefined || typeof bool !== 'boolean';
+};
+
 // COURSE_SCHEMA
 
-const createCourseRequest = Joi.object({
-  code: Joi.string().alphanum().min(8).max(8).required(),
-  name: Joi.string().min(3).max(80).required(),
-  school: Joi.string().alphanum().min(3).max(3).required(),
-  lecturer: Joi.string().min(3).max(50).required(),
+const createCourseRequest = Joi.object().keys({
+  course: Joi.object({
+    code: Joi.string().alphanum().min(8).max(8).required(),
+    name: Joi.string().min(3).max(80).required(),
+    school: Joi.string().alphanum().min(3).max(3).required(),
+    lecturer: Joi.string().min(3).max(50).required(),
+  }).required()
 }).options({ abortEarly: false });
+
+const updateCourseRequest = Joi.object().keys({
+  course: Joi.object({
+    id: Joi.string().required(),
+  }).required()
+}).options({ abortEarly: false, allowUnknown: true });
+
 
 // USER_SCHEMA
 
 const createUserRequest = Joi.object({
-  email: Joi.string().email().required(),
-  password: Joi.string().min(6).max(30).required(),
-  displayName: Joi.string().min(3).max(50).required(),
-  school: Joi.string().alphanum().min(3).max(3).required(),
-  isLecturer: Joi.boolean().required(),
+  user: Joi.object({
+    email: Joi.string().email().required(),
+    password: Joi.string().min(6).max(30).required(),
+    displayName: Joi.string().min(3).max(50).required(),
+    school: Joi.string().alphanum().min(3).max(3).required(),
+    isLecturer: Joi.boolean().required()
+  }).required()
 }).options({ abortEarly: false });
 
 const requiredUserEmail = Joi.object({
@@ -36,12 +62,10 @@ const requiredUserEmail = Joi.object({
 }).options({ abortEarly: false });
 
 const updateUserRequest = Joi.object({
-  id: Joi.string().required(),
-  firstTimePassword: Joi.boolean().required(),
-  displayName: Joi.string().min(3).max(50).required(),
-  school: Joi.string().alphanum().min(3).max(3).required(),
-  verified: Joi.boolean().required(),
-}).options({ abortEarly: false });
+  user: Joi.object({
+    id: Joi.string().required(),
+  }).required()
+}).options({ abortEarly: false, allowUnknown: true });
 
 const userAccountRequest = Joi.object({
   email: Joi.string().email().required(),
@@ -108,6 +132,7 @@ const getMonthlyAttendanceSessionsRequest = Joi.object({
 
 module.exports = {
   createCourseRequest,
+  updateCourseRequest,
   createUserRequest,
   requiredUserEmail,
   updateUserRequest,
@@ -121,5 +146,7 @@ module.exports = {
   getAttendanceSessionsInMonthRangeRequest,
   requiredCoursesArray,
   getMonthlyAttendanceSessionsRequest,
-  checkSchema
+  checkSchema,
+  invalidString,
+  invalidBoolean
 };

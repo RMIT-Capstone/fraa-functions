@@ -3,10 +3,6 @@ const {
   attendanceSessionExistsWithDocId,
 } = require("../../helpers/attendance-sessions-helpers");
 const {
-  booleanIsMissing,
-  objectIsMissing
-} = require("../../helpers/utilities-helpers");
-const {
   studentAlreadySubscribedToCourses,
   getCourseDocumentIdWithCode,
   studentAlreadySubscribedToCoursesByEmail
@@ -16,17 +12,14 @@ const {
   userWithIdExistsInFirestore,
   getLatestOTPDocumentOfUser,
 } = require("../../helpers/users-helpers");
-const { checkSchema } = require("../../schema");
+const { checkSchema, invalidBoolean } = require("../../schema");
 const USERS_ROUTES = require("../../utils/routes/users");
 const SCHEMA = require("../../schema");
 const ERROR = require("../../utils/errors");
 
 const validateCreateUserRequest = async (user) => {
-  if (objectIsMissing(user)) throw new ERROR.MissingObjectError("user");
-  else {
-    const validate = checkSchema(SCHEMA.createUserRequest, user);
-    if (validate !== null) throw new ERROR.schemaError(validate);
-  }
+  const validate = checkSchema(SCHEMA.createUserRequest, { user });
+  if (validate !== null) throw new ERROR.schemaError(validate);
   // email duplicate is already handled inside create user function in users/https
 };
 
@@ -38,13 +31,10 @@ const validateDeleteUserRequest = async (email) => {
 };
 
 const validateUpdateUserRequest = async (user) => {
-  if (objectIsMissing(user)) throw new ERROR.MissingObjectError("user");
-  else {
-    const validate = checkSchema(SCHEMA.updateUserRequest, user);
-    if (validate !== null) throw new ERROR.schemaError(validate);
-    const { existsWithId } = await userWithIdExistsInFirestore(user.id);
-    if (!existsWithId) throw new ERROR.NotExisted(user.id);
-  }
+  const validate = checkSchema(SCHEMA.updateUserRequest, { user });
+  if (validate !== null) throw new ERROR.schemaError(validate);
+  const { existsWithId } = await userWithIdExistsInFirestore(user.id);
+  if (!existsWithId) throw new ERROR.NotExisted(user.id);
 };
 
 const validateGetUserByEmailRequest = async (email) => {
@@ -55,7 +45,7 @@ const validateGetUserByEmailRequest = async (email) => {
 };
 
 const validateGetAllUsersRequest = (isLecturer) => {
-  if (booleanIsMissing(isLecturer))
+  if (invalidBoolean(isLecturer))
     throw new ERROR.MissingObjectError("isLecturer");
 };
 

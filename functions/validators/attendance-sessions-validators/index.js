@@ -1,12 +1,10 @@
 const { db } = require('../../utils/admin');
 const { courseExistsWithDocumentId, invalidCourseArrayWithCourseCode } = require('../../helpers/courses-helpers');
-const { objectIsMissing } = require('../../helpers/utilities-helpers');
 const { checkSchema } = require("../../schema");
 const SCHEMA = require("../../schema");
 const ERROR = require("../../utils/errors");
 
 const validateCreateAttendanceSessionRequest = async (validOn, expireOn, location, semester, course) => {
-  if (objectIsMissing(course)) throw new ERROR.MissingObjectError('course');
   const validate = checkSchema(SCHEMA.createAttendanceSessionRequest,
     { course, validOn, expireOn, location, semester });
   if (validate !== null) throw new ERROR.schemaError(validate);
