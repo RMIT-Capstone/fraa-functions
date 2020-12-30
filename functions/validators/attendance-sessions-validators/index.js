@@ -47,7 +47,7 @@ const validateCreateAttendanceSessionRequest = async (validOn, expireOn, room, l
     if (stringIsEmpty(courseName)) error.courseName = `${ERROR_MESSAGES.MISSING_FIELD} courseName`;
     if (stringIsEmpty(lecturer)) error.lecturer = `${ERROR_MESSAGES.MISSING_FIELD} lecturer`;
   }
-  if (objectIsMissing(location)) error.room = `${ERROR_MESSAGES.MISSING_FIELD} room`;
+  if (objectIsMissing(location)) error.room = `${ERROR_MESSAGES.MISSING_FIELD} location`;
   else {
     const { altitude, latitude, longitude } = location;
     if (numberIsEmpty(altitude)) error.altitude = `${ERROR_MESSAGES.MISSING_FIELD} altitude in location`;
@@ -56,7 +56,7 @@ const validateCreateAttendanceSessionRequest = async (validOn, expireOn, room, l
   }
   if (stringIsEmpty(validOn)) error.validOn = `${ERROR_MESSAGES.MISSING_FIELD} validOn`;
   if (stringIsEmpty(expireOn)) error.expireOn = `${ERROR_MESSAGES.MISSING_FIELD} expireOn`;
-  if (stringIsEmpty(room)) error.location = `${ERROR_MESSAGES.MISSING_FIELD} location`;
+  if (stringIsEmpty(room)) error.room = `${ERROR_MESSAGES.MISSING_FIELD} room`;
 
   return { error, valid: Object.keys(error).length === 0 };
 };
