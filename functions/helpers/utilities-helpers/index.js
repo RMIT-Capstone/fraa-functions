@@ -9,8 +9,12 @@ const generateOTPCode = () => {
   return Array.apply(null, { length: OTP_LENGTH }).map(() => getRandomInt(0, 9)).join('');
 };
 
+const numberIsEmpty = number => {
+  return typeof number !== 'number' || !number;
+};
+
 const stringIsEmpty = string => {
-  if (!(typeof string === 'string') || !string) return true;
+  if (typeof string !== 'string' || !string) return true;
   return string.trim() === '';
 };
 
@@ -36,6 +40,7 @@ const isEmail = email => {
 module.exports = {
   getRandomInt,
   generateOTPCode,
+  numberIsEmpty,
   stringIsEmpty,
   booleanIsMissing,
   objectIsMissing,
