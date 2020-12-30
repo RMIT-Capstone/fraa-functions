@@ -2,11 +2,12 @@ const { db } = require('../../utils/admin');
 const { stringIsEmpty } = require('../../helpers/utilities-helpers');
 const { courseExistsWithDocumentId } = require('../../helpers/courses-helpers');
 const ERROR_MESSAGES = require('../../handlers/constants/ErrorMessages');
+const { numberIsEmpty } = require('../../helpers/utilities-helpers');
 const { arrayIsMissing } = require('../../helpers/utilities-helpers');
 const { objectIsMissing } = require('../../helpers/utilities-helpers');
 
 // eslint-disable-next-line max-len
-const validateCreateAttendanceSessionRequest = async (validOn, expireOn, location, semester, course) => {
+const validateCreateAttendanceSessionRequest = async (validOn, expireOn, room, location, semester, course) => {
   let error = {};
   if (objectIsMissing(course)) error.course = `${ERROR_MESSAGES.MISSING_FIELD} course`;
   else {
@@ -46,9 +47,16 @@ const validateCreateAttendanceSessionRequest = async (validOn, expireOn, locatio
     if (stringIsEmpty(courseName)) error.courseName = `${ERROR_MESSAGES.MISSING_FIELD} courseName`;
     if (stringIsEmpty(lecturer)) error.lecturer = `${ERROR_MESSAGES.MISSING_FIELD} lecturer`;
   }
+  if (objectIsMissing(location)) error.room = `${ERROR_MESSAGES.MISSING_FIELD} room`;
+  else {
+    const { altitude, latitude, longitude } = location;
+    if (numberIsEmpty(altitude)) error.altitude = `${ERROR_MESSAGES.MISSING_FIELD} altitude in location`;
+    if (numberIsEmpty(latitude)) error.latitude = `${ERROR_MESSAGES.MISSING_FIELD} latitude in location`;
+    if (numberIsEmpty(longitude)) error.longitude = `${ERROR_MESSAGES.MISSING_FIELD} longitude in location`;
+  }
   if (stringIsEmpty(validOn)) error.validOn = `${ERROR_MESSAGES.MISSING_FIELD} validOn`;
-  if (stringIsEmpty(expireOn)) error.validOn = `${ERROR_MESSAGES.MISSING_FIELD} expireOn`;
-  if (stringIsEmpty(location)) error.location = `${ERROR_MESSAGES.MISSING_FIELD} location`;
+  if (stringIsEmpty(expireOn)) error.expireOn = `${ERROR_MESSAGES.MISSING_FIELD} expireOn`;
+  if (stringIsEmpty(room)) error.location = `${ERROR_MESSAGES.MISSING_FIELD} location`;
 
   return { error, valid: Object.keys(error).length === 0 };
 };
