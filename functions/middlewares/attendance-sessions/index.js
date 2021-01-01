@@ -26,8 +26,9 @@ module.exports = async (req, res, next) => {
   }
 
   if (path === ATTENDANCE_SESSIONS_ROUTES.GET_ATTENDANCE_SESSIONS_IN_MONTH_RANGE) {
-    const { courses, startMonth, monthRange } = req.body;
-    const { error, valid } = validateGetAttendanceSessionsInMonthRangeRequest(courses, startMonth, monthRange);
+    const { courses, startMonth, monthRange, startYear, endYear } = req.body;
+    const { error, valid } =
+      validateGetAttendanceSessionsInMonthRangeRequest(courses, startMonth, monthRange, startYear, endYear);
     if (!valid) return sendErrorObject(res, error);
   }
 

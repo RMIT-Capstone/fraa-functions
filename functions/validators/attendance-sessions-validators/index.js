@@ -71,9 +71,11 @@ const validateGetAttendanceSessionsInDateRangeRequest = (courses, startTime, end
   return { error, valid: Object.keys(error).length === 0 };
 };
 
-const validateGetAttendanceSessionsInMonthRangeRequest = (courses, startMonth, monthRange) => {
+const validateGetAttendanceSessionsInMonthRangeRequest = (courses, startMonth, monthRange, startYear, endYear) => {
   let error = {};
   if (arrayIsMissing(courses)) error.courses = `${ERROR_MESSAGES.MISSING_FIELD} courses.`;
+  if (numberIsEmpty(startYear)) error.startYear = `${ERROR_MESSAGES.MISSING_FIELD} startYear`;
+  if (numberIsEmpty(endYear)) error.endYear = `${ERROR_MESSAGES.MISSING_FIELD} endYear`;
   if (startMonth <= 0 || startMonth > 11) error.startMonth = `startMonth must be between 1 and 11`;
   if (monthRange <= 0 || monthRange > 6) {
     error.monthRange = 'monthRange must be at least 1 and maximum 6.';
