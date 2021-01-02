@@ -3,11 +3,6 @@ const { courseExistsWithDocumentId, invalidCourseArrayWithCourseCode } = require
 const { checkSchema } = require("../../schema");
 const SCHEMA = require("../../schema");
 const ERROR = require("../../utils/errors");
-const { stringIsEmpty } = require('../../helpers/utilities-helpers');
-const ERROR_MESSAGES = require('../../handlers/constants/ErrorMessages');
-const { numberIsEmpty } = require('../../helpers/utilities-helpers');
-const { arrayIsMissing } = require('../../helpers/utilities-helpers');
-const { objectIsMissing } = require('../../helpers/utilities-helpers');
 
 const validateCreateAttendanceSessionRequest = async (validOn, expireOn, room, location, semester, course) => {
   const validate = checkSchema(SCHEMA.createAttendanceSessionRequest,
@@ -42,13 +37,14 @@ const validateGetAttendanceSessionsInDateRangeRequest = async (courses, startTim
 
 };
 
-const validateGetAttendanceSessionsInMonthRangeRequest = async (courses, startMonth, monthRange, startYear, endYear) => {
-  const validate = checkSchema(SCHEMA.getAttendanceSessionsInMonthRangeRequest,
-    { startMonth, monthRange, startYear, endYear,  courses });
-  if (validate !== null) throw new ERROR.schemaError(validate);
-  const invalidCourses = await invalidCourseArrayWithCourseCode(courses);
-  if (invalidCourses.length > 0) throw new ERROR.NotExisted(invalidCourses);
-};
+const validateGetAttendanceSessionsInMonthRangeRequest =
+  async (courses, startMonth, monthRange, startYear, endYear) => {
+    const validate = checkSchema(SCHEMA.getAttendanceSessionsInMonthRangeRequest,
+      { startMonth, monthRange, startYear, endYear,  courses });
+    if (validate !== null) throw new ERROR.schemaError(validate);
+    const invalidCourses = await invalidCourseArrayWithCourseCode(courses);
+    if (invalidCourses.length > 0) throw new ERROR.NotExisted(invalidCourses);
+  };
 
 const validateGetDailyAttendanceSessionsRequest = async (courses) => {
   const validate = checkSchema(SCHEMA.requiredCoursesArray, { courses });

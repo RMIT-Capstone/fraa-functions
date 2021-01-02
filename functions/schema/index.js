@@ -5,7 +5,7 @@ const Joi = require("joi");
 const checkSchema = (schema, value) => {
   const validate = schema.validate(value);
   if ("error" in validate) {
-    console.log(validate.error.details);
+    console.log(validate.error);
     let msg = {};
     validate.error.details.forEach((e) => {
       if(e.path.length > 1) {
@@ -96,7 +96,7 @@ const countMissedTotalAttendanceSessionsRequest = Joi.object({
 
 // ATTENDANCE_SESSIONS_SCHEMA
 
-const createAttendanceSessionRequest = Joi.object().keys({
+const createAttendanceSessionRequest = Joi.object({
   course: Joi.object({
     courseId: Joi.string().alphanum().required(),
     courseCode: Joi.string().alphanum().min(8).max(8).required(),
@@ -105,7 +105,12 @@ const createAttendanceSessionRequest = Joi.object().keys({
   }).required().options({ abortEarly: false }),
   validOn: Joi.date().iso().required(),
   expireOn: Joi.date().iso().greater(Joi.ref('validOn')).required(),
-  location: Joi.string().required(),
+  room: Joi.string().required(),
+  location: Joi.object({
+    altitude: Joi.number().required(),
+    latitude: Joi.number().required(),
+    longitude: Joi.number().required(),
+  }).required().options({ abortEarly: false }),
   semester: Joi.string().alphanum().required(),
 }).options({ abortEarly: false });
 
@@ -118,6 +123,8 @@ const getAttendanceSessionsInDateRangeRequest = Joi.object({
 const getAttendanceSessionsInMonthRangeRequest = Joi.object({
   startMonth: Joi.number().integer().min(0).max(11).required(),
   monthRange: Joi.number().integer().min(0).max(6).required(),
+  startYear: Joi.number().integer().min(2019).max(2021).required(),
+  endYear: Joi.number().integer().min(Joi.ref('startYear')).required(),
   courses: Joi.array().required(),
 }).options({ abortEarly: false });
 
