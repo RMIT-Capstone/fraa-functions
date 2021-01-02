@@ -134,8 +134,13 @@ def publish_sessions(sessions):
             },
             "validOn": session['validOn'],
             "expireOn": session['expireOn'],
-            "location": session['location'],
+            "room": session['location'],
             "semester": "2020C",
+            "location": {
+                "altitude": 0,
+                "latitude": 0,
+                "longitude": 0
+            },
             "attendees": session["attendees"],
             "createdAt": session['createdAt']
         }
@@ -174,12 +179,17 @@ def publish_sessions_with_cloud_api(sessions):
             },
             "validOn": session['validOn'],
             "expireOn": session['expireOn'],
-            "location": session['location'],
+            "room": session['location'],
             "semester": "2020C",
+            "location": {
+                "altitude": 10,
+                "latitude": 10,
+                "longitude": 10
+            },
             "attendees": session["attendees"],
             "createdAt": session['createdAt']
         }
-
+        print(payload)
         res = post_data(payload=payload, api='create_attendance_session')
         if "error" in json.loads(res.text):
             print('Error: ', res.text)
@@ -212,8 +222,13 @@ def publish_sessions_with_sdk(sessions):
             },
             "validOn": parse(session['validOn']),
             "expireOn": parse(session['expireOn']),
-            "location": session['location'],
+            "room": session['location'],
             "semester": "2020C",
+            "location": {
+                "altitude": 0,
+                "latitude": 0,
+                "longitude": 0
+            },
             "attendees": session["attendees"],
             "createdAt": parse(session['createdAt'])
         }
