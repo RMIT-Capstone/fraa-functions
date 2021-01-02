@@ -12,11 +12,19 @@ module.exports = async (req, res, next) => {
   const path = req.path.split('/')[1];
   try{
     if (path === ATTENDANCE_SESSIONS_ROUTES.CREATE_ATTENDANCE_SESSION) {
-      const { validOn, expireOn, location, semester, course } = req.body;
+      const { validOn, expireOn, room, location, semester, course } = req.body;
       await validateCreateAttendanceSessionRequest(
-        validOn, expireOn, location, semester, course,
+        validOn, expireOn, room, location, semester, course,
       );
     }
+
+  if (path === ATTENDANCE_SESSIONS_ROUTES.CREATE_ATTENDANCE_SESSION) {
+    const { validOn, expireOn, room, location, semester, course } = req.body;
+    const { error, valid } = await validateCreateAttendanceSessionRequest(
+      validOn, expireOn, room, location, semester, course,
+    );
+    if (!valid) return sendErrorObject(res, error);
+  }
 
     if (path === ATTENDANCE_SESSIONS_ROUTES.GET_ATTENDANCE_SESSIONS_IN_DATE_RANGE) {
       const { courses, startTime, endTime } = req.body;
@@ -24,9 +32,15 @@ module.exports = async (req, res, next) => {
     }
 
     if (path === ATTENDANCE_SESSIONS_ROUTES.GET_ATTENDANCE_SESSIONS_IN_MONTH_RANGE) {
-      const { courses, startMonth, monthRange } = req.body;
-      await validateGetAttendanceSessionsInMonthRangeRequest(courses, startMonth, monthRange);
+      const { courses, startMonth, monthRange, startYear, endYear } = req.body;
+      await validateGetAttendanceSessionsInMonthRangeRequest(courses, startMonth, monthRange, startYear, endYear);
     }
+  if (path === ATTENDANCE_SESSIONS_ROUTES.GET_ATTENDANCE_SESSIONS_IN_MONTH_RANGE) {
+    const { courses, startMonth, monthRange, startYear, endYear } = req.body;
+    const { error, valid } =
+      validateGetAttendanceSessionsInMonthRangeRequest(courses, startMonth, monthRange, startYear, endYear);
+    if (!valid) return sendErrorObject(res, error);
+  }
 
     if (path === ATTENDANCE_SESSIONS_ROUTES.GET_DAILY_ATTENDANCE_SESSION) {
       const { courses } = req.body;
