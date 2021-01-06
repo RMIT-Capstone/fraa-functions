@@ -14,10 +14,10 @@ students = factory.StudentFactory().connect_to_courses(courses=courses, students
 sessions = factory.SessionFactory().generate_session_data(courses=courses, students=students)
 
 # Shown data
-# publisher.shown_data(courses)
-# publisher.shown_data(students)
-# publisher.shown_data(lecturers)
-# publisher.shown_data(sessions)
+publisher.shown_data(courses)
+publisher.shown_data(students)
+publisher.shown_data(lecturers)
+publisher.shown_data(sessions)
 
 # Publish data
 publisher.publish_courses(courses)

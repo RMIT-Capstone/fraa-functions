@@ -107,8 +107,8 @@ class SessionFactory:
         semester = course['semester']
         courseId = course['_id']
         validOn = datetime.datetime.now().isoformat()
-        expireOn = (datetime.datetime.now() + datetime.timedelta(minutes=15)).isoformat()
-        createdAt = datetime.datetime.now().isoformat()
+        expireOn = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=15)).isoformat()
+        createdAt = datetime.datetime.now(datetime.timezone.utc).isoformat()
         build = str(random.randint(1, 2))
         floor = str(random.randint(1, 2))
         room = str(random.randint(1, 2))

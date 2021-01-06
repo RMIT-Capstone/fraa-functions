@@ -71,7 +71,7 @@ def publish_students(students):
         student_payload = {
             "user": {
                 'email': student['email'],
-                'password': '1234567',
+                'password': '123456',
                 'displayName': student['fullName'],
                 'school': student['school'],
                 'isLecturer': False
@@ -98,7 +98,7 @@ def publish_lecturers(lecturers):
         payload = {
             "user": {
                 'email': lecturer['email'],
-                'password': '1234567',
+                'password': '123456',
                 'displayName': lecturer['fullName'],
                 'school': lecturer['school'],
                 'isLecturer': True
