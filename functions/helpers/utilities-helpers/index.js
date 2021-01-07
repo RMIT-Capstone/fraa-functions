@@ -10,7 +10,13 @@ const generateOTPCode = () => {
 };
 
 const numberIsEmpty = number => {
-  return typeof number !== 'number' || !number;
+  if (typeof number !== 'number') {
+    return true;
+  }
+  // else if (!Number.isInteger(number)) {
+  //   return true;
+  // }
+  return false;
 };
 
 const stringIsEmpty = string => {
