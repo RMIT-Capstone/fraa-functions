@@ -76,7 +76,7 @@ const validateGetAttendanceSessionsInMonthRangeRequest = (courses, startMonth, m
   if (arrayIsMissing(courses)) error.courses = `${ERROR_MESSAGES.MISSING_FIELD} courses.`;
   if (numberIsEmpty(startYear)) error.startYear = `${ERROR_MESSAGES.MISSING_FIELD} startYear`;
   if (numberIsEmpty(endYear)) error.endYear = `${ERROR_MESSAGES.MISSING_FIELD} endYear`;
-  if (startMonth <= 0 || startMonth > 11) error.startMonth = `startMonth must be between 1 and 11`;
+  if (startMonth < 0 || startMonth > 11) error.startMonth = `startMonth must be between 1 and 11`;
   if (monthRange <= 0 || monthRange > 6) {
     error.monthRange = 'monthRange must be at least 1 and maximum 6.';
   }
@@ -92,8 +92,8 @@ const validateGetDailyAttendanceSessionsRequest = (courses) => {
 
 const validateGetMonthlyAttendanceSessionsRequest = (courses, month) => {
   let error = {};
-  if (arrayIsMissing(courses)) error.courses = 'Must include courses.';
-  if (!month) error.month = 'Must include month.';
+  if (arrayIsMissing(courses)) error.courses = 'Must include courses';
+  if (numberIsEmpty(month)) error.month = 'Must include month';
   if (month < 0 || month > 11) error.month = 'Month must be between 0 and 11';
 
   return { error, valid: Object.keys(error).length === 0 };
