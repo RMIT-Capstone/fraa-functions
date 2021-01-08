@@ -5,6 +5,7 @@ const {
   validateGetMoreCoursesByNameRequest,
   validateGetCoursesByNameRequest,
   validateGetCourseByCodeRequest,
+  validateGetCoursesByCodesRequest,
   validateGetMoreCoursesRequest,
   validateCreateCourseRequest,
 } = require('../../validators/courses-validators');
@@ -29,6 +30,12 @@ module.exports = async (req, res, next) => {
   if (path === COURSE_ROUTES.GET_COURSE_BY_CODE) {
     const { code } = req.body;
     const { error, valid } = await validateGetCourseByCodeRequest(code);
+    if (!valid) return sendErrorObject(res, error);
+  }
+
+  if (path === COURSE_ROUTES.GET_COURSES_BY_CODES) {
+    const { courses } = req.body;
+    const { error, valid } = await validateGetCoursesByCodesRequest(courses);
     if (!valid) return sendErrorObject(res, error);
   }
 

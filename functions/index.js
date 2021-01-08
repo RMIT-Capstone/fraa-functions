@@ -33,12 +33,13 @@ const {
   getCourses,
   getMoreCourses,
   getCourseByCode,
+  getCoursesByCodes,
   getCoursesByName,
   getMoreCoursesByName,
   updateCourse,
   deleteCourse,
   subscribeUserToCourses,
-  unsubscribeStudentFromCourses
+  unsubscribeStudentFromCourses,
 } = require('./handlers/courses/https');
 
 // attendance session handlers
@@ -90,6 +91,7 @@ app.post(`/${COURSES_ROUTES.GET_MORE_COURSES}`, coursesValidator, getMoreCourses
 app.post(`/${COURSES_ROUTES.GET_COURSES_BY_NAME}`, coursesValidator, getCoursesByName);
 app.post(`/${COURSES_ROUTES.GET_MORE_COURSES_BY_NAME}`, coursesValidator, getMoreCoursesByName);
 app.post(`/${COURSES_ROUTES.GET_COURSE_BY_CODE}`, coursesValidator, getCourseByCode);
+app.post(`/${COURSES_ROUTES.GET_COURSES_BY_CODES}`, coursesValidator, getCoursesByCodes);
 app.post(`/${COURSES_ROUTES.UPDATE_COURSE}`, coursesValidator, updateCourse);
 app.post(`/${COURSES_ROUTES.DELETE_COURSE}`, coursesValidator, deleteCourse);
 

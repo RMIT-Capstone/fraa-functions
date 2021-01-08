@@ -84,9 +84,32 @@ exports.getCourseByCode = async (req, res) => {
     course.id = querySnapshot.docs[0].id;
 
     return res.json({ course });
-  }
-  catch (errorGetCourseByCode) {
+  } catch (errorGetCourseByCode) {
     console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getCourseByCode: `, errorGetCourseByCode);
+    return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
+  }
+};
+
+exports.getCoursesByCodes = async (req, res) => {
+  const { courses } = req.body;
+  try {
+    let results = [];
+    await Promise.all(courses.map(async code => {
+      const querySnapshot = await db
+        .collection('courses')
+        .where('code', '==', code)
+        .limit(1)
+        .get();
+      let course = querySnapshot.docs[0].data();
+      const { createdAt } = course;
+      course.createdAt = createdAt.toDate();
+      course.id = querySnapshot.docs[0].id;
+      results.push(course);
+    }));
+
+    return sendSuccessObject(res, { courses: results });
+  } catch (errorGetCoursesByCodes) {
+    console.error(`${ERROR_MESSAGES.GENERIC_CONSOLE_ERROR_MESSAGE} getCoursesByCodes: `, errorGetCoursesByCodes);
     return sendErrorMessage(res, `${ERROR_MESSAGES.GENERIC_ERROR_MESSAGE}`);
   }
 };

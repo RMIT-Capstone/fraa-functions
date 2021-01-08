@@ -1,8 +1,6 @@
-const { stringIsEmpty } = require('../../helpers/utilities-helpers');
-const { courseExistsWithDocumentId } = require('../../helpers/courses-helpers');
-const { objectIsMissing } = require('../../helpers/utilities-helpers');
+const { courseExistsWithCourseCode, courseExistsWithDocumentId } = require('../../helpers/courses-helpers');
+const { stringIsEmpty, arrayIsMissing, objectIsMissing } = require('../../helpers/utilities-helpers');
 const ERROR_MESSAGES = require('../../handlers/constants/ErrorMessages');
-const { courseExistsWithCourseCode } = require('../../helpers/courses-helpers');
 
 const validateCreateCourseRequest = async course => {
   let error = {};
@@ -57,6 +55,22 @@ const validateGetCourseByCodeRequest = async code => {
   return { error, valid: Object.keys(error).length === 0 };
 };
 
+const validateGetCoursesByCodesRequest = async (courses) => {
+  let error = {};
+  if (arrayIsMissing(courses)) error.courses = `${ERROR_MESSAGES.MISSING_FIELD} courses`;
+  else {
+    let errorExists = [];
+    await Promise.all(courses.map(async code => {
+      const { courseExists, errorCheckExists } = await courseExistsWithCourseCode(code);
+      if (errorCheckExists) error.courses = 'Error checking course exists with id';
+      if (!courseExists) errorExists.push(code);
+    }));
+    if (errorExists.length !== 0) error.courses = `Courses do not exist: ${errorExists}`;
+  }
+
+  return { error, valid: Object.keys(error).length === 0 };
+};
+
 const validateUpdateCourseRequest = async (course) => {
   let error = {};
   if (objectIsMissing(course)) {
@@ -92,6 +106,7 @@ module.exports = {
   validateGetCoursesByNameRequest,
   validateGetMoreCoursesByNameRequest,
   validateGetCourseByCodeRequest,
+  validateGetCoursesByCodesRequest,
   validateUpdateCourseRequest,
   validateDeleteCourseRequest,
 };
