@@ -1,6 +1,7 @@
 const { db, admin } = require('../../../utils/admin');
 const { sendErrorMessage, sendSuccessMessage } = require('../../../helpers/express-helpers');
 const { getUserIdInFirestoreWithEmail } = require('../../../helpers/users-helpers');
+const { countAllAttendanceSessionsWithCourseCode } = require('../../../helpers/attendance-sessions-helpers');
 const { sendSuccessObject } = require('../../../helpers/express-helpers');
 const ERROR_MESSAGES = require('../../constants/ErrorMessages');
 
@@ -8,7 +9,7 @@ const today = new Date();
 
 exports.createAttendanceSession = async (req, res) => {
   const attendance = req.body;
-  const { validOn, expireOn, course: { courseId } } = req.body;
+  const { validOn, expireOn, course: { courseId, courseCode } } = req.body;
   attendance.createdAt = new Date();
   attendance.validOn = new Date(validOn);
   attendance.expireOn = new Date(expireOn);
@@ -19,11 +20,13 @@ exports.createAttendanceSession = async (req, res) => {
       .add(attendance);
     attendance.id = result.id;
 
+    const count = await countAllAttendanceSessionsWithCourseCode(courseCode);
+
     await db
       .collection('courses')
       .doc(courseId)
       .update({
-        sessionCounts: admin.firestore.FieldValue.increment(1),
+        sessionCounts: count,
       });
 
     return sendSuccessObject(res, attendance);
