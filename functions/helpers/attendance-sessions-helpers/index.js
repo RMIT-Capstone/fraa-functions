@@ -60,8 +60,25 @@ const userAlreadyRegisteredToAttendanceSession = async (email, sessionId) => {
   }
 };
 
+const countAllAttendanceSessionsWithCourseCode = async (code) => {
+  try {
+    const querySnapshot = await db
+      .collection('attendance-sessions')
+      .where('course.courseCode', '==', code)
+      .get();
+
+    return querySnapshot.docs.length;
+  } catch (errorCountAllAttendanceSessionsWithCourseCode) {
+    console.error(
+      'Something went wrong with userAlreadyRegisteredToAttendanceSession: ',
+      errorCountAllAttendanceSessionsWithCourseCode);
+    return null;
+  }
+};
+
 module.exports = {
   getAttendanceSessionDocumentIdByDate,
   attendanceSessionExistsWithDocId,
   userAlreadyRegisteredToAttendanceSession,
+  countAllAttendanceSessionsWithCourseCode,
 };
