@@ -106,9 +106,10 @@ class SessionFactory:
         lecturer = course['lecturer']
         semester = course['semester']
         courseId = course['_id']
-        validOn = datetime.datetime.now().isoformat()
-        expireOn = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=15)).isoformat()
-        createdAt = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        now = datetime.datetime.now() - datetime.timedelta(hours=7)
+        validOn = now.isoformat()
+        expireOn = (now + datetime.timedelta(minutes=30)).isoformat()
+        createdAt = now.isoformat()
         build = str(random.randint(1, 2))
         floor = str(random.randint(1, 2))
         room = str(random.randint(1, 2))
@@ -121,6 +122,8 @@ class SessionFactory:
     def generate_session_data(self, courses, students):
         data = []
         for course in courses:
+            now = datetime.datetime.now() - datetime.timedelta(hours=7)
+            # TODO: turn into range and add the time delta base on  index
             for i in range(course.get_session_count()):
                 attendees = []
                 for student in students:
@@ -129,10 +132,10 @@ class SessionFactory:
                         if subscribed_course == course.get_course_code() and random.choice(rate) is True and 1 > i:
                             attendees.append(student.get_email())
                 session = self.create_session(course, attendees)
-                validOn = (datetime.datetime.now() - datetime.timedelta(days=1) 
+                validOn = (now - datetime.timedelta(days=1)
                            + datetime.timedelta(days=i)).isoformat()
-                expireOn = (datetime.datetime.now() - datetime.timedelta(days=1) 
-                            + datetime.timedelta(days=i, minutes=30)).isoformat()
+                expireOn = (now - datetime.timedelta(days=1)
+                            + datetime.timedelta(days=i, minutes=45)).isoformat()
                 session.set_time(validOn=validOn, expireOn=expireOn)
                 data.append(session)
         return data

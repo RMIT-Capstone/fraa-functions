@@ -32,10 +32,11 @@ def shown_data(data):
         print(record.get_detail())
 
 
+# HOST_SERVER = 'http://localhost:5001/serve/asia-northeast1/api/'
+
 HOST_SERVER = 'https://asia-northeast1-fraa-capstone.cloudfunctions.net/api/'
 
-
-# HOST_SERVER = 'http://localhost:5001/serve/asia-northeast1/api/'
+altitude, latitude, longitude = 26.600000381469727, 10.8563096, 106.7640536
 
 
 def post_data(payload, api):
@@ -137,9 +138,9 @@ def publish_sessions(sessions):
             "room": session['location'],
             "semester": "2020C",
             "location": {
-                "altitude": 0,
-                "latitude": 0,
-                "longitude": 0
+                "altitude": altitude,
+                "latitude": latitude,
+                "longitude": longitude
             },
             "attendees": session["attendees"],
             "createdAt": session['createdAt']
@@ -182,14 +183,13 @@ def publish_sessions_with_cloud_api(sessions):
             "room": session['location'],
             "semester": "2020C",
             "location": {
-                "altitude": 10,
-                "latitude": 10,
-                "longitude": 10
+                "altitude": altitude,
+                "latitude": latitude,
+                "longitude": longitude
             },
             "attendees": session["attendees"],
             "createdAt": session['createdAt']
         }
-        print(payload)
         res = post_data(payload=payload, api='create_attendance_session')
         if "error" in json.loads(res.text):
             print('Error: ', res.text)
@@ -225,9 +225,9 @@ def publish_sessions_with_sdk(sessions):
             "room": session['location'],
             "semester": "2020C",
             "location": {
-                "altitude": 0,
-                "latitude": 0,
-                "longitude": 0
+                "altitude": altitude,
+                "latitude": latitude,
+                "longitude": longitude
             },
             "attendees": session["attendees"],
             "createdAt": parse(session['createdAt'])
