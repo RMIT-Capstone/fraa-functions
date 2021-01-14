@@ -121,10 +121,11 @@ class SessionFactory:
 
     def generate_session_data(self, courses, students):
         data = []
-        for course in courses:
-            now = datetime.datetime.now() - datetime.timedelta(hours=7)
+        for c in range(len(courses)):
+            course = courses[c]
             # TODO: turn into range and add the time delta base on  index
             for i in range(course.get_session_count()):
+                now = datetime.datetime.now() - datetime.timedelta(hours=7) + datetime.timedelta(minutes=c*90)
                 attendees = []
                 for student in students:
                     for subscribed_course in student.get_subscribe_courses():
@@ -135,7 +136,7 @@ class SessionFactory:
                 validOn = (now - datetime.timedelta(days=1)
                            + datetime.timedelta(days=i)).isoformat()
                 expireOn = (now - datetime.timedelta(days=1)
-                            + datetime.timedelta(days=i, minutes=45)).isoformat()
+                            + datetime.timedelta(days=i, minutes=50)).isoformat()
                 session.set_time(validOn=validOn, expireOn=expireOn)
                 data.append(session)
         return data
